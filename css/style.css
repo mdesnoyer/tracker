@@ -1,0 +1,12 @@
+body {
+	padding: 20px;
+}
+
+.tab-pane {
+	padding: 10px;
+}
+
+.tab-pane img {
+	display: inline-block;
+	margin: 0 80px 40px 0;
+}

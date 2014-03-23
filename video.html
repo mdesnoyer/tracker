@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="js/jquery-1.11.0.min.js"></script>
+		<script>
+		$(function() {
+			var param = window.location.search.replace("?", "");
+			var videoId = param.split('=')[1];
+			var viewedThumbs = JSON.parse(localStorage.getItem('viewedThumbnails'));
+			var thumbId = viewedThumbs[videoId];
+			$('#videoId').html(videoId);
+			if(thumbId) {
+				$('#thumbId').html(thumbId);
+			} else {
+				$('#thumbId').html("Thumbnail for this video was not viewed");
+			}
+		});
+		</script>
+	</head>
+	<body>
+		<h1>Video runs here</h1>
+		<h2>Info stored in local storage</h2>
+		<div style="margin-bottom: 8px">Video Id: <strong id="videoId"></strong></div>
+		<div style="margin-bottom: 8px">Thumbnail Id: <strong id="thumbId"></strong></div>
+		<a href="index.html">Back</a>
+	</body>
+</html>
