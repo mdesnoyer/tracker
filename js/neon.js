@@ -41,17 +41,42 @@
 			console.log(uid);
 		}
 
+		function _storeThumbnail(storage, vidId, thumbId) {
+			var data = JSON.parse(storage.getItem(thumbViewKey));
+
+			if(!data) data = {};
+
+			var ts = parseInt((new Date().getTime())/1000, 10);
+
+			//store if thumbnail id not already stored, else update the timestamp
+			data[vidId] = {
+				'thumbId': thumbId,
+				'ts': ts
+			};
+			storage.setItem(thumbViewKey, JSON.stringify(data));
+		}
+
 		function storeThumbnail(vidId, thumbId) {
-			var data = JSON.parse(localStorage.getItem(thumbViewKey));
+			_storeThumbnail(sessionStorage, vidId, thumbId);
+			_storeThumbnail(localStorage, vidId, thumbId);
+		}
 
-			//store if thumbnail id not already stored
-			if(!data) {
-				data = {};
+		function _getThumbnail(storage, vidId) {
+			var data = JSON.parse(storage.getItem(thumbViewKey));
+			if(data) {
+				return data[vidId];
+			} else {
+				return false;
 			}
+		}
 
-			if(!data[vidId]) {
-				data[vidId] = thumbId;
-				localStorage.setItem(thumbViewKey, JSON.stringify(data));
+		function getThumbnail(vidId) {
+			var ret = _getThumbnail(sessionStorage, vidId);
+			if(ret) { //if found in session storage
+				return ret;
+			} else { //check localstorage (user might have opened video in new tab)
+				ret = _getThumbnail(localStorage, vidId);
+				return ret;
 			}
 		}
 
@@ -125,15 +150,37 @@
 			return ret;
 		}
 
+		function trackVideo() {
+			//capture video play event
+			//event returns the video id
+			$(document).on('videoplay', function(e, vidId) {
+				$('#videoId').html(vidId);
+				//TODO: check for document.referrer
+				var thumb = getThumbnail(vidId);
+				if(thumb) {
+					console.log(thumb);
+					$('#thumbId').html(thumb.thumbId);
+					$('#timestamp').html(thumb.ts);
+				} else {
+					console.log("thumbnail not found");
+					$('#thumbId').html("Not found");
+				}
+			});
+		}
+
+		//public methods
 		return {
 			init: function() {
 				initImageLoad();
-			}
+				trackVideo();
+			},
+
+			getUid: getUid
 		};
 	})();
 
 	//run the tracker only on browsers that can suppport it
-	if(localStorage && JSON) {
+	if(sessionStorage && localStorage && JSON) {
 		_neon.tracker.init();
 	}
 
