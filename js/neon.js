@@ -15,6 +15,21 @@
 		        return true;
 		    }
 		    return false;
+		},
+
+		//check if current page is referred by a page from same website
+		//TODO: tackle different subdomain
+		sameSiteReferral: function() {
+			var referrer = document.referrer;
+			if(referrer.indexOf('http://') !== -1) { //found http protocol
+				referrer = referrer.substr(7);
+			} else if(referrer.indexOf('https://') !== -1) { //found https protocol
+				referrer = referrer.substr(8);
+			} else {
+				//not sure what to do
+			}
+
+			return (referrer == window.location.hostname);
 		}
 	};
 
@@ -131,6 +146,13 @@
 					forced = true;
 				}
 			});
+
+			//on window unload, send thumbnails viewed in the current session to the server
+			//TODO: Test this properly across browsers
+			$(window).bind('beforeunload', function() {
+				console.log("sending viewed thumbnails to server");
+				var thumbnails = JSON.parse(sessionStorage.getItem(thumbViewKey));
+			});
 		}
 
 		function getDummyReponse(urls) {
@@ -155,12 +177,13 @@
 			//event returns the video id
 			$(document).on('videoplay', function(e, vidId) {
 				$('#videoId').html(vidId);
-				//TODO: check for document.referrer
+				//TODO: do we need to check for domain?
 				var thumb = getThumbnail(vidId);
 				if(thumb) {
 					console.log(thumb);
 					$('#thumbId').html(thumb.thumbId);
 					$('#timestamp').html(thumb.ts);
+					//TODO: send this thumbnail to server
 				} else {
 					console.log("thumbnail not found");
 					$('#thumbId').html("Not found");
