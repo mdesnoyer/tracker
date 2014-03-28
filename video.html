@@ -4,6 +4,7 @@
 		<script src="js/jquery-1.11.0.min.js"></script>
 		<script src="js/jquery.appear.js"></script>
 		<script src="js/neon.js"></script>
+		<script language="JavaScript" type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences_all.js"></script>
 		<script>
 		$(function() {
 			$('#playVideo').click(function() {
@@ -21,5 +22,21 @@
 		<div style="margin-bottom: 8px">Thumbnail Id: <strong id="thumbId"></strong></div>
 		<div style="margin-bottom: 8px">Timestamp: <strong id="timestamp"></strong></div>
 		<a href="index.html">Back</a>
+
+		<object id="myExperience" class="BrightcoveExperience">
+		  <param name="bgcolor" value="#FFFFFF" />
+		  <param name="width" value="480" />
+		  <param name="height" value="270" />
+		  <param name="playerID" value="2296789948001" />
+		  <param name="playerKey" value="AQ~~,AAACFlFGaSk~,KO63PfDvw1wM52CosKaGrogGVsk4YwDe" />
+		  <param name="isVid" value="true" />
+		  <param name="isUI" value="true" />
+		  <param name="dynamicStreaming" value="true" />
+  		  <param name="@videoPlayer"  value="2801877295001" />	    
+		  <param name="includeAPI" value="true" />
+		  <param name="templateLoadHandler" value="NeonPlayerTracker.BCPlayerOnTemplateLoad" />
+		  <param name="templateReadyHandler" value="NeonPlayerTracker.BCPlayerOnTemplateReady" />
+		</object>
+
 	</body>
 </html>

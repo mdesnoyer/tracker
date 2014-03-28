@@ -1,3 +1,47 @@
+/// JSON Script Requester 
+var JsonRequester = (function() {
+
+		function JSONscriptRequest(fullUrl) {
+			this.fullUrl = fullUrl; 
+			this.noCacheIE = '&noCacheIE=' + (new Date()).getTime();
+			this.headLoc = document.getElementsByTagName("head").item(0);
+			this.scriptId = 'JscriptId' + JSONscriptRequest.scriptCounter++;
+		}
+
+		JSONscriptRequest.scriptCounter = 1;
+		JSONscriptRequest.prototype.buildScriptTag = function () {
+			this.scriptObj = document.createElement("script");
+			this.scriptObj.setAttribute("type", "text/javascript");
+			this.scriptObj.setAttribute("charset", "utf-8");
+			this.scriptObj.setAttribute("src", this.fullUrl + this.noCacheIE);
+			this.scriptObj.setAttribute("id", this.scriptId);
+		};
+		
+		JSONscriptRequest.prototype.removeScriptTag = function () {
+			this.headLoc.removeChild(this.scriptObj);  
+		};
+		
+		JSONscriptRequest.prototype.addScriptTag = function () {
+			this.headLoc.appendChild(this.scriptObj);
+		}
+
+		return{ 
+			sendRequest: function(req){
+				try 
+				{
+					// req: Entire url of the request along with query params
+					bObj = new JSONscriptRequest(req); 
+					bObj.buildScriptTag(); 
+					bObj.addScriptTag();  
+				}
+				catch(err){
+					console.log(err)
+				}
+				
+			},
+		}
+}());
+
 (function() {
 
 	var _neon = {};
@@ -183,7 +227,10 @@
 					console.log(thumb);
 					$('#thumbId').html(thumb.thumbId);
 					$('#timestamp').html(thumb.ts);
-					//TODO: send this thumbnail to server
+					
+					//Sennd event request to dummy URL
+					url = "http://localhost:8888/event";
+					JsonRequester.sendRequest(url);
 				} else {
 					console.log("thumbnail not found");
 					$('#thumbId').html("Not found");
@@ -191,13 +238,14 @@
 			});
 		}
 
+
 		//public methods
 		return {
 			init: function() {
 				initImageLoad();
 				trackVideo();
 			},
-
+		
 			getUid: getUid
 		};
 	})();
@@ -208,3 +256,35 @@
 	}
 
 })();
+
+var NeonPlayerTracker = (function(){
+	var player, videoPlayer, content, exp, initialVideo;
+	return {
+			
+		/// Brightcove player specific methods
+
+		BCPlayerOnTemplateLoad: function(expID){
+			console.log("Player template loaded")
+			player = bcPlayer.getPlayer(expID);                 
+			videoPlayer = player.getModule(APIModules.VIDEO_PLAYER);
+			content = player.getModule(APIModules.CONTENT);                  
+			exp = player.getModule(APIModules.EXPERIENCE); 
+			videoPlayer.addEventListener(BCMediaEvent.BEGIN, 
+						NeonPlayerTracker.PlayerVideoPlay);
+			//exp.addEventListener(BCExperienceEvent.CONTENT_LOAD, 
+			//			PlayerImagesLoad) 
+		},
+
+		BCPlayerOnTemplateReady: function(evt){
+			console.log(evt);
+		},
+		
+		PlayerVideoPlay: function(evt){
+				var vid = evt.media.id;	
+				console.log("Video begin play vid: " + vid);
+			/// TODO: ADD Logic here to trace back which thumbnail was clicked	
+		},	
+		////////// EOB
+}
+
+}());
