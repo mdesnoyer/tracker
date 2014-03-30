@@ -4,9 +4,13 @@
 // 3. Image click event
 // 4. Video play event 
 
+/// Create our global object
+// All other objects will be children of this object, so we do not pollute
+// global scope thus minimizing any interference with existing code on the website
+var _neon = {};
 
 /// JSON Script Requester 
-var JsonRequester = (function() {
+_neon.JsonRequester = (function() {
 
 		function JSONscriptRequest(fullUrl) {
 			this.fullUrl = fullUrl; 
@@ -49,170 +53,157 @@ var JsonRequester = (function() {
 		}
 }());
 
-//// MAIN Function
 
-(function() {
+_neon.utils = {
 
-	var _neon = {};
+	//generate a random string of given length
+	getRandomString: function(len) {
+		var n = parseInt((1 + Math.random()) * 100000000, 10); //a random number
+		return n.toString().substr(0, len);
+	},
 
-	_neon.utils = {
-
-		//generate a random string of given length
-		getRandomString: function(len) {
-			var n = parseInt((1 + Math.random()) * 100000000, 10); //a random number
-			return n.toString().substr(0, len);
-		},
-
-		isHidden: function(el) {
-		    if(el.offsetParent === null) {
-		        return true;
-		    }
-		    return false;
-		},
-
-		//check if current page is referred by a page from same website
-		//TODO: tackle different subdomain
-		sameSiteReferral: function() {
-			var referrer = document.referrer;
-			if(referrer.indexOf('http://') !== -1) { //found http protocol
-				referrer = referrer.substr(7);
-			} else if(referrer.indexOf('https://') !== -1) { //found https protocol
-				referrer = referrer.substr(8);
-			} else {
-				//not sure what to do
-			}
-
-			return (referrer == window.location.hostname);
+	isHidden: function(el) {
+		if(el.offsetParent === null) {
+			return true;
 		}
-	};
+		return false;
+	},
 
-	_neon.tracker = (function() {
-
-		var uidKey = 'uid',
-			thumbMap, //stores a thumbnail url -> (videoId, thumbnailId) map
-			thumbViewKey = 'viewedThumbnails'; //key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
-
-		function initImageLoad() {
-			//wait for page load
-			$(window).bind("load", function() {
-				//batch all the thumbnail urls
-				var urls = [];
-				$('img').each(function() {
-					var url = $(this).attr('src'); //this url resolves to some thumbnail id
-					urls.push(url);
-				});
-
-				//assuming the url list is small enough to send as GET
-				/*
-				var serviceUrl = 'http://neon.com/thumbnails/get/' + urls.join();
-				$.getJSON(serviceUrl, function(data) {
-					//data will be an object like {url1: [vid_id, thumbnail_id], url2: [vid_id, thumbnail_id]}
-				});
-				*/
-
-				//simulating response
-				thumbMap = getDummyReponse(urls);
-				startTracking();
-			});
+	//check if current page is referred by a page from same website
+	//TODO: tackle different subdomain
+	sameSiteReferral: function() {
+		var referrer = document.referrer;
+		if(referrer.indexOf('http://') !== -1) { //found http protocol
+			referrer = referrer.substr(7);
+		} else if(referrer.indexOf('https://') !== -1) { //found https protocol
+			referrer = referrer.substr(8);
+		} else {
+			//not sure what to do
 		}
 
-		function startTracking() {
-			console.log(document.referrer);
-			//for now, assuming all images on the page are thumbnails
-			//basic visibility check
-			$('img').appear();
-			var forced = false;
+		return (referrer == window.location.hostname);
+	}
+};
 
-			$(document.body).on('appear', 'img', function(e, $appeared) { //callback when certain images appear in viewport
-				$appeared.each(function() {
-					var url = $(this).attr('src'),
-						vidId = thumbMap[url][0],
-						thumbId = thumbMap[url][1];
+_neon.tracker = (function() {
 
-					console.log(url);
+	var uidKey = 'uid',
+		thumbMap, //stores a thumbnail url -> (videoId, thumbnailId) map
+		thumbViewKey = 'viewedThumbnails'; //key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
 
-					//store the video_id-thumbnail_id pair as viewed
-					StorageModule.storeThumbnail(vidId, thumbId);
-					//console.log(StorageModule.getAllThumbnails("session"));
-				});
+	function initImageLoad() {
+		//wait for page load
+		$(window).bind("load", function() {
+			//batch all the thumbnail urls
+			var urls = [];
+			$('img').each(function() {
+				var url = $(this).attr('src'); //this url resolves to some thumbnail id
+				urls.push(url);
 			});
 
-			//force appear the thumbnails which are visible in the initial state
-			$(document.body).mousemove(function() {
-				if(!forced) {
-					$.force_appear();
-					forced = true;
-				}
+			//assuming the url list is small enough to send as GET
+			/*
+			var serviceUrl = 'http://neon.com/thumbnails/get/' + urls.join();
+			$.getJSON(serviceUrl, function(data) {
+				//data will be an object like {url1: [vid_id, thumbnail_id], url2: [vid_id, thumbnail_id]}
 			});
+			*/
 
-			//on window unload, send thumbnails viewed in the current session to the server
-			//TODO: Test this properly across browsers
-			$(window).bind('beforeunload', function() {
-				console.log("sending viewed thumbnails to server");
-				var thumbnails = StorageModule.getAllThumbnails("session");
-			});
-		}
-
-		function getDummyReponse(urls) {
-			var ret = {};
-			ret["img/islands/1.jpeg"] = [1, "red"]; //[videoId, thumbnailId]
-			ret["img/islands/2.jpeg"] = [2, "world"];
-			ret["img/islands/3.jpeg"] = [3, "cat"];
-			ret["img/islands/4.jpeg"] = [4, "knight"];
-			ret["img/islands/5.jpeg"] = [5, "ruby"];
-			ret["img/islands/6.jpeg"] = [6, "orange"];
-			ret["img/islands/7.jpeg"] = [7, "blue"];
-			ret["img/islands/8.jpeg"] = [8, "apple"];
-			ret["img/islands/9.jpeg"] = [9, "sky"];
-			ret["img/islands/10.jpeg"] = [10, "river"];
-			ret["img/islands/11.jpeg"] = [11, "monk"];
-			ret["img/islands/12.jpeg"] = [12, "panda"];
-			return ret;
-		}
-
-		function trackVideo() {
-			//capture video play event
-			//event returns the video id
-			$(document).on('videoplay', function(e, vidId) {
-				$('#videoId').html(vidId);
-				//TODO: do we need to check for domain?
-				var referrer = document.referrer.split('?')[0]
-				var thumb = StorageModule.getThumbnail(vidId, referrer);
-				if(thumb) {
-					console.log(thumb);
-					$('#thumbId').html(thumb.thumbId);
-					$('#timestamp').html(thumb.ts);
-				
-					//Sennd event request to dummy URL
-					url = "http://localhost:8888/event";
-					JsonRequester.sendRequest(url);
-				} else {
-					console.log("thumbnail not found");
-					$('#thumbId').html("Not found");
-				}
-			});
-		}
-
-
-		//public methods
-		return {
-			init: function() {
-				initImageLoad();
-				trackVideo();
-			},
-		
-		};
-	})();
-
-	/// TODO: Handle this globally and resort to storign things in memory
-	//run the tracker only on browsers that can suppport it
-	if(sessionStorage && localStorage && JSON) {
-		_neon.tracker.init();
+			//simulating response
+			thumbMap = getDummyReponse(urls);
+			startTracking();
+		});
 	}
 
+	function startTracking() {
+		console.log(document.referrer);
+		//for now, assuming all images on the page are thumbnails
+		//basic visibility check
+		$('img').appear();
+		var forced = false;
+
+		$(document.body).on('appear', 'img', function(e, $appeared) { //callback when certain images appear in viewport
+			$appeared.each(function() {
+				var url = $(this).attr('src'),
+					vidId = thumbMap[url][0],
+					thumbId = thumbMap[url][1];
+
+				console.log(url);
+
+				//store the video_id-thumbnail_id pair as viewed
+				_neon.StorageModule.storeThumbnail(vidId, thumbId);
+				//console.log(StorageModule.getAllThumbnails("session"));
+			});
+		});
+
+		//force appear the thumbnails which are visible in the initial state
+		$(document.body).mousemove(function() {
+			if(!forced) {
+				$.force_appear();
+				forced = true;
+			}
+		});
+
+		//on window unload, send thumbnails viewed in the current session to the server
+		//TODO: Test this properly across browsers
+		$(window).bind('beforeunload', function() {
+			console.log("sending viewed thumbnails to server");
+			var thumbnails = _neon.StorageModule.getAllThumbnails("session");
+		});
+	}
+
+	function getDummyReponse(urls) {
+		var ret = {};
+		ret["img/islands/1.jpeg"] = [1, "red"]; //[videoId, thumbnailId]
+		ret["img/islands/2.jpeg"] = [2, "world"];
+		ret["img/islands/3.jpeg"] = [3, "cat"];
+		ret["img/islands/4.jpeg"] = [4, "knight"];
+		ret["img/islands/5.jpeg"] = [5, "ruby"];
+		ret["img/islands/6.jpeg"] = [6, "orange"];
+		ret["img/islands/7.jpeg"] = [7, "blue"];
+		ret["img/islands/8.jpeg"] = [8, "apple"];
+		ret["img/islands/9.jpeg"] = [9, "sky"];
+		ret["img/islands/10.jpeg"] = [10, "river"];
+		ret["img/islands/11.jpeg"] = [11, "monk"];
+		ret["img/islands/12.jpeg"] = [12, "panda"];
+		return ret;
+	}
+
+	function trackVideo() {
+		//capture video play event
+		//event returns the video id
+		$(document).on('videoplay', function(e, vidId) {
+			$('#videoId').html(vidId);
+			//TODO: do we need to check for domain?
+			var referrer = document.referrer.split('?')[0]
+			var thumb = _neon.StorageModule.getThumbnail(vidId, referrer);
+			if(thumb) {
+				console.log(thumb);
+				$('#thumbId').html(thumb.thumbId);
+				$('#timestamp').html(thumb.ts);
+			
+				//Sennd event request to dummy URL
+				url = "http://localhost:8888/event";
+				_neon.JsonRequester.sendRequest(url);
+			} else {
+				console.log("thumbnail not found");
+				$('#thumbId').html("Not found");
+			}
+		});
+	}
+
+
+	//public methods
+	return {
+		init: function() {
+			initImageLoad();
+			trackVideo();
+		},
+	
+	};
 })();
 
-var StorageModule = (function(){
+_neon.StorageModule = (function(){
 	var uidKey = 'uid',
 		thumbMap, //stores a thumbnail url -> (videoId, thumbnailId) map
 		thumbViewKeyPrefix = 'neonThumbnails', //key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
@@ -312,14 +303,14 @@ var StorageModule = (function(){
 			if (storage == "session"){
 				var	pattern = new RegExp(thumbViewKeyPrefix);
 				for(var i = 0; i < sessionStorage.length; i++) {
-				  	var key = sessionStorage.key(i);
+					var key = sessionStorage.key(i);
 					//console.log("key == " + key);
 					//console.log(pattern);
 					if(pattern.test(key)) {
 						var data = sessionStorage.getItem(key);
 						return data;
 					}
-		 		}
+				}
 			}
 			else{
 				return JSON.parse(localStorage.getItem(thumbViewKeyPrefix));
@@ -332,7 +323,7 @@ var StorageModule = (function(){
 				pageUrl = document.URL.split("?")[0];
 				var keyMatch = _getPageStorageKey(pageUrl);
 				for(var i = 0; i<sessionStorage.length; i++) {
-				  	var key = sessionStorage.key(i);
+					var key = sessionStorage.key(i);
 					console.log("key : " + key + " ---> " + keyMatch);
 					if(key == keyMatch) {
 						console.log("remove " + key);
@@ -348,7 +339,7 @@ var StorageModule = (function(){
 
 }());
 
-var NeonPlayerTracker = (function(){
+_neon.PlayerTracker = (function(){
 	var player, videoPlayer, content, exp, initialVideo;
 	return {
 			
@@ -361,10 +352,10 @@ var NeonPlayerTracker = (function(){
 			content = player.getModule(APIModules.CONTENT);                  
 			exp = player.getModule(APIModules.EXPERIENCE); 
 			videoPlayer.addEventListener(BCMediaEvent.BEGIN, 
-						NeonPlayerTracker.PlayerVideoPlay);
+						_neon.PlayerTracker.PlayerVideoPlay);
 			//exp.addEventListener(BCExperienceEvent.CONTENT_LOAD, 
 			//			PlayerImagesLoad) 
-			//StorageModule.storeThumbnail("v1", "hello")
+			//_neon.StorageModule.storeThumbnail("v1", "hello")
 		},
 
 		BCPlayerOnTemplateReady: function(evt){
@@ -377,23 +368,32 @@ var NeonPlayerTracker = (function(){
 			/// TODO: ADD Logic here to trace back which thumbnail was clicked	
 		},	
 		////////// EOB
-}
+	}
 }());
 
-var docReadyId = setInterval(NeonInit, 100); //100ms
-/// Neon Init method
-function NeonInit(){
-	if(document.readyState === "complete" || document.readyState === "interactive"){
-		console.log(" ---- PAGE LOAD EVENT ---- ");
+(function() {
+	var docReadyId = setInterval(NeonInit, 100); //100ms
+	
+	/// Neon Init method
+	function NeonInit(){
+		if(document.readyState === "complete" || document.readyState === "interactive"){
+			console.log(" ---- PAGE LOAD EVENT ---- ");
 
-		//Clear the data on viewed thumbnails in session storage 
-		//and update the TS in local storage	
-		console.log(window.location.pathname);
-		console.log(StorageModule.getAllThumbnails("session"));	
-		StorageModule.clearPageSessionData();
-		console.log("After clearing");
-		console.log(StorageModule.getAllThumbnails("session"));	
-		clearInterval(docReadyId);
+			//Clear the data on viewed thumbnails in session storage 
+			//and update the TS in local storage	
+			console.log(window.location.pathname);
+			console.log(_neon.StorageModule.getAllThumbnails("session"));	
+			_neon.StorageModule.clearPageSessionData();
+			console.log("After clearing");
+			console.log(_neon.StorageModule.getAllThumbnails("session"));	
+			clearInterval(docReadyId);
+		}
+
 	}
 
-}
+	/// TODO: Handle this globally and resort to storing things in memory
+	//run the tracker only on browsers that can suppport it
+	if(sessionStorage && localStorage && JSON) {
+		_neon.tracker.init();
+	}
+})();
