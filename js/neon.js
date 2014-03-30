@@ -221,7 +221,8 @@ var StorageModule = (function(){
 	/// Private methods
 	function _getPageStorageKey(pageUrl){
 		if(typeof(pageUrl)==='undefined'){
-			// Also clean up bookmarks "#"// TODO: Use a "SAFE" separator
+			// Also clean up bookmarks "#"
+			// TODO: Use a "SAFE" separator to generate key
 			var pageURL = document.URL.split("?")[0]
 			var key = thumbViewKeyPrefix + keySeparator + pageURL; 
 			return key; 
@@ -299,7 +300,9 @@ var StorageModule = (function(){
 				return ret;
 			} else { //check localstorage (user might have opened video in new tab)
 				console.log("accessing local storage data");
-				ret = _getThumbnail(localStorage, null, vidId);
+				// Not a current session, hence get global state
+				ret = _getThumbnail(localStorage, thumbViewKeyPrefix, vidId);
+				console.log(ret);
 				return ret;
 			}
 		},
