@@ -1,3 +1,10 @@
+//// Events to track
+// 1. Visible images loaded 
+// 2. All images loaded on the page
+// 3. Image click event
+// 4. Video play event 
+
+
 /// JSON Script Requester 
 var JsonRequester = (function() {
 
@@ -42,6 +49,8 @@ var JsonRequester = (function() {
 		}
 }());
 
+//// MAIN Function
+
 (function() {
 
 	var _neon = {};
@@ -83,62 +92,6 @@ var JsonRequester = (function() {
 			thumbMap, //stores a thumbnail url -> (videoId, thumbnailId) map
 			thumbViewKey = 'viewedThumbnails'; //key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
 
-		//get the unique id
-		function getUid() {
-			var uid = localStorage.getItem(uidKey);
-			
-			if(uid) { //if uid already exists
-				return uid;
-			} else { //create a unique id of length 10
-				//we generate a highly randomized string to increase the probability of it being unique
-				var ts = new Date().getTime(); //timestamp
-				uid = _neon.utils.getRandomString(4) + _neon.utils.getRandomString(4) + ts.toString().substring(11, 13);
-				localStorage.setItem(uidKey, uid);
-				return uid;
-			}
-
-			console.log(uid);
-		}
-
-		function _storeThumbnail(storage, vidId, thumbId) {
-			var data = JSON.parse(storage.getItem(thumbViewKey));
-
-			if(!data) data = {};
-
-			var ts = parseInt((new Date().getTime())/1000, 10);
-
-			//store if thumbnail id not already stored, else update the timestamp
-			data[vidId] = {
-				'thumbId': thumbId,
-				'ts': ts
-			};
-			storage.setItem(thumbViewKey, JSON.stringify(data));
-		}
-
-		function storeThumbnail(vidId, thumbId) {
-			_storeThumbnail(sessionStorage, vidId, thumbId);
-			_storeThumbnail(localStorage, vidId, thumbId);
-		}
-
-		function _getThumbnail(storage, vidId) {
-			var data = JSON.parse(storage.getItem(thumbViewKey));
-			if(data) {
-				return data[vidId];
-			} else {
-				return false;
-			}
-		}
-
-		function getThumbnail(vidId) {
-			var ret = _getThumbnail(sessionStorage, vidId);
-			if(ret) { //if found in session storage
-				return ret;
-			} else { //check localstorage (user might have opened video in new tab)
-				ret = _getThumbnail(localStorage, vidId);
-				return ret;
-			}
-		}
-
 		function initImageLoad() {
 			//wait for page load
 			$(window).bind("load", function() {
@@ -159,12 +112,12 @@ var JsonRequester = (function() {
 
 				//simulating response
 				thumbMap = getDummyReponse(urls);
-
 				startTracking();
 			});
 		}
 
 		function startTracking() {
+			console.log(document.referrer);
 			//for now, assuming all images on the page are thumbnails
 			//basic visibility check
 			$('img').appear();
@@ -179,7 +132,8 @@ var JsonRequester = (function() {
 					console.log(url);
 
 					//store the video_id-thumbnail_id pair as viewed
-					storeThumbnail(vidId, thumbId);
+					StorageModule.storeThumbnail(vidId, thumbId);
+					//console.log(StorageModule.getAllThumbnails("session"));
 				});
 			});
 
@@ -195,7 +149,7 @@ var JsonRequester = (function() {
 			//TODO: Test this properly across browsers
 			$(window).bind('beforeunload', function() {
 				console.log("sending viewed thumbnails to server");
-				var thumbnails = JSON.parse(sessionStorage.getItem(thumbViewKey));
+				var thumbnails = StorageModule.getAllThumbnails("session");
 			});
 		}
 
@@ -222,12 +176,13 @@ var JsonRequester = (function() {
 			$(document).on('videoplay', function(e, vidId) {
 				$('#videoId').html(vidId);
 				//TODO: do we need to check for domain?
-				var thumb = getThumbnail(vidId);
+				var referrer = document.referrer.split('?')[0]
+				var thumb = StorageModule.getThumbnail(vidId, referrer);
 				if(thumb) {
 					console.log(thumb);
 					$('#thumbId').html(thumb.thumbId);
 					$('#timestamp').html(thumb.ts);
-					
+				
 					//Sennd event request to dummy URL
 					url = "http://localhost:8888/event";
 					JsonRequester.sendRequest(url);
@@ -246,16 +201,149 @@ var JsonRequester = (function() {
 				trackVideo();
 			},
 		
-			getUid: getUid
 		};
 	})();
 
+	/// TODO: Handle this globally and resort to storign things in memory
 	//run the tracker only on browsers that can suppport it
 	if(sessionStorage && localStorage && JSON) {
 		_neon.tracker.init();
 	}
 
 })();
+
+var StorageModule = (function(){
+	var uidKey = 'uid',
+		thumbMap, //stores a thumbnail url -> (videoId, thumbnailId) map
+		thumbViewKeyPrefix = 'neonThumbnails', //key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
+		keySeparator = ":" ; 
+
+	/// Private methods
+	function _getPageStorageKey(pageUrl){
+		if(typeof(pageUrl)==='undefined'){
+			// Also clean up bookmarks "#"// TODO: Use a "SAFE" separator
+			var pageURL = document.URL.split("?")[0]
+			var key = thumbViewKeyPrefix + keySeparator + pageURL; 
+			return key; 
+		}
+		return thumbViewKeyPrefix + keySeparator + pageUrl;
+	}
+
+	/// Store thumbnails in storage	
+	// Session storage: data is stored per page, keyed by page
+	// Global thumbnail state is stored in local storage
+	function _storeThumbnail(storage, vidId, thumbId) {
+		var ts = parseInt((new Date().getTime())/1000, 10);
+		
+		if (storage == localStorage){
+			storageKey = thumbViewKeyPrefix;
+		}else{
+			storageKey = _getPageStorageKey();
+		}
+
+		var data = JSON.parse(storage.getItem(storageKey));
+		if(!data) data = {};
+		//store if thumbnail id not already stored, else update the timestamp
+		data[vidId] = {
+			'thumbId': thumbId,
+			'ts': ts
+		};
+		
+		storage.setItem(storageKey, JSON.stringify(data));
+	}
+	
+	/// Get thumbnail from storage	
+	function _getThumbnail(storage, storageKey, videoId) {
+		var data = JSON.parse(storage.getItem(storageKey));
+		if(data) {
+			return data[videoId];
+		} else {
+			return false;
+		}
+	}
+
+	return{
+		/// get the unique id
+		getUid: function (){
+			var uid = localStorage.getItem(uidKey);
+			
+			if(uid) { //if uid already exists
+				return uid;
+			} else { //create a unique id of length 10
+				//we generate a highly randomized string to increase the probability of it being unique
+				var ts = new Date().getTime(); //timestamp
+				uid = _neon.utils.getRandomString(4) + _neon.utils.getRandomString(4) + ts.toString().substring(11, 13);
+				localStorage.setItem(uidKey, uid);
+				return uid;
+			}
+			console.log(uid);
+		},
+
+		/// store thumbnail to storage    
+		storeThumbnail: function(vidId, thumbId) {
+			_storeThumbnail(sessionStorage, vidId, thumbId);
+			_storeThumbnail(localStorage, vidId, thumbId);
+		},
+
+		// get thumbnail from storage  
+		// case 1: Found in session storage
+		// case 2: Found in local storage
+		// case 3: Not found in either
+		getThumbnail: function(vidId, pageUrl){
+			// pageUrl == null, request thumbnail data on same page
+			// pageUrl !null, look if data is session, then local
+			var storageKey = _getPageStorageKey(pageUrl);
+			var ret = _getThumbnail(sessionStorage, storageKey, vidId);
+			if(ret) { //if found in session storage
+				console.log("accessing session storage data");
+				return ret;
+			} else { //check localstorage (user might have opened video in new tab)
+				console.log("accessing local storage data");
+				ret = _getThumbnail(localStorage, null, vidId);
+				return ret;
+			}
+		},
+
+		// Get all thumbnail data from particular storage
+		getAllThumbnails: function (storage){
+			if (storage == "session"){
+				var	pattern = new RegExp(thumbViewKeyPrefix);
+				for(var i = 0; i < sessionStorage.length; i++) {
+				  	var key = sessionStorage.key(i);
+					//console.log("key == " + key);
+					//console.log(pattern);
+					if(pattern.test(key)) {
+						var data = sessionStorage.getItem(key);
+						return data;
+					}
+		 		}
+			}
+			else{
+				return JSON.parse(localStorage.getItem(thumbViewKeyPrefix));
+			}
+		},
+
+		//Clear previous session data for the page 
+		clearPageSessionData: function(pageUrl){
+			if(typeof(pageUrl)==='undefined'){
+				pageUrl = document.URL.split("?")[0];
+				var keyMatch = _getPageStorageKey(pageUrl);
+				for(var i = 0; i<sessionStorage.length; i++) {
+				  	var key = sessionStorage.key(i);
+					console.log("key : " + key + " ---> " + keyMatch);
+					if(key == keyMatch) {
+						console.log("remove " + key);
+						sessionStorage.removeItem(key);
+					}
+				}
+			}		
+		}
+
+
+	}
+		
+
+}());
 
 var NeonPlayerTracker = (function(){
 	var player, videoPlayer, content, exp, initialVideo;
@@ -273,6 +361,7 @@ var NeonPlayerTracker = (function(){
 						NeonPlayerTracker.PlayerVideoPlay);
 			//exp.addEventListener(BCExperienceEvent.CONTENT_LOAD, 
 			//			PlayerImagesLoad) 
+			//StorageModule.storeThumbnail("v1", "hello")
 		},
 
 		BCPlayerOnTemplateReady: function(evt){
@@ -286,5 +375,22 @@ var NeonPlayerTracker = (function(){
 		},	
 		////////// EOB
 }
-
 }());
+
+var docReadyId = setInterval(NeonInit, 100); //100ms
+/// Neon Init method
+function NeonInit(){
+	if(document.readyState === "complete" || document.readyState === "interactive"){
+		console.log(" ---- PAGE LOAD EVENT ---- ");
+
+		//Clear the data on viewed thumbnails in session storage 
+		//and update the TS in local storage	
+		console.log(window.location.pathname);
+		console.log(StorageModule.getAllThumbnails("session"));	
+		StorageModule.clearPageSessionData();
+		console.log("After clearing");
+		console.log(StorageModule.getAllThumbnails("session"));	
+		clearInterval(docReadyId);
+	}
+
+}
