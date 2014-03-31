@@ -7,7 +7,7 @@
 /// Create our global object
 // All other objects will be children of this object, so we do not pollute
 // global scope thus minimizing any interference with existing code on the website
-var _neon = {};
+var _neon = _neon || {};
 
 /// JSON Script Requester 
 _neon.JsonRequester = (function() {
@@ -371,7 +371,12 @@ _neon.PlayerTracker = (function(){
 	}
 }());
 
+//Main function
 (function() {
+	//We do not want the script to execute this main function while unit testing
+	//TODO: Break down neon.js into separate files for each module. It will solve this problem.
+	if(_neon.UNITTEST) return;
+
 	var docReadyId = setInterval(NeonInit, 100); //100ms
 	
 	/// Neon Init method
