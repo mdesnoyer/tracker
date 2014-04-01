@@ -69,6 +69,10 @@ _neon.utils = {
 		return false;
 	},
 
+	isAnchor: function($el) {
+		return $el.prop('tagName') == 'A';
+	},
+
 	//check if current page is referred by a page from same website
 	//TODO: tackle different subdomain
 	sameSiteReferral: function() {
@@ -91,14 +95,28 @@ _neon.tracker = (function() {
 		thumbMap, //stores a thumbnail url -> (videoId, thumbnailId) map
 		thumbViewKey = 'viewedThumbnails'; //key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
 
+	//This function guesses if the given img element is a thumbnail or not
+	//NOTE: Only IGN case handled for noe
+	function _isThumbnail($el) {
+		$parent = $el.parent();
+		if(_neon.utils.isAnchor($parent)) { //check parent
+			return true;
+		} else { //check grandparent
+			$parent = $parent.parent();
+			return _neon.utils.isAnchor($parent);
+		}
+	}
+
 	function initImageLoad() {
 		//wait for page load
 		$(window).bind("load", function() {
 			//batch all the thumbnail urls
 			var urls = [];
 			$('img').each(function() {
-				var url = $(this).attr('src'); //this url resolves to some thumbnail id
-				urls.push(url);
+				if(_isThumbnail($(this))) {
+					var url = $(this).attr('src'); //this url resolves to some thumbnail id
+					urls.push(url);
+				}
 			});
 
 			//assuming the url list is small enough to send as GET
@@ -124,15 +142,18 @@ _neon.tracker = (function() {
 
 		$(document.body).on('appear', 'img', function(e, $appeared) { //callback when certain images appear in viewport
 			$appeared.each(function() {
-				var url = $(this).attr('src'),
+				var url = $(this).attr('src');
+
+				if(thumbMap.hasOwnProperty(url)) {
 					vidId = thumbMap[url][0],
 					thumbId = thumbMap[url][1];
 
-				console.log(url);
+					console.log(url);
 
-				//store the video_id-thumbnail_id pair as viewed
-				_neon.StorageModule.storeThumbnail(vidId, thumbId);
-				//console.log(StorageModule.getAllThumbnails("session"));
+					//store the video_id-thumbnail_id pair as viewed
+					_neon.StorageModule.storeThumbnail(vidId, thumbId);
+					//console.log(StorageModule.getAllThumbnails("session"));
+				}
 			});
 		});
 
@@ -154,18 +175,11 @@ _neon.tracker = (function() {
 
 	function getDummyReponse(urls) {
 		var ret = {};
-		ret["img/islands/1.jpeg"] = [1, "red"]; //[videoId, thumbnailId]
-		ret["img/islands/2.jpeg"] = [2, "world"];
-		ret["img/islands/3.jpeg"] = [3, "cat"];
-		ret["img/islands/4.jpeg"] = [4, "knight"];
-		ret["img/islands/5.jpeg"] = [5, "ruby"];
-		ret["img/islands/6.jpeg"] = [6, "orange"];
-		ret["img/islands/7.jpeg"] = [7, "blue"];
-		ret["img/islands/8.jpeg"] = [8, "apple"];
-		ret["img/islands/9.jpeg"] = [9, "sky"];
-		ret["img/islands/10.jpeg"] = [10, "river"];
-		ret["img/islands/11.jpeg"] = [11, "monk"];
-		ret["img/islands/12.jpeg"] = [12, "panda"];
+		for(var i = 0; i < urls.length; i++) {
+			var vidId = (i+1);
+			var thumbId = "thumb" + (i+1);
+			ret[urls[i]] = [vidId, thumbId];
+		}
 		return ret;
 	}
 
