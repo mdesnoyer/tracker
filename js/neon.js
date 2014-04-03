@@ -36,17 +36,17 @@ _neon.JsonRequester = (function() {
 			this.headLoc.appendChild(this.scriptObj);
 		}
 
-		return{ 
+		return{
 			sendRequest: function(req){
 				try 
 				{
 					// req: Entire url of the request along with query params
-					bObj = new JSONscriptRequest(req); 
+					bObj = new JSONscriptRequest(req);
 					bObj.buildScriptTag(); 
 					bObj.addScriptTag();  
 				}
 				catch(err){
-					console.log(err)
+					console.log(err);
 				}
 				
 			},
@@ -143,7 +143,6 @@ _neon.tracker = (function() {
 		$(document.body).on('appear', 'img', function(e, $appeared) { //callback when certain images appear in viewport
 			$appeared.each(function() {
 				var url = $(this).attr('src');
-
 				if(thumbMap.hasOwnProperty(url)) {
 					vidId = thumbMap[url][0],
 					thumbId = thumbMap[url][1];
@@ -224,6 +223,13 @@ _neon.StorageModule = (function(){
 		keySeparator = ":" ; 
 
 	/// Private methods
+	//
+	
+	function _getDomain(url){
+		// expects url in the form of  "http://www.google.com";
+		return url.match(/:\/\/(www[0-9]?\.)?(.[^/:]+)/)[2];
+	}
+
 	function _getPageStorageKey(pageUrl){
 		if(typeof(pageUrl)==='undefined'){
 			// Also clean up bookmarks "#"
@@ -267,6 +273,11 @@ _neon.StorageModule = (function(){
 			return false;
 		}
 	}
+		
+	function _getThumbnailLocalStorage(vidId){
+				ret = _getThumbnail(localStorage, thumbViewKeyPrefix, vidId);
+				return ret;
+	}
 
 	return{
 		/// get the unique id
@@ -299,17 +310,34 @@ _neon.StorageModule = (function(){
 			// pageUrl == null, request thumbnail data on same page
 			// pageUrl !null, look if data is session, then local
 			var storageKey = _getPageStorageKey(pageUrl);
+			//console.log("Storage key: " + storageKey);
 			var ret = _getThumbnail(sessionStorage, storageKey, vidId);
 			if(ret) { //if found in session storage
 				console.log("accessing session storage data");
 				return ret;
-			} else { //check localstorage (user might have opened video in new tab)
-				console.log("accessing local storage data");
-				// Not a current session, hence get global state
-				ret = _getThumbnail(localStorage, thumbViewKeyPrefix, vidId);
-				console.log(ret);
-				return ret;
+			}else { //check localstorage (user might have opened video in new tab)
+				
+					if(pageUrl){
+						//If the domain of pageUrl and the document.url doesn't match return null
+						//console.log(_getDomain(document.URL)); 
+						//console.log(_getDomain(pageUrl));
+						if (_getDomain(document.URL) != _getDomain(pageUrl))
+							return null;
+					}	
+					// Not a current session, hence get global state
+					ret = _getThumbnailLocalStorage(vidId);
+					return ret;
 			}
+		},
+
+		// Helper method defined here so that we can unit test certain scenarios
+		getThumbnailSessionStorage: function(vidId, pageUrl){
+			var storageKey = _getPageStorageKey(pageUrl);
+			return _getThumbnail(sessionStorage, storageKey, vidId);
+		},
+
+		getThumbnailLocalStorage: function(vidId){
+				return _getThumbnailLocalStorage(vidId)
 		},
 
 		// Get all thumbnail data from particular storage
@@ -334,7 +362,7 @@ _neon.StorageModule = (function(){
 		//Clear previous session data for the page 
 		clearPageSessionData: function(pageUrl){
 			if(typeof(pageUrl)==='undefined'){
-				pageUrl = document.URL.split("?")[0];
+				var pageUrl = document.URL.split("?")[0];
 				var keyMatch = _getPageStorageKey(pageUrl);
 				for(var i = 0; i<sessionStorage.length; i++) {
 					var key = sessionStorage.key(i);
