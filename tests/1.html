@@ -8,6 +8,11 @@
 <body>
 	<div id="qunit"></div>
 	<div id="qunit-fixture"></div>
+	
+	<a href="#">
+	<img src="../img/islands/4.jpeg">
+	</a>
+	
 	<script>
 	 //to make sure neon.js doesn't execute main function while unit testing
 	_neon = {};
@@ -17,16 +22,95 @@
 	<script src="../js/neon.js"></script>
 	<script src="qunit-1.14.0.js"></script>
 	<script>
+	
+
+	test("clearPageSessionData", function(){
+		
+		var vidId = "test_video1";
+		var thumbId = "test_thumb1";
+		_neon.StorageModule.storeThumbnail(vidId, thumbId);
+		_neon.StorageModule.clearPageSessionData(); 
+		var storageData = _neon.StorageModule.getThumbnailSessionStorage(vidId);
+		equal(storageData, false, "No such key");
+	});
+
 	test("StorageModule", function() {
-		_neon.StorageModule.clearPageSessionData(); //start with empty session storage
+		//start with empty session storage
+		_neon.StorageModule.clearPageSessionData(); 
 
 		var vidId = "video1";
 		var thumbId = "thumb1";
 
 		_neon.StorageModule.storeThumbnail(vidId, thumbId);
+
+		// Test retrieving the data from the same page, in the same session
 		var storageData = _neon.StorageModule.getThumbnail(vidId);
 		equal(storageData.thumbId, thumbId, "Saved and fetched data");
+		
+		// Test retrieving the data from a different page, in the same session
+		var referal_page = "http://localhost/xyz";
+		var storageData = _neon.StorageModule.getThumbnail(vidId, referal_page);
+		equal(storageData.thumbId, thumbId, "Fetched data for diff referal page");
+
+		// A new session created by right-click open, hence need to check if
+		// data is in localStorage
+		storageData = _neon.StorageModule.getThumbnailLocalStorage(vidId);
+		equal(storageData.thumbId, thumbId, "Fetched data from localStorage");
+
+		// A new session was created since we landed to the video page from
+		// an external page like google.com		
+		var referal_page = "http://www.google.com";
+		storageData = _neon.StorageModule.getThumbnail(vidId, referal_page);
+		equal(storageData, null, "empty data");
+
+		// An entry for the video doesn't exist
+		storageData = _neon.StorageModule.getThumbnail("randomvidnotexist");
+		equal(storageData, null, "empty data");
+		
 	});
+
+	
+	test("JsonRequester", function() {
+		testcallback = (function(x){
+			//Parse json response
+			console.log(x);
+		});
+		var request = "http://ip.jsontest.com/?callback=testcallback";
+		_neon.JsonRequester.sendRequest(request);
+		ok(true, "callback worked");
+		//TODO: How do you check the callback worked ? 
+		// For now rely on no global failures as an indicator 	
+	});
+
+
+	// Test if a given element is a thumbnail (img, div, text that anchor to a video)
+
+	// Test images as they appear of the viewport
+	test("ViewImages", function(){
+
+		//temp test a fake click
+		var $img = $( "img" );
+ 		$img.on( "click", function() {
+			ok( true, "img was clicked!" );
+  		});
+ 
+  		$img.trigger( "click" );
+
+			
+	});
+
+	// Test local storage not available or full
+
+	/*		
+	module("videoPlay", function(){
+		setup: function(){
+		},
+		teardown: function(){
+		}		
+    });
+	*/
+
+
 	</script>
 </body>
 </html>
