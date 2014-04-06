@@ -36,3 +36,20 @@ body {
 	display: inline-block;
 	margin: 0 80px 40px 0;
 }
+
+.carousel {
+	width: 420px;
+}
+
+.carousel-inner {
+	left: 80px;
+}
+.carousel-control {
+	background: none;
+	color: #333;
+	border: none;
+}
+
+.carousel-control:hover {
+	color: #333;
+}
