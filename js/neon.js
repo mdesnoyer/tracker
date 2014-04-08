@@ -129,18 +129,19 @@ _neon.tracker = (function() {
 
 			//simulating response
 			thumbMap = getDummyReponse(urls);
-			startTracking();
+			startTracking(urls);
 		});
 	}
 
-	function startTracking() {
-		console.log(document.referrer);
+	function startTracking(imgUrls) {
 		//for now, assuming all images on the page are thumbnails
 		//basic visibility check
 		$('img').appear();
 		var forced = false;
 
+		/*
 		$(document.body).on('appear', 'img', function(e, $appeared) { //callback when certain images appear in viewport
+			console.log($appeared);
 			$appeared.each(function() {
 				var url = $(this).attr('src');
 				if(thumbMap.hasOwnProperty(url)) {
@@ -163,6 +164,35 @@ _neon.tracker = (function() {
 				forced = true;
 			}
 		});
+		*/
+
+		//Above method is not working for carousel
+		//So we check for the appearance of all images after a fixed interval
+		var $imgArr = [];
+		for(var i = 0; i < imgUrls.length; i++) {
+			var $el = $('img[src$="' + imgUrls[i] + '"]');
+			$imgArr.push($el);
+		}
+
+		setInterval(function() {
+			for(var i = 0; i < $imgArr.length; i++) {
+				var $img = $imgArr[i];
+				if($img.is(':appeared')) {
+					var url = $img.attr('src');
+
+					if(thumbMap.hasOwnProperty(url)) {
+						vidId = thumbMap[url][0],
+						thumbId = thumbMap[url][1];
+
+						console.log("Visible: " + url);
+
+						//store the video_id-thumbnail_id pair as viewed
+						_neon.StorageModule.storeThumbnail(vidId, thumbId);
+						//console.log(StorageModule.getAllThumbnails("session"));
+					}
+				}
+			}
+		}, 2000); //Let's check every 2 seconds
 
 		//on window unload, send thumbnails viewed in the current session to the server
 		//TODO: Test this properly across browsers
