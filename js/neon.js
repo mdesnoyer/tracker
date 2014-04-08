@@ -175,8 +175,14 @@ _neon.tracker = (function() {
 	function getDummyReponse(urls) {
 		var ret = {};
 		for(var i = 0; i < urls.length; i++) {
-			var vidId = (i+1);
-			var thumbId = "thumb" + (i+1);
+			if (urls[i].indexOf("brightcove") > -1){
+				var parts = urls[i].split("-");
+				var vidId = parts[parts.length -1].split('.jpg')[0];
+				var thumbId = urls[i]; 
+			}else{
+				var vidId = (i+1);
+				var thumbId = "thumb" + (i+1);
+			}
 			ret[urls[i]] = [vidId, thumbId];
 		}
 		return ret;
@@ -407,6 +413,14 @@ _neon.PlayerTracker = (function(){
 		PlayerVideoPlay: function(evt){
 				var vid = evt.media.id;	
 				console.log("Video begin play vid: " + vid);
+				$('#videoId').html(vid);
+				//TODO: do we need to check for domain?
+				var referrer = document.referrer.split('?')[0]
+				var thumb = _neon.StorageModule.getThumbnail(vid, referrer);
+				if(thumb) {
+					console.log(thumb);
+					$('#thumbId').html(thumb.thumbId);
+				}
 			/// TODO: ADD Logic here to trace back which thumbnail was clicked	
 		},	
 		////////// EOB
