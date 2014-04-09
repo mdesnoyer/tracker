@@ -174,25 +174,46 @@ _neon.tracker = (function() {
 			$imgArr.push($el);
 		}
 
+		var lastVisibleSet = {}; //set of thumbnails visible currently
+
+		//Every second, we get a list of images visible on the screen 
+		//and compare with the last set.
+		//If any new images have appeared, we add it to storage
 		setInterval(function() {
+			var newVisibleSet = {}; //set of thumbnails visible now
+			var visibleSetChanged = false;
+
+			console.log(lastVisibleSet);
+
+			//loop through all images on the page and check which of them are visible
 			for(var i = 0; i < $imgArr.length; i++) {
 				var $img = $imgArr[i];
 				if($img.is(':appeared')) {
 					var url = $img.attr('src');
-
 					if(thumbMap.hasOwnProperty(url)) {
 						vidId = thumbMap[url][0],
 						thumbId = thumbMap[url][1];
 
-						console.log("Visible: " + url);
+						//console.log("Visible: " + url);
 
-						//store the video_id-thumbnail_id pair as viewed
-						_neon.StorageModule.storeThumbnail(vidId, thumbId);
-						//console.log(StorageModule.getAllThumbnails("session"));
+						if(!lastVisibleSet.hasOwnProperty(url)) { //image just appeared, store it
+							//store the video_id-thumbnail_id pair as viewed
+							_neon.StorageModule.storeThumbnail(vidId, thumbId);
+							//console.log(StorageModule.getAllThumbnails("session"));
+						}
+
+						newVisibleSet[url] = 1; //add to the visible set
+						visibleSetChanged = true;
 					}
 				}
 			}
-		}, 2000); //Let's check every 2 seconds
+
+			if(visibleSetChanged) {
+				//update our set of currently visible thumbnails
+				lastVisibleSet = newVisibleSet;
+			}
+
+		}, 1000); //Let's check every second
 
 		//on window unload, send thumbnails viewed in the current session to the server
 		//TODO: Test this properly across browsers
@@ -351,18 +372,17 @@ _neon.StorageModule = (function(){
 			if(ret) { //if found in session storage
 				console.log("accessing session storage data");
 				return ret;
-			}else { //check localstorage (user might have opened video in new tab)
-				
-					if(pageUrl){
-						//If the domain of pageUrl and the document.url doesn't match return null
-						//console.log(_getDomain(document.URL)); 
-						//console.log(_getDomain(pageUrl));
-						if (_getDomain(document.URL) != _getDomain(pageUrl))
-							return null;
-					}	
-					// Not a current session, hence get global state
-					ret = _getThumbnailLocalStorage(vidId);
-					return ret;
+			} else { //check localstorage (user might have opened video in new tab)
+				if(pageUrl){
+					//If the domain of pageUrl and the document.url doesn't match return null
+					//console.log(_getDomain(document.URL)); 
+					//console.log(_getDomain(pageUrl));
+					if (_getDomain(document.URL) != _getDomain(pageUrl))
+						return null;
+				}	
+				// Not a current session, hence get global state
+				ret = _getThumbnailLocalStorage(vidId);
+				return ret;
 			}
 		},
 
