@@ -1,0 +1,111 @@
+#globalheader { position: relative; z-index: 100000; text-rendering: optimizelegibility; -webkit-font-smoothing: subpixel-antialiased; }
+#globalheader a, #globalheader a:hover { text-decoration: none; font-weight: inherit; color: inherit; }
+#globalheader .cnt { position: relative; width: 972px; height: 100%; margin: 0px auto; font-family: 'ars-maquette-web',sans-serif; font-weight: bold; }
+#globalspine { border-bottom: 1px solid #e1e1e1; background-color: #FFF; position: relative; height: 74px; }
+#globalnav { background-color: #FFF; position: relative; width: 100%; height: 40px; /* border-bottom: 1px solid #e1e1e1; */ }
+#globalnav.fixed { position: fixed; top: 0px; left: 0px; }
+
+#globalheader .redbox { position: relative; background-color: #d3222a; text-align: center; width: 132px; height: 74px; color: #FFF; float: left; }
+#globalheader .redbox:hover, #globalspine a.logo:hover { background-color: #BA1E26; }
+#globalspine a.logo { display: block; 
+       /*background: url('logo-ign.png') no-repeat center 33px; */
+       background: url('http://oystatic.ignimgs.com//src/core/img/widgets/global/page/header/global-header-sprite.png') transparent 15px -104px no-repeat;
+       width: 130px; height: 34px; margin-top: 30px; }
+
+#globalspine .editions { position: absolute; top: 0px; right: 0px; overflow: visible; width: auto; height: auto; padding: 0px; margin: 0px; z-index: 100000; background: none repeat scroll 0 0 rgba(0, 0, 0, 0.1); color: #FFF; }
+#globalspine .editions p { color: #FFF; font-weight: 400; font-size: 10px; margin: 0px; padding: 5px 10px; text-transform: uppercase; }
+#globalspine .editions ul { display: none; position: absolute; top: 0px; left: 50px; background-color: #313234; width: 275px; 
+              height: auto; color: #b6b7b9; text-transform: uppercase; font-size: 14px; font-family: "ff-din-round-web-pro",sans-serif; padding: 20px 0px 0px 0px; overflow-y: auto; }
+#globalspine .editions li { text-align: right; padding: 8px 20px; font-size: 12px; border-right: 10px solid transparent; }
+#globalspine .editions li.big { font-size: 110%; padding: 7px 20px; }
+#globalspine .editions li:hover { border-right-color: #d3222a; }
+#globalspine .editions li.active, #globalspine .editions li.active a { border-right-color: #9AA0A8; color: #FFF; }
+
+#globalspine .editions a { color: #9AA0A8;  }
+#globalspine .editions a:hover { color: #FFF;  }
+#globalspine .editions .language { color: #FFF; font-weight: bold; float: left; }
+#globalspine .editions:hover ul, #globalspine .editions.active ul { display: block; }
+
+#globalspine .covercards { display: block; height: 74px; width: 840px; float: left; }
+#globalspine .covercards li { font-size: 12px; line-height: 14px; font-weight: 400; width: 140px; height: 42px;  display: block; display: inline-block; float: left; }
+#globalspine .covercards li.first { border-right: 1px solid #FFF; width: 279px; padding: 0px; }
+#globalspine .covercards li.img { width: 280px; padding: 0px; }
+#globalspine .covercards a.img { display: block; padding: 0px; width: 140px; height: 74px; border: 0px; float: left; background: url() no-repeat center center; background-size: cover; }
+#globalspine .covercards li.first a.img { float: right; margin-left: 5px; }
+#globalspine .covercards li .wrap { margin: 18px 12px 0px 17px; border-right: 1px solid #e7e7e7; color: #252627; height: 56px; }
+#globalspine .covercards li.first .wrap { border: 0px; line-height: 13px; }
+#globalspine .covercards li.img .wrap { margin-left: 157px; }
+#globalspine .covercards li:last-child .wrap { border: 0px; }
+#globalspine .covercards li b { font-family:'ff-din-round-web-pro',sans-serif; color: #D3222A; font-weight: 600; }
+#globalspine .covercards a { color: #252627; }
+#globalspine .covercards li:hover a { color: #d3222a; }
+#globalspine .covercards li .bar { display: none; position: absolute; width: 104px; height: 5px; top: 0px; background-color: #d3222a; }
+#globalspine .covercards li:hover .bar { display: block; }
+
+
+#globalnav #dpad { 
+    background: url("http://oystatic.ignimgs.com/src/core/img/widgets/global/page/globhead_dpad_red.png") no-repeat scroll 7px center rgba(0, 0, 0, 0);
+    left: -40px; position: absolute; display: none; width: 40px; height: 40px; text-decoration: none;
+}
+#globalnav.fixed #dpad { display: block;  }
+#globalnav .menu { width: 270px; height: 40px; float: left; position: relative; }
+#globalnav .redbox { border-top: 1px solid #c31f26; margin-top: -1px; height: 40px; display: block; text-align: left; transition: background-color 0.2s ease 0.1s; }
+#globalnav .redbox .browse { font-family: 'ars-maquette-web',sans-serif;  padding: 12px 18px; font-size: 14px; font-weight: 400; 
+         display: block;  background: transparent url("http://oystatic.ignimgs.com/src/core/img/widgets/global/page/header/global-header-sprite.png") no-repeat scroll 97px 13px; }
+
+#globalnav .browsemenu { display: block; position: absolute; overflow: hidden; width: 177%; max-height: 0px; text-align: left;
+                         background-color: #313234; color: #b6b7b9; font-size: 14px; font-family: "ff-din-round-web-pro",sans-serif; 
+                         opacity: 0.4; padding: 10px 20px 20px 20px; visibility: hidden; margin-top: -1px;
+	-webkit-transition: all 0.4s ease 0.1s; -moz-transition: all 0.4s ease 0.1s; transition: all 0.4s ease 0.1s;
+}
+#globalnav .browsemenu li { float: left; width: 44%; padding: 3% 3%; height: 1em; font-size: 14px; font-weight: 400; }
+#globalnav .browsemenu li.odd { text-align: right; }
+#globalnav .browsemenu li a { color: rgba(255,255,255,0.8); font-weight: 400; -moz-osx-font-smoothing: grayscale; }
+#globalnav .browsemenu li a:hover { color: rgba(255,255,255,1.0); }
+#globalnav .menu:hover .redbox { background-color: #313234; }
+#globalnav .menu:hover .browsemenu { display: block; max-height: 500px; opacity: 1.0; visibility: visible; }
+#globalnav #topsearch { position: relative; padding: 5px; width: 128px; float: left; }
+#globalnav input.search {    
+    box-sizing: content-box;
+    -webkit-appearance: textfield;
+    background-color: #F2F2F2;
+    border: 1px solid #E7E6E6;
+    border-radius: 4px;
+    color: #252627;
+    font-size: 13px;
+    font-weight: bold;
+    margin: 1px 2px;
+    padding: 5px 22px 5px 9px;
+    width: 96px;
+}
+#globalnav #btn_topsearch { position: absolute; top: 10px; right: 10px; width: 18px; height: 18px; }
+
+#globalnav #topnav { display: inline; float: left; }
+#globalnav #topnav a { display: inline-block; width: auto; padding: 11px 0px 13px 15px; color: #000000; position: relative; font-size: 15px; line-height: 16px; font-family: 'ars-maquette-web',sans-serif; font-weight: 400; -moz-osx-font-smoothing: grayscale; } 
+#globalnav #topnav a:hover { color: #d3222a; }
+
+#toplogin { position: absolute; top: 0px; right: 0px; z-index: 10; width: 100px; font-size: 15px;
+    color: #000000; font-weight: bold; text-align: right; font-weight: 400; background-color: #FFF;
+    padding: 11px 40px 13px 15px; transition: background-color 0.5s; height: 16px; line-height: 16px;
+}
+#toplogin > a { font-weight: 600 !important; color: inherit; opacity: 1.0; }
+#toplogin:hover { background-color: #313234; color: #FFF; }
+
+#toplogin .uico { 
+    background: url("http://oystatic.ignimgs.com/src/core/img/widgets/global/page/header/global-header-sprite.png") no-repeat scroll 3px -46px rgba(0, 0, 0, 0);
+    display: block; width: 30px; height: 30px; position: absolute; top: 1px; right: 5px;
+    transition: all 0.3s ease 0.1s;    
+}
+#toplogin:hover .uico { background-position: -27px -46px; }
+#toplogin .userIcon { display: block; width: 32px; height: 32px; position: absolute; top: 3px; right: 5px; border-radius: 16px; }
+#toplogin .usermenu { display: block; position: absolute; top: 40px; left: 0px; width: 155px; text-align: right;
+                      background-color: #313234; color: #b6b7b9; font-size: 14px; font-family: "ff-din-round-web-pro",sans-serif; 
+                      opacity: 0.6; max-height: 0px; visibility: hidden;
+                      -webkit-transition: all 0.4s ease 0.1s; -moz-transition: all 0.4s ease 0.1s; transition: all 0.4s ease 0.1s;
+}
+#toplogin ul { padding: 15px; }
+#toplogin li { padding: 2px 0px; font-size: 13px; text-align: right; }
+#toplogin li a { color: #FFF; color: rgba(255,255,255,0.8); font-weight: 400;  -moz-osx-font-smoothing: grayscale; }
+#toplogin li a:hover { color: rgba(255,255,255,1.0); }
+#toplogin:hover .usermenu { display: block; max-height: 600px; visibility: visible; opacity: 1.0; }
+

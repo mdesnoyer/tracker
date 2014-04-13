@@ -1,0 +1,5 @@
+var DISQUSWIDGETS;
+
+if (typeof DISQUSWIDGETS != 'undefined') {
+    DISQUSWIDGETS.displayCount({"text":{"and":"and","comments":{"zero":"0 Comments","multiple":"{num} Comments","one":"1 Comment"}},"counts":[{"id":"http:\/\/in.ign.com\/en\/news\/2644\/","comments":0},{"id":"http:\/\/in.ign.com\/en\/feature\/2647\/","comments":1},{"id":"http:\/\/in.ign.com\/en\/feature\/2648\/","comments":2},{"id":"http:\/\/in.ign.com\/en\/news\/2641\/","comments":0},{"id":"http:\/\/in.ign.com\/en\/feature\/2656\/","comments":38},{"id":"http:\/\/in.ign.com\/en\/news\/2649\/","comments":1},{"id":"http:\/\/in.ign.com\/en\/feature\/2639\/","comments":1},{"id":"http:\/\/in.ign.com\/en\/news\/2643\/","comments":1},{"id":"http:\/\/in.ign.com\/en\/news\/2652\/","comments":1},{"id":"http:\/\/in.ign.com\/en\/news\/2645\/","comments":2}]});
+}

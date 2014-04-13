@@ -188,22 +188,27 @@ _neon.tracker = (function() {
 			//loop through all images on the page and check which of them are visible
 			for(var i = 0; i < $imgArr.length; i++) {
 				var $img = $imgArr[i];
-				if($img.is(':appeared')) {
+				if($img.is(':appeared')) { //image is in viewport
 					var url = $img.attr('src');
-					if(thumbMap.hasOwnProperty(url)) {
-						vidId = thumbMap[url][0],
-						thumbId = thumbMap[url][1];
 
-						//console.log("Visible: " + url);
+					//check if image is not stacked under other elements
+					var el = document.elementFromPoint($img.offset().left, $img.offset().top);
+					if($(el).attr('src') == url) { //image is visible
+						if(thumbMap.hasOwnProperty(url)) {
+							vidId = thumbMap[url][0],
+							thumbId = thumbMap[url][1];
 
-						if(!lastVisibleSet.hasOwnProperty(url)) { //image just appeared, store it
-							//store the video_id-thumbnail_id pair as viewed
-							_neon.StorageModule.storeThumbnail(vidId, thumbId);
-							//console.log(StorageModule.getAllThumbnails("session"));
+							//console.log("Visible: " + url);
+
+							if(!lastVisibleSet.hasOwnProperty(url)) { //image just appeared, store it
+								//store the video_id-thumbnail_id pair as viewed
+								_neon.StorageModule.storeThumbnail(vidId, thumbId);
+								//console.log(StorageModule.getAllThumbnails("session"));
+							}
+
+							newVisibleSet[url] = 1; //add to the visible set
+							visibleSetChanged = true;
 						}
-
-						newVisibleSet[url] = 1; //add to the visible set
-						visibleSetChanged = true;
 					}
 				}
 			}
