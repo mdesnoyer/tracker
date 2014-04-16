@@ -25,6 +25,21 @@
 	<script type="text/javascript" src="../js/neon.js"></script>
 	<script>
 
+	
+	function delayTest(fn, milliseconds) {
+    	setTimeout(function () {
+        try {
+           fn()
+        }
+        catch (e) {
+            msg = e + ": " + e.stack
+            console.log(msg)
+            ok(0, msg)
+        }
+        start()
+    	}, milliseconds)
+	}
+	
 	asyncTest("carousel visibility", function(){
 		
 		_neon.StorageModule.clearPageSessionData(); 
@@ -97,41 +112,13 @@
 				start();
 			}, 2000);
 		
+		F('.previousbuttion').click()
 		F('#c_next').click()
 		}, 1500);
 
 	});
 
-
-	/*
-	asyncTest("async: carousel test", function(){
-		expect(1);
-		var $carousel = $("#c_next");
-		$carousel.click(function(){ 
-			ok(true, "clicked");
-			start();
-		});
-		F('#c_next').click()
-
-	});
-	*/
 	
-	/*
-	function delayTest(fn, milliseconds) {
-    	setTimeout(function () {
-        try {
-           fn()
-        }
-        catch (e) {
-            msg = e + ": " + e.stack
-            console.log(msg)
-            ok(0, msg)
-        }
-        start()
-    	}, milliseconds)
-	}
-	*/
-
 	</script>	
 
   <script type="text/template" class="template">
@@ -381,8 +368,10 @@
                     
                  </ul>
 				 <a class="nextbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#"><div id="c_next" class="next page"></div></a>
-                 <div id="c_next1" class="next page"><a class="nextbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#">Next</a></div>
-                 <div id="c_prev" class="previous page disabled"><a class="prevbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#">Previous</a></div>
+                 <div class="next page"><a class="nextbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#">Next</a></div>
+				 <a class="prevbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#"><div id="c_prev" class="previous page disabled"/></a>
+					 <! --<div class="previous page disabled"><a class="prevbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#">Previous</a></div>
+					 -->
              </div>
         </div>
       </div>
