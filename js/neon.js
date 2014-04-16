@@ -107,29 +107,38 @@ _neon.tracker = (function() {
 		}
 	}
 
+	function getNeonThumbnailIds(){
+	
+		//assuming the url list is small enough to send as GET
+		/*
+		var serviceUrl = 'http://neon.com/thumbnails/get/' + urls.join();
+		$.getJSON(serviceUrl, function(data) {
+			//data will be an object like {url1: [vid_id, thumbnail_id], url2: [vid_id, thumbnail_id]}
+		});
+		*/
+		return
+	}
+
+	function mapImagesToTids(){
+		//batch all the thumbnail urls
+		var urls = [];
+		$('img').each(function() {
+			if(_isThumbnail($(this))) {
+				var url = $(this).attr('src'); 
+				//this url resolves to some thumbnail id
+				urls.push(url);
+			}
+		});
+		thumbMap = getDummyReponse(urls);
+		console.log(thumbMap);
+		startTracking(urls);
+
+	}
+
 	function initImageLoad() {
 		//wait for page load
 		$(window).bind("load", function() {
-			//batch all the thumbnail urls
-			var urls = [];
-			$('img').each(function() {
-				if(_isThumbnail($(this))) {
-					var url = $(this).attr('src'); //this url resolves to some thumbnail id
-					urls.push(url);
-				}
-			});
-
-			//assuming the url list is small enough to send as GET
-			/*
-			var serviceUrl = 'http://neon.com/thumbnails/get/' + urls.join();
-			$.getJSON(serviceUrl, function(data) {
-				//data will be an object like {url1: [vid_id, thumbnail_id], url2: [vid_id, thumbnail_id]}
-			});
-			*/
-
-			//simulating response
-			thumbMap = getDummyReponse(urls);
-			startTracking(urls);
+			mapImagesToTids()
 		});
 	}
 
@@ -183,7 +192,7 @@ _neon.tracker = (function() {
 			var newVisibleSet = {}; //set of thumbnails visible now
 			var visibleSetChanged = false;
 
-			console.log(lastVisibleSet);
+			//console.log(lastVisibleSet);
 
 			//loop through all images on the page and check which of them are visible
 			for(var i = 0; i < $imgArr.length; i++) {
@@ -223,6 +232,9 @@ _neon.tracker = (function() {
 		});
 	}
 
+	// A dummy TID response call
+	// Brightcove videos return T_URL as TID
+	// Others just assign a incremental counter, starting at 1 
 	function getDummyReponse(urls) {
 		var ret = {};
 		for(var i = 0; i < urls.length; i++) {
@@ -269,6 +281,8 @@ _neon.tracker = (function() {
 			initImageLoad();
 			trackVideo();
 		},
+
+		mapImagesToTids: mapImagesToTids,
 	
 	};
 })();
