@@ -8,6 +8,7 @@
 // All other objects will be children of this object, so we do not pollute
 // global scope thus minimizing any interference with existing code on the website
 var _neon = _neon || {};
+var neonPageId = null;
 
 /// JSON Script Requester 
 _neon.JsonRequester = (function() {
@@ -37,10 +38,10 @@ _neon.JsonRequester = (function() {
 		}
 
 		return{
+			// req: Entire url of the request along with query params
 			sendRequest: function(req){
 				try 
 				{
-					// req: Entire url of the request along with query params
 					bObj = new JSONscriptRequest(req);
 					bObj.buildScriptTag(); 
 					bObj.addScriptTag();  
@@ -86,12 +87,20 @@ _neon.utils = {
 		}
 
 		return (referrer == window.location.hostname);
+	},
+	
+	getPageRequestUUID: function(){
+		function genRandomHexChars() {
+			return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1); 
+		}
+		return genRandomHexChars() + genRandomHexChars() + genRandomHexChars() + genRandomHexChars();
 	}
 };
 
 _neon.tracker = (function() {
 
-	var uidKey = 'uid',
+	var trackerAccountId,
+		uidKey = 'uid',
 		thumbMap, //stores a thumbnail url -> (videoId, thumbnailId) map
 		thumbViewKey = 'viewedThumbnails'; //key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
 
@@ -118,6 +127,15 @@ _neon.tracker = (function() {
 		*/
 		return
 	}
+	
+	// image click event handler
+	function imageClickEventHandler(e){
+		var coordinates = e.pageX  + "," + e.pageY;
+		var offset = $(this).offset();
+		var imgSrc = $(this).attr('src');
+		var pageCoordinates = offset.left + "," + offset.top;
+		console.log("image clicked" + imgSrc + " xy: "+ coordinates + " of: "+ pageCoordinates);
+	}
 
 	function mapImagesToTids(){
 		//batch all the thumbnail urls
@@ -127,10 +145,14 @@ _neon.tracker = (function() {
 				var url = $(this).attr('src'); 
 				//this url resolves to some thumbnail id
 				urls.push(url);
+				$(this).click(imageClickEventHandler);
+				//Attach a click handler to the image
 			}
 		});
 		thumbMap = getDummyReponse(urls);
 		console.log(thumbMap);
+		/// Send the loaded image set that Neon is interested in 
+		_neon.TrackerEvents.imagesLoadedEvent(thumbMap);
 		startTracking(urls);
 
 	}
@@ -182,6 +204,7 @@ _neon.tracker = (function() {
 			var $el = $('img[src$="' + imgUrls[i] + '"]');
 			$imgArr.push($el);
 		}
+
 
 		var lastVisibleSet = {}; //set of thumbnails visible currently
 
@@ -280,6 +303,14 @@ _neon.tracker = (function() {
 		init: function() {
 			initImageLoad();
 			trackVideo();
+		},
+
+		getTrackerAccoundId: function(){
+			return "test_aid";
+		},
+
+		getTrackerType: function(){
+			return "test";	
 		},
 
 		mapImagesToTids: mapImagesToTids,
@@ -451,6 +482,91 @@ _neon.StorageModule = (function(){
 
 }());
 
+_neon.TrackerEvents = (function(){
+	var pageLoadId, trackerAccountID, trackerType, pageUrl, referralUrl, timestamp, eventName; 
+
+	function buildTrackerEventData(){
+		var request = "http://localhost:8888/track?"+ "a=" + eventName + "&page=" + encodeURIComponent(pageUrl) + "&pid=" + pageLoadId + "&ttype=" + trackerType + "&referrer=" + encodeURIComponent(referralUrl) + "&tai=" + trackerAccountID;
+		return request;
+
+	}
+
+	// convert ThumbMap to [tid1, tid2,....]
+	function convertThumbMapToTids(tmap){
+		var tids = [];
+		for(var tm in tmap){ 
+			tid = tmap[tm][1];
+			tids.push(tid);
+		}	
+		return tids;
+	}
+
+	return {
+		setCommonTrackerData: function(){
+			pageLoadId = neonPageId;
+			trackerAccountID = _neon.tracker.getTrackerAccoundId();
+			trackerType = _neon.tracker.getTrackerType();
+			pageUrl = document.URL.split("?")[0];
+			referralUrl = document.referrer.split('?')[0];
+			timestamp = new Date().getTime();
+		},
+		
+		// tid: thumbnail id
+		// xy: window xy coordinate
+		sendImageClickEvent: function(vid, tid, xy, pageXY){
+			eventName = "ic";
+			timestamp = new Date().getTime();
+			var req = buildTrackerEventData();
+			req += "&vid=" + vid + "&tid=" + tid + "&xy=" + xy + "&pagexy=" + pageXY + "&ts=" + timestamp;
+			_neon.JsonRequester.sendRequest(req);
+		},
+	
+		// PlayerID of the player, if available 
+		sendVideoPlayEvent: function(vid, tid, playerID){
+			eventName = "vp";
+			timestamp = new Date().getTime();
+			var req = buildTrackerEventData();
+			req += "&vid=" + vid + "&tid=" + tid + "&ts=" + timestamp
+			if (typeof(playerID)==='undefined'){
+				req += "&playerid=" + playerID;
+			}
+			_neon.JsonRequester.sendRequest(req);
+		},
+
+		// If AD event available
+		sendAdPlayEvent: function(vid, playerID){
+			eventName = "ap";
+			timestamp = new Date().getTime();
+			var req = buildTrackerEventData();
+			req += "&vid="+ vid + "&playerid=" + playerID + "&ts=" + timestamp;
+			_neon.JsonRequester.sendRequest(req);
+		},
+
+		// ImageMap is a Map of thumbnail url => tid 
+		sendImagesVisibleEvent: function(imageMap){
+			//#TODO: Also send image sizes that are visibile
+			eventName = "iv";
+			timestamp = new Date().getTime();
+			var tids = convertThumbMapToTids(imageMap);
+			var req = buildTrackerEventData();
+			req += "&tids="+ tids + "&ts=" + timestamp;
+			_neon.JsonRequester.sendRequest(req);
+		},
+
+		// ImageMap is a Map of thumbnail url => tid 
+		imagesLoadedEvent: function(imageMap){
+			eventname = "il";
+			timestamp = new Date().getTime();
+			var tids = convertThumbMapToTids(imageMap);
+			console.log("IMG LOAD");
+			var req = buildTrackerEventData();
+			req += "&tids="+ tids + "&ts=" + timestamp;
+			_neon.JsonRequester.sendRequest(req);
+		}	
+	}
+
+}());
+
 _neon.PlayerTracker = (function(){
 	var player, videoPlayer, content, exp, initialVideo;
 	return {
@@ -512,6 +628,10 @@ _neon.PlayerTracker = (function(){
 			console.log("After clearing");
 			console.log(_neon.StorageModule.getAllThumbnails("session"));	
 			clearInterval(docReadyId);
+			neonPageID = _neon.utils.getPageRequestUUID();
+			// setup the common data that will be sent to the server
+			_neon.TrackerEvents.setCommonTrackerData();
+
 		}
 
 	}

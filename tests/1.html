@@ -34,6 +34,10 @@
 		equal(storageData, false, "No such key");
 	});
 
+	// get thumbnail from storage  
+	// case 1: Found in session storage
+	// case 2: Found in local storage
+	// case 3: Not found in either
 	test("StorageModule", function() {
 		//start with empty session storage
 		_neon.StorageModule.clearPageSessionData(); 
@@ -79,7 +83,7 @@
 		_neon.JsonRequester.sendRequest(request);
 		ok(true, "callback worked");
 		//TODO: How do you check the callback worked ? 
-		// For now rely on no global failures as an indicator 	
+		// Currently rely on no global failures as an indicator 	
 	});
 
 
@@ -95,9 +99,61 @@
   		});
  
   		$img.trigger( "click" );
-
-			
 	});
+
+	/////// Test tracker events ////////
+	function getDummyReponse(urls) {
+		var ret = {};
+		for(var i = 0; i < urls.length; i++) {
+			if (urls[i].indexOf("brightcove") > -1){
+				var parts = urls[i].split("-");
+				var vidId = parts[parts.length -1].split('.jpg')[0];
+				var thumbId = urls[i]; 
+			}else{
+				var vidId = (i+1);
+				var thumbId = "thumb" + (i+1);
+			}
+			ret[urls[i]] = [vidId, thumbId];
+		}
+		return ret;
+	}
+
+	module("Test Tracker Events");	
+	test("images loaded event", function(){
+		var urls = ["http://1", "http://2"]
+		var tmap = getDummyReponse(urls);
+		_neon.TrackerEvents.setCommonTrackerData();	
+		_neon.TrackerEvents.sendImagesVisibleEvent(tmap);
+		// verify the creation of the script tag
+		var src = getScriptTag("a=iv");
+		notEqual(typeof(src), 'undefined');
+	});
+
+	test("image click event", function(){
+		_neon.TrackerEvents.setCommonTrackerData();	
+		_neon.TrackerEvents.sendImageClickEvent("vid", "tid", "xy", "pxy");
+		
+		// verify the creation of the script tag
+		notEqual(typeof(getScriptTag("a=ic")), 'undefined');
+
+		//TODO: verify the URL
+
+	});
+	
+	test("video play event", function(){
+		_neon.TrackerEvents.setCommonTrackerData();	
+		_neon.TrackerEvents.sendVideoPlayEvent("vid", "tid", "pid");
+		notEqual(typeof(getScriptTag("a=vp")), 'undefined');
+	});	
+		
+	function getScriptTag(eventName){
+		var pattern = new RegExp(eventName);
+		var scripts = document.getElementsByTagName("script");
+		for (var i=0;i<scripts.length;i++) {
+		if (pattern.test(scripts[i].src)) 
+			return scripts[i].src;
+		}
+	}
 
 	// Test local storage not available or full
 

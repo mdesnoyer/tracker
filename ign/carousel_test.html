@@ -93,32 +93,6 @@
 		F('#c_next').click()
 	});
 	
-	asyncTest("carousel visibility with delayed carousel move", function(){
-		// Reset carousel	
-		_neon.StorageModule.clearPageSessionData(); 
-		console.log(_neon.StorageModule.getAllThumbnails());
-		_neon.tracker.mapImagesToTids();
-		var carouselSize = 5;
-		var st = 1;
-		var end = st + 2 * carouselSize;
-		// Verify the first 2*carouselSize images are visible
-		setTimeout(function(){
-			setTimeout(function(){
-				for(var i=st; i<end; i++){
-					var data = _neon.StorageModule.getThumbnailSessionStorage(i);
-					var tid = data["thumbId"]
-					equal(tid, "thumb"+i, "tid match");
-					}
-				start();
-			}, 2000);
-		
-		F('.previousbuttion').click()
-		F('#c_next').click()
-		}, 1500);
-
-	});
-
-	
 	</script>	
 
   <script type="text/template" class="template">
@@ -369,9 +343,7 @@
                  </ul>
 				 <a class="nextbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#"><div id="c_next" class="next page"></div></a>
                  <div class="next page"><a class="nextbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#">Next</a></div>
-				 <a class="prevbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#"><div id="c_prev" class="previous page disabled"/></a>
-					 <! --<div class="previous page disabled"><a class="prevbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#">Previous</a></div>
-					 -->
+				 <a class="prevbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#"><div id="c_prev" class="previous page"></div></a>
              </div>
         </div>
       </div>
