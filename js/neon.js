@@ -107,6 +107,7 @@ _neon.tracker = (function() {
 	//This function guesses if the given img element is a thumbnail or not
 	//NOTE: Only IGN case handled for noe
 	function _isThumbnail($el) {
+		
 		$parent = $el.parent();
 		if(_neon.utils.isAnchor($parent)) { //check parent
 			return true;
@@ -142,7 +143,7 @@ _neon.tracker = (function() {
 		var urls = [];
 		$('img').each(function() {
 			if(_isThumbnail($(this))) {
-				var url = $(this).attr('src'); 
+				var url = $(this).attr('src');
 				//this url resolves to some thumbnail id
 				urls.push(url);
 				$(this).click(imageClickEventHandler);
@@ -167,7 +168,7 @@ _neon.tracker = (function() {
 	function startTracking(imgUrls) {
 		//for now, assuming all images on the page are thumbnails
 		//basic visibility check
-		$('img').appear();
+		$('img').appear(); //TODO: Why call the apper method ??
 		var forced = false;
 
 		/*
@@ -205,7 +206,6 @@ _neon.tracker = (function() {
 			$imgArr.push($el);
 		}
 
-
 		var lastVisibleSet = {}; //set of thumbnails visible currently
 
 		//Every second, we get a list of images visible on the screen 
@@ -218,7 +218,7 @@ _neon.tracker = (function() {
 			//console.log(lastVisibleSet);
 
 			//loop through all images on the page and check which of them are visible
-			for(var i = 0; i < $imgArr.length; i++) {
+			for(var i=0; i < $imgArr.length; i++) {
 				var $img = $imgArr[i];
 				if($img.is(':appeared')) {
 					var url = $img.attr('src');
@@ -226,7 +226,7 @@ _neon.tracker = (function() {
 						vidId = thumbMap[url][0],
 						thumbId = thumbMap[url][1];
 
-						//console.log("Visible: " + url);
+						console.log("Visible: " + url);
 
 						if(!lastVisibleSet.hasOwnProperty(url)) { //image just appeared, store it
 							//store the video_id-thumbnail_id pair as viewed

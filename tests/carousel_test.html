@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<head>
+
+<link href="../ign/css/ign-video.module.css" media="screen" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="../ign/js/jquery.min.js"></script>
+<script type="text/javascript" src="../ign/js/global.js"></script>
+<script type="text/javascript" src="../ign/js/ign-video.module.js"></script>
+<script type="text/javascript" src="../js/jquery-1.11.0.min.js"></script>
+<script type="text/javascript" src="../js/jquery.appear.js"></script>
+<script type="text/javascript" src="qunit-1.14.0.js"></script>
+<script type="text/javascript" src="funcunit.js"></script>
+<link rel="stylesheet" href="qunit-1.14.0.css">
+</head>
+
+<body>
+	<div id="qunit"></div>
+	<div id="qunit-fixture"></div>
+	<script>
+	 //to make sure neon.js doesn't execute main function while unit testing
+	_neon = {};
+	_neon.UNITTEST = 1;
+	</script>
+	
+	<script type="text/javascript" src="../js/neon.js"></script>
+	<script>
+
+	
+	function delayTest(fn, milliseconds) {
+    	setTimeout(function () {
+        try {
+           fn()
+        }
+        catch (e) {
+            msg = e + ": " + e.stack
+            console.log(msg)
+            ok(0, msg)
+        }
+        start()
+    	}, milliseconds)
+	}
+	
+	asyncTest("carousel visibility", function(){
+		//init the test by clearing session data & mapImageToTids()	
+		_neon.StorageModule.clearPageSessionData(); 
+		console.log(_neon.StorageModule.getAllThumbnails());
+		_neon.tracker.mapImagesToTids();
+		var carouselSize = 5;
+		var st = 1;
+		var end = st + carouselSize;
+		// Verify the first N images are visible
+		setTimeout(function(){
+			for(var i=st; i<end; i++){
+				var data = _neon.StorageModule.getThumbnailSessionStorage(i);
+				var tid = data["thumbId"]
+				equal(tid, "thumb"+i, "tid match");
+			}
+		start();
+		}, 1500);
+
+	});
+
+	asyncTest("carousel scroll fast image visibility", function(){
+		// The carousel visibility records the images immediate to the left and and right
+		// of the carousel in addition to the visibile images.  
+		// So if the carousel size if 5, at initial position there are 6 images, since there is no image to the left
+		// on moving right, the current visibile images are I5 to I9; Additionally I4 & I10 are visible too given the false detection
+		
+		_neon.StorageModule.clearPageSessionData(); 
+		console.log(_neon.StorageModule.getAllThumbnails());
+		_neon.tracker.mapImagesToTids();
+		var carouselSize = 5;
+		var st = 1;
+		var end = st + carouselSize;
+		var carousel = $("#c_next");
+
+
+		setTimeout(function(){ 
+			for(var i=st; i<end; i++){
+				var data = _neon.StorageModule.getThumbnailSessionStorage(i);
+				var tid = data["thumbId"]
+				equal(tid, "thumb"+i, "tid match");
+			}
+			// Assert that the first 3 images have not been recorded
+			for(var i=1; i<st-2; i++){
+				var data = _neon.StorageModule.getThumbnailSessionStorage(i);
+				equal(data, undefined, "no data");
+			}
+			start();
+		}, 2000);
+		st = end;
+		end = st + 3;
+		F('#c_next').click()
+	});
+	
+	</script>	
+
+  <script type="text/template" class="template">
+    <li class="<%= data.classes %>">
+      <a href="<%= data.url %>" target="<%= data.target %>" data-video-title="<%= data.title %>" data-video-description="" <%if (data.responseId) {%>data-response-id="<%= data.responseId %>" data-item-id="<%= data.itemId %>"<%}%> >
+        <div class="<%= data.recircClass %>">
+          <img src="<%= data.img %>" alt="<%= data.title %>" />
+        </div>
+        <span class="video_name">
+          <div>
+            <%= data.title %>
+          </div>
+        </span>
+        <span class="video_duration">
+          <%= data.duration %>
+        </span>
+      </a>
+    </li>
+  </script>
+
+  <div class="full-container">
+    <div id="videoplayer-page" style="display: block; opacity: 1; position: relative; ">
+      <div class="video-container columns layout-ms">
+         <div class="container">
+          <div class="video_playlist" id="video_playlist">
+                 <ul id="videos-list" class="videos" style="left: 10px;">
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/12/from-xbox-one-to-smash-bros-its-the-top-5-news-of-the-week-ign-daily-fix" target="_self" data-video-title="From Xbox One to Smash Bros, It&#39;s the Top 5 News of the Week - IGN Daily Fix" data-video-description="">
+                                                    <div class="image-timer">                           <img src="../ign/images/Top5_041114_1280_medium.jpg" alt="From Xbox One to Smash Bros, It&#39;s the Top 5 News of the Week - IGN Daily Fix">
+                                                      </div>                         <span class="video_name">
+                           <div>
+                             H1Z1 - From Xbox One to Smash Bros, It's the Top 5 News of the Week - IGN Daily Fix                           </div>
+                         </span>
+                         <span class="video_duration">
+                           1:50 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/12/big-blizzard-news-rock-bands-return-ign-daily-fix" target="_self" data-video-title="Big Blizzard News &amp; Rock Band&#39;s Return - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/BlizzardNews_640p_medium.jpg" alt="Big Blizzard News &amp; Rock Band&#39;s Return - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             Infamous: Second Son - Big Blizzard News &amp; Rock Band's Return - IGN Daily Fix                           </div>
+                         </span>
+                         <span class="video_duration">
+                           2:45 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/09/7-shows-you-should-binge-watch-what-to-watch" target="_self" data-video-title="7 Shows You Should Binge Watch - What to Watch" data-video-description="">
+                                                    <img src="../ign/images/tv01_040814_1280_medium.jpg" alt="7 Shows You Should Binge Watch - What to Watch">
+                                                    <span class="video_name">
+                           <div>
+                             Freaks and Geeks - 7 Shows You Should Binge Watch - What to Watch                           </div>
+                         </span>
+                         <span class="video_duration">
+                           3:27 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/10/sonys-zombie-mmo-reveal-no-kinect-love-ign-daily-fix" target="_self" data-video-title="Sony&#39;s Zombie MMO Reveal &amp; No Kinect Love - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/H1Z1_640p-(1)_medium.jpg" alt="Sony&#39;s Zombie MMO Reveal &amp; No Kinect Love - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             Infamous: Second Son - Sony's Zombie MMO Reveal &amp; No Kinect Love - IGN Daily Fix                           </div>
+                         </span>
+                         <span class="video_duration">
+                           3:39 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/09/last-of-us-ps4-new-borderlands-revealed-ign-daily-fix" target="_self" data-video-title="Last of Us PS4 &amp; New Borderlands Revealed - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/Rumors_640p_medium.jpg" alt="Last of Us PS4 &amp; New Borderlands Revealed - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             Watch Dogs - Last of Us PS4 &amp; New Borderlands Revealed - IGN Daily Fix                            </div>
+                         </span>
+                         <span class="video_duration">
+                           2:02 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/09/huge-smash-bros-xbox-one-update-details-ign-daily-fix" target="_self" data-video-title="Huge Smash Bros &amp; Xbox One Update Details - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/SmashBros_640p-(2)_medium.jpg" alt="Huge Smash Bros &amp; Xbox One Update Details - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             Super Smash Bros. for Nintendo 3DS - Huge Smash Bros &amp; Xbox One Update Details - IGN Daily Fix                           </div>
+                         </span>
+                         <span class="video_duration">
+                           2:21 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/07/x360-on-x1-plans-borderlands-2-prequel-ign-daily-fix" target="_self" data-video-title="X360 on X1 Plans &amp; Borderlands 2 Prequel? - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/Borderlands2Prequel_640p-(1)_medium.jpg" alt="X360 on X1 Plans &amp; Borderlands 2 Prequel? - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             Borderlands 2 - X360 on X1 Plans &amp; Borderlands 2 Prequel? - IGN Daily Fix                           </div>
+                         </span>
+                         <span class="video_duration">
+                           2:47 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/07/from-walking-dead-to-wolf-among-us-to-borderlands-dave-fennoy-on-up-at-noon" target="_self" data-video-title="From Walking Dead to Wolf Among Us to Borderlands: Dave Fennoy on Up at Noon" data-video-description="">
+                                                    <img src="../ign/images/upatnoon_040714_1280-(1)_medium.jpg" alt="From Walking Dead to Wolf Among Us to Borderlands: Dave Fennoy on Up at Noon">
+                                                    <span class="video_name">
+                           <div>
+                             The Walking Dead: A Telltale Game Series -- Season Two - From Walking Dead to Wolf Among Us to Borderlands: Dave Fennoy on Up at Noon                           </div>
+                         </span>
+                         <span class="video_duration">
+                           21:51 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/04/from-gta-online-to-star-wars-its-the-top-5-news-of-the-week-ign-daily-fix" target="_self" data-video-title="From GTA Online to Star Wars, It&#39;s the Top 5 News of the Week - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/Top5_040414_1280-(1)_medium.jpg" alt="From GTA Online to Star Wars, It&#39;s the Top 5 News of the Week - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             Grand Theft Auto Online - From GTA Online to Star Wars, It's the Top 5 News of the Week - IGN Daily Fix                           </div>
+                         </span>
+                         <span class="video_duration">
+                           1:49 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/04/5-year-old-hacks-x1-360-titanfall-drops-ign-daily-fix" target="_self" data-video-title="5-Year-Old Hacks X1 &amp; 360 Titanfall Drops - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/Titanfall360_640p_medium.jpg" alt="5-Year-Old Hacks X1 &amp; 360 Titanfall Drops - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             Doom - 5-Year-Old Hacks X1 &amp; 360 Titanfall Drops - IGN Daily Fix                             </div>
+                         </span>
+                         <span class="video_duration">
+                           2:41 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/05/new-super-smash-bros-in-depth-analysis-040414-ign-conversation" target="_self" data-video-title="New Super Smash Bros. In-Depth Analysis (04/04/14) - IGN Conversation" data-video-description="">
+                                                    <img src="../ign/images/Smash-new_medium.jpg" alt="New Super Smash Bros. In-Depth Analysis (04/04/14) - IGN Conversation">
+                                                    <span class="video_name">
+                           <div>
+                             Super Smash Bros. for Wii U - New Super Smash Bros. In-Depth Analysis (04/04/14)                           </div>
+                         </span>
+                         <span class="video_duration">
+                           7:28 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/04/mlb-the-show-14-review" target="_self" data-video-title="MLB: The Show 14 Review" data-video-description="">
+                                                    <img src="../ign/images/20823568_mlb14theshow_033114_1280_medium.jpg" alt="MLB: The Show 14 Review">
+                                                    <span class="video_name">
+                           <div>
+                             MLB 14: The Show - MLB: The Show 14 Review                           </div>
+                         </span>
+                         <span class="video_duration">
+                           4:35 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/03/star-wars-new-hire-nintendo-trouble-ign-daily-fix" target="_self" data-video-title="Star Wars New Hire &amp; Nintendo Trouble - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/UnchartedStarWars_640p_medium.jpg" alt="Star Wars New Hire &amp; Nintendo Trouble - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             Halo - Steven Spielberg Project - Star Wars New Hire &amp; Nintendo Trouble - IGN Daily Fix                           </div>
+                         </span>
+                         <span class="video_duration">
+                           3:32 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/02/ps4-new-features-hinted-ea-apologizes-ign-daily-fix" target="_self" data-video-title="PS4 New Features Hinted &amp; EA Apologizes - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/PS4Survey_640p_medium.jpg" alt="PS4 New Features Hinted &amp; EA Apologizes - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             EverQuest Next - PS4 New Features Hinted &amp; EA Apologizes - IGN Daily Fix                            </div>
+                         </span>
+                         <span class="video_duration">
+                           2:30 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/01/infamous-update-optimus-in-titanfall-ign-daily-fix" target="_self" data-video-title="Infamous Update &amp; Optimus in Titanfall? - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/TitanfallPrime3_640p_medium.jpg" alt="Infamous Update &amp; Optimus in Titanfall? - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             Watch Dogs - Infamous Update &amp; Optimus in Titanfall? - IGN Daily Fix                           </div>
+                         </span>
+                         <span class="video_duration">
+                           3:02 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/04/01/titanfall-optimus-prime-dlc-trailer" target="_self" data-video-title="Titanfall: Optimus Prime DLC Trailer" data-video-description="">
+                                                    <img src="../ign/images/AprFools-TitanfallPrime_v1_medium.jpg" alt="Titanfall: Optimus Prime DLC Trailer">
+                                                    <span class="video_name">
+                           <div>
+                             Titanfall - Titanfall: Optimus Prime DLC Trailer - IGN Originals                           </div>
+                         </span>
+                         <span class="video_duration">
+                           1:13 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/03/31/square-enix-goes-back-to-core-metro-redux-coming-ign-daily-fix" target="_self" data-video-title="Square Enix Goes Back to Core, Metro: Redux Coming? - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/XboxBoss_640p_medium.jpg" alt="Square Enix Goes Back to Core, Metro: Redux Coming? - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             Square Enix Goes Back to Core, Metro: Redux Coming? - IGN Daily Fix                           </div>
+                         </span>
+                         <span class="video_duration">
+                           2:08 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/03/22/13-tips-to-dominate-in-titanfall-best-way-to-play" target="_self" data-video-title="13 Tips to Dominate in Titanfall - Best Way to Play" data-video-description="">
+                                                    <img src="../ign/images/Titanfall_1280_medium.jpg" alt="13 Tips to Dominate in Titanfall - Best Way to Play">
+                                                    <span class="video_name">
+                           <div>
+                             Titanfall - 13 Tips to Dominate in Titanfall - Best Way to Play                           </div>
+                         </span>
+                         <span class="video_duration">
+                           3:02 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/03/28/from-assassins-creed-comet-to-oculus-fb-its-the-top-5-news-of-the-week-ign-daily-fix" target="_self" data-video-title="From Assassin&#39;s Creed: Comet to Oculus FB, It&#39;s the Top 5 News of the Week - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/Top5_032814_1280-(1)_medium.jpg" alt="From Assassin&#39;s Creed: Comet to Oculus FB, It&#39;s the Top 5 News of the Week - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             Minecraft - From Assassin's Creed: Comet to Oculus FB, It's the Top 5 News of the Week - IGN Daily Fix                            </div>
+                         </span>
+                         <span class="video_duration">
+                           2:23 MIN                         </span>
+                       </a>
+                     </li>
+                                        <li class="video">
+                       <a href="http://www.ign.com/videos/2014/03/28/uncharted-director-quits-predator-cod-ign-daily-fix" target="_self" data-video-title="Uncharted Director Quits &amp; Predator COD? - IGN Daily Fix" data-video-description="">
+                                                    <img src="../ign/images/PredatorCOD_640p_medium.jpg" alt="Uncharted Director Quits &amp; Predator COD? - IGN Daily Fix">
+                                                    <span class="video_name">
+                           <div>
+                             Call of Duty: Ghosts - Uncharted Director Quits &amp; Predator COD? - IGN Daily Fix                            </div>
+                         </span>
+                         <span class="video_duration">
+                           4:08 MIN                         </span>
+                       </a>
+                     </li>
+                    
+                 </ul>
+				 <a class="nextbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#"><div id="c_next" class="next page"></div></a>
+                 <div class="next page"><a class="nextbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#">Next</a></div>
+				 <a class="prevbutton" href="http://www.ign.com/videos/2014/04/13/naomi-brian-goat-to-space#"><div id="c_prev" class="previous page"></div></a>
+             </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
