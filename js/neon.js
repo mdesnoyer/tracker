@@ -130,6 +130,28 @@ _neon.tracker = (function() {
 		//TODO(Sunil): Get thumbnail ids and video_id for Brightcove images from URL
 		return
 	}
+
+	function getElementsWithBackgroundImages() {
+		var tags = document.getElementsByTagName('div'), //consider only divs
+			len = tags.length,
+			el,
+			ret = [];
+
+		for(var i = 0; i < len; i++) {
+			el = tags[i];
+			if (el.currentStyle) {
+				if( el.currentStyle['backgroundImage'] !== 'none' ) {
+					ret.push(el);
+				}
+			} else if (window.getComputedStyle) {
+				if( document.defaultView.getComputedStyle(el, null).getPropertyValue('background-image') !== 'none' ) {
+					ret.push(el);
+				}
+			}
+		}
+
+		return ret;
+	}
 	
 	// image click event handler
 	function imageClickEventHandler(e){
@@ -172,6 +194,15 @@ _neon.tracker = (function() {
 		//for now, assuming all images on the page are thumbnails
 		//basic visibility check
 		$('img').appear(); //TODO: Why call the apper method ??
+
+		/*
+		//For case like http://www.ign.com/articles/2014/04/15/mechrunner-coming-to-ps4-vita-and-pc
+		var elArr = getElementsWithBackgroundImages();
+		for(var i = 0; i < elArr.length; i++) {
+			$(elArr[i]).appear();
+		}
+		*/
+
 		var forced = false;
 
 		/*
