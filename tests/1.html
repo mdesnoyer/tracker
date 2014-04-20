@@ -4,6 +4,11 @@
 	<meta charset="utf-8">
 	<title>Neon Unit Testing</title>
 	<link rel="stylesheet" href="qunit-1.14.0.css">
+
+	<style>
+		img.hidden {display:none;}
+	</style>
+
 </head>
 <body>
 	<div id="qunit"></div>
@@ -11,6 +16,16 @@
 	
 	<a href="#">
 	<img src="../img/islands/4.jpeg">
+	</a>
+	
+	<a href="#">
+	<img id="invisibleImage" class="hidden" src="../img/islands/5.jpeg">
+	</a>
+
+	<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>	
+	<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>	
+	<a href="#">
+	<img id="scollimg" src="../img/islands/6.jpeg">
 	</a>
 	
 	<script>
@@ -102,6 +117,8 @@
 	});
 
 	/////// Test tracker events ////////
+
+	/// Return fake tids for testing
 	function getDummyReponse(urls) {
 		var ret = {};
 		for(var i = 0; i < urls.length; i++) {
@@ -118,6 +135,33 @@
 		return ret;
 	}
 
+	// Extract token value from the query string
+	function getQueryValue(qstring, param) {
+		var qstringArray = qstring && qstring.substring(1).split("&"),
+		  i = 0,
+		  len = qstringArray.length;
+		//console.log(qstringArray);
+	  for (; i < len; i++) {
+		  var token = qstringArray[i],
+			  eqIndex = token.indexOf("="),
+			  firstPart = token && token.substring(0, eqIndex);
+		  if (firstPart === param ) {
+			  return token.substring(eqIndex + 1, token.length);
+		  }
+	  }
+	}
+
+	// Get script tag	
+	function getScriptTag(eventName){
+		var pattern = new RegExp(eventName);
+		var scripts = document.getElementsByTagName("script");
+		for (var i=0;i<scripts.length;i++) {
+		if (pattern.test(scripts[i].src)) 
+			return scripts[i].src;
+		}
+	}
+
+
 	module("Test Tracker Events");	
 	test("images loaded event", function(){
 		var urls = ["http://1", "http://2"]
@@ -127,6 +171,9 @@
 		// verify the creation of the script tag
 		var src = getScriptTag("a=iv");
 		notEqual(typeof(src), 'undefined');
+		equal("thumb1,thumb2", getQueryValue(src.split("?")[1], "tids"));
+
+		//http://localhost:8888/track?a=iv&page=http%3A%2F%2Flocalhost%2Ftrackerv2%2Ftests%2F1.html%23&pid=null&ttype=test&referrer=&tai=test_aid&tids=thumb1,thumb2&ts=1397956636420&noCacheIE=1397956636420
 	});
 
 	test("image click event", function(){
@@ -134,26 +181,25 @@
 		_neon.TrackerEvents.sendImageClickEvent("vid", "tid", "xy", "pxy");
 		
 		// verify the creation of the script tag
-		notEqual(typeof(getScriptTag("a=ic")), 'undefined');
-
-		//TODO: verify the URL
+		var src = getScriptTag("a=ic");
+		notEqual(typeof(src), 'undefined');
+		equal("vid", getQueryValue(src.split("?")[1], "vid"));
+		equal("tid", getQueryValue(src.split("?")[1], "tid"));
+		equal("xy", getQueryValue(src.split("?")[1], "xy"));
+		equal("pxy", getQueryValue(src.split("?")[1], "pagexy"));
 
 	});
 	
 	test("video play event", function(){
 		_neon.TrackerEvents.setCommonTrackerData();	
 		_neon.TrackerEvents.sendVideoPlayEvent("vid", "tid", "pid");
-		notEqual(typeof(getScriptTag("a=vp")), 'undefined');
+		var src = getScriptTag("a=vp");
+		notEqual(typeof(src), 'undefined');
+		equal("vid", getQueryValue(src.split("?")[1], "vid"));
+		equal("tid", getQueryValue(src.split("?")[1], "tid"));
+		equal("pid", getQueryValue(src.split("?")[1], "playerid"));
 	});	
 		
-	function getScriptTag(eventName){
-		var pattern = new RegExp(eventName);
-		var scripts = document.getElementsByTagName("script");
-		for (var i=0;i<scripts.length;i++) {
-		if (pattern.test(scripts[i].src)) 
-			return scripts[i].src;
-		}
-	}
 
 	// Test local storage not available or full
 

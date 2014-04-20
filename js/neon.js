@@ -126,6 +126,8 @@ _neon.tracker = (function() {
 			//data will be an object like {url1: [vid_id, thumbnail_id], url2: [vid_id, thumbnail_id]}
 		});
 		*/
+
+		//TODO(Sunil): Get thumbnail ids and video_id for Brightcove images from URL
 		return
 	}
 	
@@ -147,6 +149,7 @@ _neon.tracker = (function() {
 				//this url resolves to some thumbnail id
 				urls.push(url);
 				$(this).click(imageClickEventHandler);
+				console.log(url, $(this).width(), $(this).height());
 				//Attach a click handler to the image
 			}
 		});
@@ -522,13 +525,13 @@ _neon.TrackerEvents = (function(){
 		},
 	
 		// PlayerID of the player, if available 
-		sendVideoPlayEvent: function(vid, tid, playerID){
+		sendVideoPlayEvent: function(vid, tid, playerId){
 			eventName = "vp";
 			timestamp = new Date().getTime();
 			var req = buildTrackerEventData();
 			req += "&vid=" + vid + "&tid=" + tid + "&ts=" + timestamp
-			if (typeof(playerID)==='undefined'){
-				req += "&playerid=" + playerID;
+			if (typeof(playerId) !=='undefined'){
+				req += "&playerid=" + playerId;
 			}
 			_neon.JsonRequester.sendRequest(req);
 		},
