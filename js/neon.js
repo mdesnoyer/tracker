@@ -94,6 +94,31 @@ _neon.utils = {
 			return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1); 
 		}
 		return genRandomHexChars() + genRandomHexChars() + genRandomHexChars() + genRandomHexChars();
+	},
+
+	isOnScreen: function(el) {
+		var el = $(el),
+			win = $(window);
+    
+	    var viewport = {
+	        top : win.scrollTop(),
+	        left : win.scrollLeft()
+	    };
+
+	    viewport.right = viewport.left + win.width();
+	    viewport.bottom = viewport.top + win.height();
+	    
+	    var bounds = el.offset();
+	    bounds.right = bounds.left + el.outerWidth();
+	    bounds.bottom = bounds.top + el.outerHeight();
+	    
+	    return (!(viewport.right < bounds.left || viewport.left > bounds.right || viewport.bottom < bounds.top || viewport.top > bounds.bottom));
+	},
+
+	getBackgroundImageUrl: function(el) {
+		var bg = $(el).css('background-image');
+		bg = bg.replace('url(','').replace(')','');
+		return bg.substr(7); //remove http:// - https?
 	}
 };
 
@@ -102,7 +127,8 @@ _neon.tracker = (function() {
 	var trackerAccountId,
 		uidKey = 'uid',
 		thumbMap, //stores a thumbnail url -> (videoId, thumbnailId) map
-		thumbViewKey = 'viewedThumbnails'; //key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
+		thumbViewKey = 'viewedThumbnails', //key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
+		bgImageElArr; //array of elements which have background images
 
 	//This function guesses if the given img element is a thumbnail or not
 	//NOTE: Only IGN case handled for noe
@@ -165,6 +191,8 @@ _neon.tracker = (function() {
 	function mapImagesToTids(){
 		//batch all the thumbnail urls
 		var urls = [];
+
+		//Image tags
 		$('img').each(function() {
 			if(_isThumbnail($(this))) {
 				var url = $(this).attr('src');
@@ -175,6 +203,17 @@ _neon.tracker = (function() {
 				//Attach a click handler to the image
 			}
 		});
+
+		//Elements with background images
+		//Example: http://www.ign.com/articles/2014/04/15/mechrunner-coming-to-ps4-vita-and-pc
+		bgImageElArr = getElementsWithBackgroundImages();
+		for(var i = 0; i < bgImageElArr.length; i++) {
+			var el = bgImageElArr[i];
+			var url = _neon.utils.getBackgroundImageUrl(el);
+			urls.push(url);
+			console.log(url, $(el).width(), $(el).height());
+		}
+
 		thumbMap = getDummyReponse(urls);
 		console.log(thumbMap);
 		/// Send the loaded image set that Neon is interested in 
@@ -194,15 +233,7 @@ _neon.tracker = (function() {
 		//for now, assuming all images on the page are thumbnails
 		//basic visibility check
 		$('img').appear(); //TODO: Why call the apper method ??
-
-		/*
-		//For case like http://www.ign.com/articles/2014/04/15/mechrunner-coming-to-ps4-vita-and-pc
-		var elArr = getElementsWithBackgroundImages();
-		for(var i = 0; i < elArr.length; i++) {
-			$(elArr[i]).appear();
-		}
-		*/
-
+		
 		var forced = false;
 
 		/*
@@ -256,6 +287,29 @@ _neon.tracker = (function() {
 				var $img = $imgArr[i];
 				if($img.is(':appeared')) {
 					var url = $img.attr('src');
+					if(thumbMap.hasOwnProperty(url)) {
+						vidId = thumbMap[url][0],
+						thumbId = thumbMap[url][1];
+
+						console.log("Visible: " + url);
+
+						if(!lastVisibleSet.hasOwnProperty(url)) { //image just appeared, store it
+							//store the video_id-thumbnail_id pair as viewed
+							_neon.StorageModule.storeThumbnail(vidId, thumbId);
+							//console.log(StorageModule.getAllThumbnails("session"));
+						}
+
+						newVisibleSet[url] = 1; //add to the visible set
+						visibleSetChanged = true;
+					}
+				}
+			}
+
+			//loop through all elements with background images and check which of them are visible
+			for(var i = 0; i < bgImageElArr.length; i++) {
+				var el = bgImageElArr[i];
+				if(_neon.utils.isOnScreen(el)) { //if element is in viewport
+					var url = _neon.utils.getBackgroundImageUrl(el);
 					if(thumbMap.hasOwnProperty(url)) {
 						vidId = thumbMap[url][0],
 						thumbId = thumbMap[url][1];
