@@ -12,7 +12,8 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 #from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
- 
+import time
+
 class QUnitTests(unittest.TestCase):
     driver = None
     waiter = None
@@ -56,18 +57,28 @@ class QUnitTests(unittest.TestCase):
             QUnitTests.waiter.until(lambda driver: self.is_el_present(selector))
         except TimeoutException:
             raise Exception('Never saw element %s' % (selector))
-    
+        except Exception, e:
+            print "-- ", e
+
     def run_qunit(self, filename):
         #QUnitTests.driver.get('file:///%s/%s' % (os.getcwd(), filename))
         QUnitTests.driver.get('http://localhost/trackerv2/tests/%s' % (filename))
         self.wait_for_el('#qunit-testresult')
-        failed_el = self.get_el('#qunit-testresult .failed')
-        if failed_el.text != '0':
+        #Wait for el seems broken, hence try polling for the element !
+        failed_el = None 
+        for i in range(10):
+            try:
+                failed_el = self.get_el('#qunit-testresult .failed')
+                break
+            except NoSuchElementException:
+                time.sleep(1)
+
+        if failed_el is None or failed_el.text != '0':
             QUnitTests.failed = True
             raise Exception('Found failures in QUnit tests in %s' % filename) 
  
     def test_models(self):
-        tests = ["1.html", "carousel_test.html", "dropdown.html"]
+        tests = ["1.html", "carousel_test.html", "carousel_test2.html" ,"dropdown.html"]
 
         for test in tests:
             self.run_qunit(test)

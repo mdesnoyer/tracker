@@ -7,92 +7,58 @@
 <script type="text/javascript" src="../ign/js/ign-video.module.js"></script>
 <script type="text/javascript" src="../js/jquery-1.11.0.min.js"></script>
 <script type="text/javascript" src="../js/jquery.appear.js"></script>
-<script type="text/javascript" src="qunit-1.14.0.js"></script>
-<script type="text/javascript" src="funcunit.js"></script>
-<link rel="stylesheet" href="qunit-1.14.0.css">
 </head>
 
 <body>
-	<div id="qunit"></div>
-	<div id="qunit-fixture"></div>
-	<script>
-	 //to make sure neon.js doesn't execute main function while unit testing
-	_neon = {};
-	_neon.UNITTEST = 1;
-	</script>
-	
 	<script type="text/javascript" src="../js/neon.js"></script>
+
+	<!-- Fake IGN Video player -->
 	<script>
-
-	
-	function delayTest(fn, milliseconds) {
-    	setTimeout(function () {
-        try {
-           fn()
-        }
-        catch (e) {
-            msg = e + ": " + e.stack
-            console.log(msg)
-            ok(0, msg)
-        }
-        start()
-    	}, milliseconds)
-	}
-	
-	asyncTest("carousel visibility", function(){
-		//init the test by clearing session data & mapImageToTids()	
-		_neon.StorageModule.clearPageSessionData(); 
-		console.log(_neon.StorageModule.getAllThumbnails());
-		_neon.tracker.mapImagesToTids();
-		var carouselSize = 5;
-		var st = 1;
-		var end = st + carouselSize;
-		// Verify the first N images are visible
-		setTimeout(function(){
-			for(var i=st; i<end; i++){
-				var data = _neon.StorageModule.getThumbnailSessionStorage(i);
-				var tid = data["thumbId"]
-				equal(tid, "thumb"+i, "tid match");
+		function clickVideo(vidId){
+			if (typeof(vidId)==='undefined'){
+				var param = window.location.search.replace("?", "");
+				vidId = param.split('=')[1];
 			}
-		start();
-		}, 1500);
-
-	});
-
-	asyncTest("carousel scroll fast image visibility", function(){
-		// The carousel visibility records the images immediate to the left and and right
-		// of the carousel in addition to the visibile images.  
-		// So if the carousel size if 5, at initial position there are 6 images, since there is no image to the left
-		// on moving right, the current visibile images are I5 to I9; Additionally I4 & I10 are visible too given the false detection
+			$(document).trigger('videoplay', vidId); //fire video play event
 		
-		_neon.StorageModule.clearPageSessionData(); 
-		console.log(_neon.StorageModule.getAllThumbnails());
-		_neon.tracker.mapImagesToTids();
-		var carouselSize = 5;
-		var st = 1;
-		var end = st + carouselSize;
-		var carousel = $("#c_next");
+		}
+		$(function() {
+			$('#playVideo').click(function() {
+				clickVideo();
+			});
+		});
+
+		//AUTOPLAY
+		$(document).ready(function(){
+			setTimeout(clickVideo(), 200); //artificial delay
+		});
 
 
-		setTimeout(function(){ 
-			for(var i=st; i<end; i++){
-				var data = _neon.StorageModule.getThumbnailSessionStorage(i);
-				var tid = data["thumbId"]
-				equal(tid, "thumb"+i, "tid match");
-			}
-			// Assert that the first 3 images have not been recorded
-			for(var i=1; i<st-2; i++){
-				var data = _neon.StorageModule.getThumbnailSessionStorage(i);
-				equal(data, undefined, "no data");
-			}
-			start();
-		}, 2000);
-		st = end;
-		end = st + 3;
-		F('#c_next').click()
-	});
+function getDummyReponse(urls) {
+	var ret = {};
+	for(var i = 0; i < urls.length; i++) {
+		if (urls[i].indexOf("brightcove") > -1){
+			var parts = urls[i].split("-");
+			var vidId = parts[parts.length -1].split('.jpg')[0];
+			var thumbId = urls[i]; 
+		}else{
+			var vidId = (i+1);
+			var thumbId = "thumb" + (i+11);
+		}
+		ret[urls[i]] = [vidId, thumbId];
+	}
+	return ret;
+}
 
-	</script>	
+
+	</script>
+	<h1><a id="playVideo" href="javascript:void(0);">Play Video</a></h1>
+	<h2>Info stored in local storage</h2>
+	<div style="margin-bottom: 8px">Video Id: <strong id="videoId"></strong></div>
+	<div style="margin-bottom: 8px">ThumbnailId: <strong id="thumbId"></strong></div>
+	<div style="margin-bottom: 8px">Timestamp: <strong id="timestamp"></strong></div>
+	<a href="index.html">Back</a>
+
 
   <script type="text/template" class="template">
     <li class="<%= data.classes %>">
@@ -119,95 +85,98 @@
           <div class="video_playlist" id="video_playlist">
                  <ul id="videos-list" class="videos" style="left: 10px;">
                                         <li class="video">
-                       <a href="http://www.ign.com/videos/2014/04/12/from-xbox-one-to-smash-bros-its-the-top-5-news-of-the-week-ign-daily-fix" target="_self" data-video-title="From Xbox One to Smash Bros, It&#39;s the Top 5 News of the Week - IGN Daily Fix" data-video-description="">
+                       <a id="cv1" href="javascript:void(0);" onclick="clickVideo('cv1')" target="_self" data-video-title="From Xbox One to Smash Bros, It&#39;s the Top 5 News of the Week - IGN Daily Fix" data-video-description="">
                                                     <div class="image-timer">                           <img src="../ign/images/Top5_041114_1280_medium.jpg" alt="From Xbox One to Smash Bros, It&#39;s the Top 5 News of the Week - IGN Daily Fix">
                                                       </div>                         <span class="video_name">
                            <div>
-                             H1Z1 - From Xbox One to Smash Bros, It's the Top 5 News of the Week - IGN Daily Fix                           </div>
-                         </span>
+						   	Carousel Video 1 
+						   </div>
+						   </span>
                          <span class="video_duration">
                            1:50 MIN                         </span>
                        </a>
                      </li>
                                         <li class="video">
-                       <a href="http://www.ign.com/videos/2014/04/12/big-blizzard-news-rock-bands-return-ign-daily-fix" target="_self" data-video-title="Big Blizzard News &amp; Rock Band&#39;s Return - IGN Daily Fix" data-video-description="">
+                       <a id="cv2" href="javascript:void(0);" onclick="clickVideo('cv2')" target="_self" data-video-title="Big Blizzard News &amp; Rock Band&#39;s Return - IGN Daily Fix" data-video-description="">
                                                     <img src="../ign/images/BlizzardNews_640p_medium.jpg" alt="Big Blizzard News &amp; Rock Band&#39;s Return - IGN Daily Fix">
                                                     <span class="video_name">
                            <div>
-                             Infamous: Second Son - Big Blizzard News &amp; Rock Band's Return - IGN Daily Fix                           </div>
+							   Carousel Video 2 </div>
                          </span>
                          <span class="video_duration">
                            2:45 MIN                         </span>
                        </a>
                      </li>
                                         <li class="video">
-                       <a href="http://www.ign.com/videos/2014/04/09/7-shows-you-should-binge-watch-what-to-watch" target="_self" data-video-title="7 Shows You Should Binge Watch - What to Watch" data-video-description="">
+                       <a href="javascript:void(0);" onclick="clickVideo('cv3')" target="_self" data-video-title="7 Shows You Should Binge Watch - What to Watch" data-video-description="">
                                                     <img src="../ign/images/tv01_040814_1280_medium.jpg" alt="7 Shows You Should Binge Watch - What to Watch">
                                                     <span class="video_name">
-                           <div>
-                             Freaks and Geeks - 7 Shows You Should Binge Watch - What to Watch                           </div>
+										<div>
+											Carousel Video 3
+										</div>
                          </span>
                          <span class="video_duration">
                            3:27 MIN                         </span>
                        </a>
                      </li>
                                         <li class="video">
-                       <a href="http://www.ign.com/videos/2014/04/10/sonys-zombie-mmo-reveal-no-kinect-love-ign-daily-fix" target="_self" data-video-title="Sony&#39;s Zombie MMO Reveal &amp; No Kinect Love - IGN Daily Fix" data-video-description="">
+                       <a href="javascript:void(0);" onclick="clickVideo('cv4')" target="_self" data-video-title="Sony&#39;s Zombie MMO Reveal &amp; No Kinect Love - IGN Daily Fix" data-video-description="">
                                                     <img src="../ign/images/H1Z1_640p-(1)_medium.jpg" alt="Sony&#39;s Zombie MMO Reveal &amp; No Kinect Love - IGN Daily Fix">
                                                     <span class="video_name">
                            <div>
-                             Infamous: Second Son - Sony's Zombie MMO Reveal &amp; No Kinect Love - IGN Daily Fix                           </div>
+							   Carousel Video 4 </div>
                          </span>
                          <span class="video_duration">
                            3:39 MIN                         </span>
                        </a>
                      </li>
                                         <li class="video">
-                       <a href="http://www.ign.com/videos/2014/04/09/last-of-us-ps4-new-borderlands-revealed-ign-daily-fix" target="_self" data-video-title="Last of Us PS4 &amp; New Borderlands Revealed - IGN Daily Fix" data-video-description="">
+                       <a href="javascript:void(0);" onclick="clickVideo('cv5')" target="_self" data-video-title="Last of Us PS4 &amp; New Borderlands Revealed - IGN Daily Fix" data-video-description="">
                                                     <img src="../ign/images/Rumors_640p_medium.jpg" alt="Last of Us PS4 &amp; New Borderlands Revealed - IGN Daily Fix">
                                                     <span class="video_name">
                            <div>
-                             Watch Dogs - Last of Us PS4 &amp; New Borderlands Revealed - IGN Daily Fix                            </div>
+							   Carousel Video 5</div>
+
                          </span>
                          <span class="video_duration">
                            2:02 MIN                         </span>
                        </a>
                      </li>
                                         <li class="video">
-                       <a href="http://www.ign.com/videos/2014/04/09/huge-smash-bros-xbox-one-update-details-ign-daily-fix" target="_self" data-video-title="Huge Smash Bros &amp; Xbox One Update Details - IGN Daily Fix" data-video-description="">
+                       <a id="cv6" href="javascript:void(0);" onclick="clickVideo('cv6')" target="_self" data-video-title="Huge Smash Bros &amp; Xbox One Update Details - IGN Daily Fix" data-video-description="">
                                                     <img src="../ign/images/SmashBros_640p-(2)_medium.jpg" alt="Huge Smash Bros &amp; Xbox One Update Details - IGN Daily Fix">
                                                     <span class="video_name">
-                           <div>
-                             Super Smash Bros. for Nintendo 3DS - Huge Smash Bros &amp; Xbox One Update Details - IGN Daily Fix                           </div>
+							<div>
+							Carousel Video 6</div>
                          </span>
                          <span class="video_duration">
                            2:21 MIN                         </span>
                        </a>
                      </li>
                                         <li class="video">
-                       <a href="http://www.ign.com/videos/2014/04/07/x360-on-x1-plans-borderlands-2-prequel-ign-daily-fix" target="_self" data-video-title="X360 on X1 Plans &amp; Borderlands 2 Prequel? - IGN Daily Fix" data-video-description="">
+                       <a id="cv7" href="javascript:void(0);" onclick="clickVideo('cv7')" target="_self" data-video-title="X360 on X1 Plans &amp; Borderlands 2 Prequel? - IGN Daily Fix" data-video-description="">
                                                     <img src="../ign/images/Borderlands2Prequel_640p-(1)_medium.jpg" alt="X360 on X1 Plans &amp; Borderlands 2 Prequel? - IGN Daily Fix">
                                                     <span class="video_name">
                            <div>
-                             Borderlands 2 - X360 on X1 Plans &amp; Borderlands 2 Prequel? - IGN Daily Fix                           </div>
+							   Carousel Video 7 </div>
                          </span>
                          <span class="video_duration">
                            2:47 MIN                         </span>
                        </a>
                      </li>
                                         <li class="video">
-                       <a href="http://www.ign.com/videos/2014/04/07/from-walking-dead-to-wolf-among-us-to-borderlands-dave-fennoy-on-up-at-noon" target="_self" data-video-title="From Walking Dead to Wolf Among Us to Borderlands: Dave Fennoy on Up at Noon" data-video-description="">
+                       <a href="javascript:void(0);" onclick="clickVideo('cv8')" target="_self" data-video-title="From Walking Dead to Wolf Among Us to Borderlands: Dave Fennoy on Up at Noon" data-video-description="">
                                                     <img src="../ign/images/upatnoon_040714_1280-(1)_medium.jpg" alt="From Walking Dead to Wolf Among Us to Borderlands: Dave Fennoy on Up at Noon">
                                                     <span class="video_name">
                            <div>
-                             The Walking Dead: A Telltale Game Series -- Season Two - From Walking Dead to Wolf Among Us to Borderlands: Dave Fennoy on Up at Noon                           </div>
+                            Carousel Video 8</div>
                          </span>
                          <span class="video_duration">
                            21:51 MIN                         </span>
                        </a>
                      </li>
                                         <li class="video">
-                       <a href="http://www.ign.com/videos/2014/04/04/from-gta-online-to-star-wars-its-the-top-5-news-of-the-week-ign-daily-fix" target="_self" data-video-title="From GTA Online to Star Wars, It&#39;s the Top 5 News of the Week - IGN Daily Fix" data-video-description="">
+                       <a href="javascript:void(0);" onclick="clickVideo('cv1')" target="_self" data-video-title="From GTA Online to Star Wars, It&#39;s the Top 5 News of the Week - IGN Daily Fix" data-video-description="">
                                                     <img src="../ign/images/Top5_040414_1280-(1)_medium.jpg" alt="From GTA Online to Star Wars, It&#39;s the Top 5 News of the Week - IGN Daily Fix">
                                                     <span class="video_name">
                            <div>

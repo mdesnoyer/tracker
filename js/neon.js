@@ -128,7 +128,8 @@ _neon.tracker = (function() {
 		uidKey = 'uid',
 		thumbMap, //stores a thumbnail url -> (videoId, thumbnailId) map
 		thumbViewKey = 'viewedThumbnails', //key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
-		bgImageElArr; //array of elements which have background images
+		bgImageElArr, //array of elements which have background images
+		lastClickedImage = null;
 
 	//This function guesses if the given img element is a thumbnail or not
 	//NOTE: Only IGN case handled for noe
@@ -157,6 +158,8 @@ _neon.tracker = (function() {
 		return
 	}
 
+	/// Detect Elements that have CSS background images with video
+	/// IGN has a few web pages with this 
 	function getElementsWithBackgroundImages() {
 		var tags = document.getElementsByTagName('div'), //consider only divs
 			len = tags.length,
@@ -186,6 +189,15 @@ _neon.tracker = (function() {
 		var imgSrc = $(this).attr('src');
 		var pageCoordinates = offset.left + "," + offset.top;
 		console.log("image clicked" + imgSrc + " xy: "+ coordinates + " of: "+ pageCoordinates);
+		var thumbData = thumbMap[imgSrc];
+		/// If the image is one that Neon cares about 
+		if (typeof(thumbData) !== 'undefined'){
+			var vid = thumbData[0];
+			var tid = thumbData[1];
+			_neon.TrackerEvents.sendImageClickEvent(vid, tid, coordinates, pageCoordinates);
+			_neon.StorageModule.storeLastClickedImage(tid);
+			console.log(thumbData);
+		}
 	}
 
 	function mapImagesToTids(){
@@ -291,7 +303,7 @@ _neon.tracker = (function() {
 						vidId = thumbMap[url][0],
 						thumbId = thumbMap[url][1];
 
-						console.log("Visible: " + url);
+						//console.log("Visible: " + url);
 
 						if(!lastVisibleSet.hasOwnProperty(url)) { //image just appeared, store it
 							//store the video_id-thumbnail_id pair as viewed
@@ -343,25 +355,48 @@ _neon.tracker = (function() {
 		});
 	}
 
+	//////////////////////////////////////////////////////////////////////////////
+
+	function parseBrightcoveUrl(imgUrl){
+
+		//return vid, tid
+		return;	
+	}
+
+	//TODO(Sunil): Remove when goes to prod
 	// A dummy TID response call
 	// Brightcove videos return T_URL as TID
 	// Others just assign a incremental counter, starting at 1 
 	function getDummyReponse(urls) {
+		console.log(urls);
 		var ret = {};
 		for(var i = 0; i < urls.length; i++) {
-			if (urls[i].indexOf("brightcove") > -1){
-				var parts = urls[i].split("-");
-				var vidId = parts[parts.length -1].split('.jpg')[0];
-				var thumbId = urls[i]; 
+			if(urls[i].indexOf("ign/images") > -1){
+				// Hardcode carousel video/thumbs 
+				var vidId = "cv" + (i+1);
+				var thumbId = "cv_thumb" + (i+1);
+				
+				//Brightcove //disabled for now
+				//if (urls[i].indexOf("brightcove") > -1){
+				//	var parts = urls[i].split("-");
+				//	var vidId = parts[parts.length -1].split('.jpg')[0];
+				//	var thumbId = urls[i]; 
 			}else{
-				var vidId = (i+1);
-				var thumbId = "thumb" + (i+1);
+				if(urls[i].indexOf("apage") > -1){
+					var vidId = "av" + (i+1);
+					var thumbId = "av_thumb" + (i+1);
+				
+				}else{
+					var vidId = (i+1);
+					var thumbId = "thumb" + (i+1);
+				}
 			}
 			ret[urls[i]] = [vidId, thumbId];
 		}
 		return ret;
 	}
 
+	//TODO(Sunil): Remove when goes to prod
 	function trackVideo() {
 		//capture video play event
 		//event returns the video id
@@ -376,14 +411,16 @@ _neon.tracker = (function() {
 				$('#timestamp').html(thumb.ts);
 			
 				//Sennd event request to dummy URL
-				url = "http://localhost:8888/event";
-				_neon.JsonRequester.sendRequest(url);
+				_neon.trackerEvents.sendVideoPlayEvent(vidId, thumb.thumbId);
+				//url = "http://localhost:8888/event";
+				//_neon.JsonRequester.sendRequest(url);
 			} else {
 				console.log("thumbnail not found");
 				$('#thumbId').html("Not found");
 			}
 		});
 	}
+	//////////////////////////////////////////////////////////////////////////////
 
 
 	//public methods
@@ -401,6 +438,10 @@ _neon.tracker = (function() {
 			return "test";	
 		},
 
+		//getLastClickedImage: function(){
+		//	return lastClickedImage;
+		//},
+
 		mapImagesToTids: mapImagesToTids,
 	
 	};
@@ -410,7 +451,8 @@ _neon.StorageModule = (function(){
 	var uidKey = 'uid',
 		thumbMap, //stores a thumbnail url -> (videoId, thumbnailId) map
 		thumbViewKeyPrefix = 'neonThumbnails', //key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
-		keySeparator = ":" ; 
+		// TODO: Use a "SAFE" separator to generate key
+		keySeparator = "+" ; 
 
 	/// Private methods
 	//
@@ -420,21 +462,44 @@ _neon.StorageModule = (function(){
 		return url.match(/:\/\/(www[0-9]?\.)?(.[^/:]+)/)[2];
 	}
 
-	function _getPageStorageKey(pageUrl){
+	function _getPageStorageKey(pageUrl, prefix){
+		if(typeof(prefix)==='undefined'){
+			prefix = thumbViewKeyPrefix;
+		}
+		
 		if(typeof(pageUrl)==='undefined'){
 			// Also clean up bookmarks "#"
-			// TODO: Use a "SAFE" separator to generate key
 			var pageURL = document.URL.split("?")[0]
-			var key = thumbViewKeyPrefix + keySeparator + pageURL; 
+			var key = prefix + keySeparator + pageURL; 
 			return key; 
 		}
-		return thumbViewKeyPrefix + keySeparator + pageUrl;
+		return prefix + keySeparator + pageUrl;
+	}
+
+	/// Store the image that was clicked in session storage
+	/// This variable will be used to detect video plays without user action
+	function _storeLastClickedImage(thumbId){
+		storageKey = _getPageStorageKey(document.URL.split("?")[0], "clickedThumbnail");
+		sessionStorage.setItem(storageKey, JSON.stringify(thumbId));
+	}
+	
+	function _getLastClickedThumbnail(){
+		storageKey = _getPageStorageKey(document.URL.split("?")[0], "clickedThumbnail");
+		var data = JSON.parse(sessionStorage.getItem(storageKey));
+		if (data == false){ 
+			return null;
+		}
+		else{
+			return data;
+		}
+
 	}
 
 	/// Store thumbnails in storage	
 	// Session storage: data is stored per page, keyed by page
 	// Global thumbnail state is stored in local storage
 	function _storeThumbnail(storage, vidId, thumbId) {
+		/// TODO:> Store Rightclick on the image happened or not
 		var ts = parseInt((new Date().getTime())/1000, 10);
 		
 		if (storage == localStorage){
@@ -550,6 +615,7 @@ _neon.StorageModule = (function(){
 
 		//Clear previous session data for the page 
 		clearPageSessionData: function(pageUrl){
+			//TODO: Clear lastClickedImage data
 			if(typeof(pageUrl)==='undefined'){
 				var pageUrl = document.URL.split("?")[0];
 				var keyMatch = _getPageStorageKey(pageUrl);
@@ -562,8 +628,15 @@ _neon.StorageModule = (function(){
 					}
 				}
 			}		
-		}
+		},
 
+		storeLastClickedImage: function(thumbId){
+			return _storeLastClickedImage(thumbId);	
+		},
+
+		getLastClickedImage: function(){
+			return _getLastClickedImage();
+		}
 
 	}
 		
@@ -571,12 +644,17 @@ _neon.StorageModule = (function(){
 }());
 
 _neon.TrackerEvents = (function(){
-	var pageLoadId, trackerAccountID, trackerType, pageUrl, referralUrl, timestamp, eventName; 
+	var pageLoadId = _neon.utils.getPageRequestUUID(), 
+						trackerAccountID, trackerType, pageUrl, referralUrl, timestamp, eventName; 
 
 	function buildTrackerEventData(){
-		var request = "http://localhost:8888/track?"+ "a=" + eventName + "&page=" + encodeURIComponent(pageUrl) + "&pid=" + pageLoadId + "&ttype=" + trackerType + "&referrer=" + encodeURIComponent(referralUrl) + "&tai=" + trackerAccountID;
+		trackerAccountID = _neon.tracker.getTrackerAccoundId();
+		trackerType = _neon.tracker.getTrackerType();
+		pageUrl = document.URL.split("?")[0];
+		referralUrl = document.referrer.split('?')[0];
+		//timestamp = new Date().getTime();
+		var request = "http://localhost:8888/track?"+ "a=" + eventName + "&page=" + encodeURIComponent(pageUrl) + "&pageid=" + pageLoadId + "&ttype=" + trackerType + "&referrer=" + encodeURIComponent(referralUrl) + "&tai=" + trackerAccountID;
 		return request;
-
 	}
 
 	// convert ThumbMap to [tid1, tid2,....]
@@ -590,15 +668,6 @@ _neon.TrackerEvents = (function(){
 	}
 
 	return {
-		setCommonTrackerData: function(){
-			pageLoadId = neonPageId;
-			trackerAccountID = _neon.tracker.getTrackerAccoundId();
-			trackerType = _neon.tracker.getTrackerType();
-			pageUrl = document.URL.split("?")[0];
-			referralUrl = document.referrer.split('?')[0];
-			timestamp = new Date().getTime();
-		},
-		
 		// tid: thumbnail id
 		// xy: window xy coordinate
 		sendImageClickEvent: function(vid, tid, xy, pageXY){
@@ -643,13 +712,16 @@ _neon.TrackerEvents = (function(){
 
 		// ImageMap is a Map of thumbnail url => tid 
 		imagesLoadedEvent: function(imageMap){
-			eventname = "il";
+			eventName = "il";
 			timestamp = new Date().getTime();
 			var tids = convertThumbMapToTids(imageMap);
-			console.log("IMG LOAD");
+			console.log("IMG LOAD", req);
 			var req = buildTrackerEventData();
 			req += "&tids="+ tids + "&ts=" + timestamp;
 			_neon.JsonRequester.sendRequest(req);
+		},
+		setPageLoadId: function(pId){
+			pageLoadId = pId;
 		}	
 	}
 
@@ -695,6 +767,89 @@ _neon.PlayerTracker = (function(){
 	}
 }());
 
+////// BRIGHTCOVE PLAYER TRACKER //////
+
+_neon.BCNeonPlayerTracker = (function(){
+	var player = null, videoPlayer, content, exp, initialVideo;
+	
+	function trackLoadedImageUrls(){
+			var imageUrls = new Array();
+			var stillUrls = new Array();                                            
+			var mediaCollection = content.getAllMediaCollections();
+			if (mediaCollection.length >0 && mediaCollection[0].mediaCount > 0){
+				for(var i=0; i< mediaCollection[0].mediaCount; i++) {
+					imageUrls[i] = content.getMedia(mediaCollection[0].mediaIds[i])["thumbnailURL"].split('?')[0]; 
+				}
+			}
+			//TODO Send Images seen from the player
+	}
+																					 
+	function onMediaBegin(evt) {
+			var vid = evt.media.id;	
+			var imgSrc = evt.media.thumbnailURL.split("?")[0]; //clean up
+			var referrer = document.referrer.split('?')[0]
+			var thumb = _neon.StorageModule.getThumbnail(vid, referrer);
+			//TODO SEND the image that was clicked	
+	}
+
+	function smartPlayerMediaBegin(evt){
+			videoPlayer.getCurrentVideo( function(videoDTO) {
+				//TODO SEND the image that was clicked	
+				imageUrl = videoDTO.thumbnailURL.split("?")[0];
+				vid = initialVideo.id 
+			});
+		}
+
+		function onAdStart(evt){
+			console.log(evt);
+		}
+
+	return {
+		onTemplateLoad: function (expID){                                         
+			NeonPlayerTracker.hookNeonTrackerToFlashPlayer(expID);
+		},
+
+		hookNeonTrackerToFlashPlayer: function(expID) {
+			//try to fetch smart player api
+			try {player = brightcove.api.getExperience(expID);} catch(err) {}
+			if(player !=null){
+				//Flashonly player api 
+				player = bcPlayer.getPlayer(expID);
+				videoPlayer = player.getModule(APIModules.VIDEO_PLAYER);                 
+				content = player.getModule(APIModules.CONTENT);                         
+				exp     = player.getModule(APIModules.EXPERIENCE); 
+				videoPlayer.addEventListener(BCMediaEvent.BEGIN, 
+												onMediaBegin);
+				exp.addEventListener(BCExperienceEvent.CONTENT_LOAD, 
+										trackLoadedImageUrls);
+				advertising = player.getModule(APIModules.ADVERTISING);
+				advertising.addEventListener(BCAdvertisingEvent.AD_START, onAdStart);
+			}
+		},                             
+
+		onTemplateReady: function (evt) {                                        
+			if (evt.target.experience) {
+				APIModules = brightcove.api.modules.APIModules;
+				videoPlayer = player.getModule(APIModules.VIDEO_PLAYER);
+				content = player.getModule(APIModules.CONTENT);
+				videoPlayer.addEventListener(brightcove.api.events.MediaEvent.BEGIN, 
+							NeonPlayerTracker.smartPlayerMediaBegin);
+				videoPlayer.getCurrentVideo(
+							function(videoDTO) {
+								initialVideo = videoDTO;
+							}
+						);
+			}else{
+				initialVideo = videoPlayer.getCurrentVideo();
+				trackLoadedImageUrls();
+			}
+		}
+	}
+}());
+
+////// BRIGHTCOVE PLAYER TRACKER //////
+
+
 //Main function
 (function() {
 	//We do not want the script to execute this main function while unit testing
@@ -716,10 +871,6 @@ _neon.PlayerTracker = (function(){
 			console.log("After clearing");
 			console.log(_neon.StorageModule.getAllThumbnails("session"));	
 			clearInterval(docReadyId);
-			neonPageID = _neon.utils.getPageRequestUUID();
-			// setup the common data that will be sent to the server
-			_neon.TrackerEvents.setCommonTrackerData();
-
 		}
 
 	}

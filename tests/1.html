@@ -161,12 +161,11 @@
 		}
 	}
 
-
 	module("Test Tracker Events");	
+	
 	test("images loaded event", function(){
 		var urls = ["http://1", "http://2"]
 		var tmap = getDummyReponse(urls);
-		_neon.TrackerEvents.setCommonTrackerData();	
 		_neon.TrackerEvents.sendImagesVisibleEvent(tmap);
 		// verify the creation of the script tag
 		var src = getScriptTag("a=iv");
@@ -177,7 +176,6 @@
 	});
 
 	test("image click event", function(){
-		_neon.TrackerEvents.setCommonTrackerData();	
 		_neon.TrackerEvents.sendImageClickEvent("vid", "tid", "xy", "pxy");
 		
 		// verify the creation of the script tag
@@ -191,7 +189,6 @@
 	});
 	
 	test("video play event", function(){
-		_neon.TrackerEvents.setCommonTrackerData();	
 		_neon.TrackerEvents.sendVideoPlayEvent("vid", "tid", "pid");
 		var src = getScriptTag("a=vp");
 		notEqual(typeof(src), 'undefined');

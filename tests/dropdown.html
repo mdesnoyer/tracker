@@ -38,18 +38,26 @@
 
 		}, 1500);
 		console.log("move mouse to the menu");
-		$('#dropdownImages').mouseover(function() {
-			console.log("mouse over");
-			$('#adropdownImages').click();
-		});
-		$('#dropdownImages').trigger('mouseover');
+		//$('#dropdownImages').mouseenter(function() {
+		//	console.log("mouse over");
+		//	$('#adropdownImages').click();
+		//});
+		//$('#dropdownImages').trigger('mouseenter');
 
-		F('#dropdownImages').click()
+		//F('#adropdownImages').move('400x250');
+		//F('#foo').move('#adropdownImages');
+		//F('#adropdownImages').click();
 
 	});
+
 	function foo(){
+		// Try to trigger the drop down
+		//$('#dropdownImages').click();
+		$( "#adropdownImages" ).mouseenter();
+		$( "#lidropdownImages" ).mouseenter();
+		$( "#dropdownImages" ).mouseenter();
+		$( "#menu" ).mouseenter();
 		console.log("FOOOO");
-		$('#dropdownImages').click();
 	}
 
 	</script>	

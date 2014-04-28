@@ -25,72 +25,30 @@
 	<script>
 
 	
-	function delayTest(fn, milliseconds) {
-    	setTimeout(function () {
-        try {
-           fn()
-        }
-        catch (e) {
-            msg = e + ": " + e.stack
-            console.log(msg)
-            ok(0, msg)
-        }
-        start()
-    	}, milliseconds)
-	}
-	
-	asyncTest("carousel visibility", function(){
-		//init the test by clearing session data & mapImageToTids()	
+	asyncTest("carousel visibility with delayed carousel move", function(){
+		// Reset carousel	
 		_neon.StorageModule.clearPageSessionData(); 
 		console.log(_neon.StorageModule.getAllThumbnails());
 		_neon.tracker.mapImagesToTids();
 		var carouselSize = 5;
 		var st = 1;
-		var end = st + carouselSize;
-		// Verify the first N images are visible
+		var end = st + 2 * carouselSize;
+		// Verify the first 2*carouselSize images are visible
 		setTimeout(function(){
-			for(var i=st; i<end; i++){
-				var data = _neon.StorageModule.getThumbnailSessionStorage(i);
-				var tid = data["thumbId"]
-				equal(tid, "thumb"+i, "tid match");
-			}
-		start();
+			setTimeout(function(){
+				for(var i=st; i<end; i++){
+					var data = _neon.StorageModule.getThumbnailSessionStorage(i);
+					var tid = data["thumbId"]
+					equal(tid, "thumb"+i, "tid match");
+					}
+				start();
+			}, 2000);
+		
+			F('#c_next').click()
 		}, 1500);
 
 	});
 
-	asyncTest("carousel scroll fast image visibility", function(){
-		// The carousel visibility records the images immediate to the left and and right
-		// of the carousel in addition to the visibile images.  
-		// So if the carousel size if 5, at initial position there are 6 images, since there is no image to the left
-		// on moving right, the current visibile images are I5 to I9; Additionally I4 & I10 are visible too given the false detection
-		
-		_neon.StorageModule.clearPageSessionData(); 
-		console.log(_neon.StorageModule.getAllThumbnails());
-		_neon.tracker.mapImagesToTids();
-		var carouselSize = 5;
-		var st = 1;
-		var end = st + carouselSize;
-		var carousel = $("#c_next");
-
-
-		setTimeout(function(){ 
-			for(var i=st; i<end; i++){
-				var data = _neon.StorageModule.getThumbnailSessionStorage(i);
-				var tid = data["thumbId"]
-				equal(tid, "thumb"+i, "tid match");
-			}
-			// Assert that the first 3 images have not been recorded
-			for(var i=1; i<st-2; i++){
-				var data = _neon.StorageModule.getThumbnailSessionStorage(i);
-				equal(data, undefined, "no data");
-			}
-			start();
-		}, 2000);
-		st = end;
-		end = st + 3;
-		F('#c_next').click()
-	});
 
 	</script>	
 

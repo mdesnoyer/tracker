@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Slider Tests</title>
+    <link rel="stylesheet" href="../tests/qunit-1.14.0.css"/>
+    <link rel="stylesheet" href="../css/jquery-ui-1.10.3.custom.css"/>
+  </head>
+  <body>
+    <div id="qunit"></div>
+    <div id="qunit-test-area"></div>
+    <script src="../js/jquery-1.11.0.min.js"></script>
+    <script src="../js/jquery-ui-1.10.3.custom.js"></script>
+    <script src="../tests/qunit-1.14.0.js"></script>
+    <script src="../tests/funcunit.js"></script>
+	<script>
+		module('tabs', {
+		  setup: function() {
+			  F.open('index.html');
+			  //F.open("index.html", function onOpenSuccess() {
+			 //      F.win.resizeTo(1024, 768);
+			//  });
+
+		  },
+		  tearDown: function(){
+		  	//F.close('video_page.html');	
+			//F.close('index.html');
+			//FuncUnit.win.close();
+
+		  }
+	  });
+
+	  test('Video view flow', function() {
+		  // The text comparison act as assertions
+		  // TODO Assert by extracting text from ID 
+
+		
+		  /// Click to play video from homepage, then click 
+		  /// on carousel images to play subsequent videos
+
+		  F('#video1').click();
+		  F('#thumbId').text("thumb1", 1000)
+		  F('#cv1').click();
+		  F('#thumbId').text("cv_thumb1", 1000)
+		  console.log($('#thumbId').text());
+		  F('#cv2').click();
+		  F('#thumbId').text("cv_thumb2", 1000)
+		  ok(true, "done");
+	});
+
+	</script>
+  </body>
+</html>
