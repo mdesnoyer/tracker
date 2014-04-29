@@ -10,6 +10,119 @@
 var _neon = _neon || {};
 var neonPageId = null;
 
+
+var lastMouseClick;
+function _trackLastMouseClick(evt){
+	lastMouseClick = new Date().getTime();
+}
+document.onmouseup = _trackLastMouseClick; 
+
+///////////// JQUERY APPEAR PLUGIN ////////////
+
+/*
+ * jQuery appear plugin
+ *
+ * Copyright (c) 2012 Andrey Sidorov
+ * licensed under MIT license.
+ *
+ * https://github.com/morr/jquery.appear/
+ *
+ * Version: 0.3.1
+ */
+(function(_$) {
+  var selectors = [];
+
+  var check_binded = false;
+  var check_lock = false;
+  var defaults = {
+    interval: 250,
+    force_process: false
+  }
+  var _$window = _$(window);
+
+  var _$prior_appeared;
+
+  function process() {
+    check_lock = false;
+    for (var index in selectors) {
+      var _$appeared = _$(selectors[index]).filter(function() {
+        return _$(this).is(':appeared');
+      });
+
+      _$appeared.trigger('appear', [_$appeared]);
+
+      if (_$prior_appeared) {
+        var _$disappeared = _$prior_appeared.not(_$appeared);
+        _$disappeared.trigger('disappear', [_$disappeared]);
+      }
+      _$prior_appeared = _$appeared;
+    }
+  }
+
+  // "appeared" custom filter
+  $.expr[':']['appeared'] = function(element) {
+    var _$element = _$(element);
+    if (!_$element.is(':visible')) {
+      return false;
+    }
+
+    var window_left = _$window.scrollLeft();
+    var window_top = _$window.scrollTop();
+    var offset = _$element.offset();
+    var left = offset.left;
+    var top = offset.top;
+
+    if (top + _$element.height() >= window_top &&
+        top - (_$element.data('appear-top-offset') || 0) <= window_top + _$window.height() &&
+        left + _$element.width() >= window_left &&
+        left - (_$element.data('appear-left-offset') || 0) <= window_left + _$window.width()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  _$.fn.extend({
+    // watching for element's appearance in browser viewport
+    appear: function(options) {
+      var opts = _$.extend({}, defaults, options || {});
+      var selector = this.selector || this;
+      if (!check_binded) {
+        var on_check = function() {
+          if (check_lock) {
+            return;
+          }
+          check_lock = true;
+
+          setTimeout(process, opts.interval);
+        };
+
+        _$(window).scroll(on_check).resize(on_check);
+        check_binded = true;
+      }
+
+      if (opts.force_process) {
+        setTimeout(process, opts.interval);
+      }
+      selectors.push(selector);
+      return _$(selector);
+    }
+  });
+
+  _$.extend({
+    // force elements's appearance check
+    force_appear: function() {
+      if (check_binded) {
+        process();
+        return true;
+      };
+      return false;
+    }
+  });
+})(jQuery);
+
+///////////////////////////////////////////////////////////////
+
 /// JSON Script Requester 
 _neon.JsonRequester = (function() {
 
@@ -201,9 +314,10 @@ _neon.tracker = (function() {
 	}
 
 	function mapImagesToTids(){
+		console.log("bind window; map TIDS ");
 		//batch all the thumbnail urls
 		var urls = [];
-
+		var imgVisibleSizes = {};  
 		//Image tags
 		$('img').each(function() {
 			if(_isThumbnail($(this))) {
@@ -211,6 +325,7 @@ _neon.tracker = (function() {
 				//this url resolves to some thumbnail id
 				urls.push(url);
 				$(this).click(imageClickEventHandler);
+				imgVisibleSizes[url] = [$(this).width(), $(this).height()]
 				console.log(url, $(this).width(), $(this).height());
 				//Attach a click handler to the image
 			}
@@ -226,6 +341,7 @@ _neon.tracker = (function() {
 			console.log(url, $(el).width(), $(el).height());
 		}
 
+		//TODO: ThumbMAP to include the visible image size as well
 		thumbMap = getDummyReponse(urls);
 		console.log(thumbMap);
 		/// Send the loaded image set that Neon is interested in 
@@ -237,6 +353,7 @@ _neon.tracker = (function() {
 	function initImageLoad() {
 		//wait for page load
 		$(window).bind("load", function() {
+			console.log("WINDOW BIND");
 			mapImagesToTids()
 		});
 	}
@@ -244,7 +361,8 @@ _neon.tracker = (function() {
 	function startTracking(imgUrls) {
 		//for now, assuming all images on the page are thumbnails
 		//basic visibility check
-		$('img').appear(); //TODO: Why call the apper method ??
+		//Add Appear event to all the images
+		$('img').appear(); 
 		
 		var forced = false;
 
@@ -303,7 +421,7 @@ _neon.tracker = (function() {
 						vidId = thumbMap[url][0],
 						thumbId = thumbMap[url][1];
 
-						//console.log("Visible: " + url);
+						console.log("Visible: " + url);
 
 						if(!lastVisibleSet.hasOwnProperty(url)) { //image just appeared, store it
 							//store the video_id-thumbnail_id pair as viewed
@@ -412,8 +530,6 @@ _neon.tracker = (function() {
 			
 				//Sennd event request to dummy URL
 				_neon.trackerEvents.sendVideoPlayEvent(vidId, thumb.thumbId);
-				//url = "http://localhost:8888/event";
-				//_neon.JsonRequester.sendRequest(url);
 			} else {
 				console.log("thumbnail not found");
 				$('#thumbId').html("Not found");
@@ -432,6 +548,16 @@ _neon.tracker = (function() {
 
 		getTrackerAccoundId: function(){
 			return "test_aid";
+		},
+
+		getAccountId: function(){
+			var scriptTags = document.getElementsByTagName("script");
+			for (var i = 0; i<scriptTags.length; i++) {
+				sTag = scriptTags[i];
+				if(sTag.src.search("neonbctracker.js") >= 0){
+					return sTag.id;
+				}
+			} 		
 		},
 
 		getTrackerType: function(){
@@ -607,6 +733,7 @@ _neon.StorageModule = (function(){
 						return data;
 					}
 				}
+				return null;
 			}
 			else{
 				return JSON.parse(localStorage.getItem(thumbViewKeyPrefix));
@@ -653,6 +780,7 @@ _neon.TrackerEvents = (function(){
 		pageUrl = document.URL.split("?")[0];
 		referralUrl = document.referrer.split('?')[0];
 		//timestamp = new Date().getTime();
+		//TODO: FIX TRACKER URL
 		var request = "http://localhost:8888/track?"+ "a=" + eventName + "&page=" + encodeURIComponent(pageUrl) + "&pageid=" + pageLoadId + "&ttype=" + trackerType + "&referrer=" + encodeURIComponent(referralUrl) + "&tai=" + trackerAccountID;
 		return request;
 	}
@@ -678,8 +806,9 @@ _neon.TrackerEvents = (function(){
 			_neon.JsonRequester.sendRequest(req);
 		},
 	
-		// PlayerID of the player, if available 
-		sendVideoPlayEvent: function(vid, tid, playerId){
+		// PlayerID of the player, if available
+		// adPlay, mediaPlay: Are timestamps  
+		sendVideoPlayEvent: function(vid, tid, playerId, adPlay, mediaPlay){
 			eventName = "vp";
 			timestamp = new Date().getTime();
 			var req = buildTrackerEventData();
@@ -720,6 +849,11 @@ _neon.TrackerEvents = (function(){
 			req += "&tids="+ tids + "&ts=" + timestamp;
 			_neon.JsonRequester.sendRequest(req);
 		},
+		
+		// When user clicks on the thumbnail within the player
+		sendVideoClickEvent: function(){
+		},
+
 		setPageLoadId: function(pId){
 			pageLoadId = pId;
 		}	
@@ -770,7 +904,7 @@ _neon.PlayerTracker = (function(){
 ////// BRIGHTCOVE PLAYER TRACKER //////
 
 _neon.BCNeonPlayerTracker = (function(){
-	var player = null, videoPlayer, content, exp, initialVideo;
+	var player = null, videoPlayer, content, exp, initialVideo, adPlay, mediaPlay;
 	
 	function trackLoadedImageUrls(){
 			var imageUrls = new Array();
@@ -801,6 +935,7 @@ _neon.BCNeonPlayerTracker = (function(){
 		}
 
 		function onAdStart(evt){
+			adPlay = new Date().getTime();
 			console.log(evt);
 		}
 
