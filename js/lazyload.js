@@ -1,9 +1,3 @@
-//This code will check if jquery already exists in a given page.
-//If jquery exists, then we check the version and decide if we 
-//need to load our jquery version or not
-//We use lazyload.js for this bootloader (https://github.com/rgrove/lazyload/)
-
-
 /*jslint browser: true, eqeqeq: true, bitwise: true, newcap: true, immed: true, regexp: false */
 
 /**
@@ -394,66 +388,3 @@ LazyLoad = (function (doc) {
 
   };
 })(this.document);
-
-
-
-
-//Neon bootloader code
-(function() {
-
-	var requiredVersion = "1.10.0"; //TODO: we need to figure out the most compatible least version
-
-	function getJqueryVersion() {
-		if(typeof jQuery != 'undefined') {
-	    		return jQuery.fn.jquery;
-		} else {
-			return false;
-		}
-	}
-
-  function isJqueryRequired() {
-    var v = getJqueryVersion();
-
-    if(v) {
-      var a = v.split('.');
-      var b = requiredVersion.split('.'); //["1", "10", "0"]
-
-      for(var i = 0; i < a.length; i++) {
-        a[i] = parseInt(a[i], 10);
-      }
-
-      for(var i = 0; i < b.length; i++) {
-        b[i] = parseInt(b[i], 10);
-      }
-
-      if(a[0] > b[0]) return false; //not required
-      
-      if(a[0] < b[0]) return true; //required
-      
-      if(a[1] >= b[1]) return false; //not required
-    }
-
-    return true; //required
-  }
-
-	function init() {
-    if(isJqueryRequired()) {
-      LazyLoad.js('http://localhost/trackerv2/js/jquery-1.11.0.min.js', function() {
-        console.log("jQuery loaded");
-        _neonjQuery = $.noConflict(true); 
-        LazyLoad.js('http://localhost/trackerv2/js/neon.js', function() {
-          console.log("neon loaded");
-          //run
-        });
-      });
-    } else {
-      _neonjQuery = jQuery;
-      LazyLoad.js('http://localhost/trackerv2/js/neon.js', function() {
-        console.log("neon loaded"); 
-        //run
-      });
-    }
-	}
-
-	init();
-})();
