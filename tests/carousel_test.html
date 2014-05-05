@@ -24,6 +24,39 @@
 	<script type="text/javascript" src="../js/neon.js"></script>
 	<script>
 
+	//TODO(Sunil): Remove when goes to prod
+	// A dummy TID response call
+	// Brightcove videos return T_URL as TID
+	// Others just assign a incremental counter, starting at 1 
+	function getDummyReponse(urls) {
+		console.log(urls);
+		var ret = {};
+		for(var i = 0; i < urls.length; i++) {
+			if(urls[i].indexOf("ign/images") > -1){
+				// Hardcode carousel video/thumbs 
+				var vidId = "cv" + (i+1);
+				var thumbId = "cv_thumb" + (i+1);
+
+				//Brightcove //disabled for now
+				//if (urls[i].indexOf("brightcove") > -1){
+				//	var parts = urls[i].split("-");
+				//	var vidId = parts[parts.length -1].split('.jpg')[0];
+				//	var thumbId = urls[i]; 
+			}else{
+				if(urls[i].indexOf("apage") > -1){
+					var vidId = "av" + (i+1);
+					var thumbId = "av_thumb" + (i+1);
+
+				}else{
+					var vidId = (i+1);
+					var thumbId = "thumb" + (i+1);
+				}
+			}
+			ret[urls[i]] = [vidId, thumbId];
+			}
+			return ret;
+	}
+
 	
 	function delayTest(fn, milliseconds) {
     	setTimeout(function () {

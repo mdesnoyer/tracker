@@ -34,7 +34,7 @@
 	_neon.UNITTEST = 1;
 	</script>
 	<script src="../js/jquery-1.11.0.min.js"></script>
-	<script src="../js/neon.js"></script>
+	<script src="../js/neonbootloader.js"></script>
 	<script src="qunit-1.14.0.js"></script>
 	<script>
 	
@@ -64,12 +64,12 @@
 
 		// Test retrieving the data from the same page, in the same session
 		var storageData = _neon.StorageModule.getThumbnail(vidId);
-		equal(storageData.thumbId, thumbId, "Saved and fetched data");
+		equal(storageData[0].thumbId, thumbId, "Saved and fetched data");
 		
 		// Test retrieving the data from a different page, in the same session
 		var referal_page = "http://localhost/xyz";
 		var storageData = _neon.StorageModule.getThumbnail(vidId, referal_page);
-		equal(storageData.thumbId, thumbId, "Fetched data for diff referal page");
+		equal(storageData[0].thumbId, thumbId, "Fetched data for diff referal page");
 
 		// A new session created by right-click open, hence need to check if
 		// data is in localStorage
@@ -84,7 +84,7 @@
 
 		// An entry for the video doesn't exist
 		storageData = _neon.StorageModule.getThumbnail("randomvidnotexist");
-		equal(storageData, null, "empty data");
+		equal(storageData, null, "empty data no such video");
 		
 	});
 
@@ -100,6 +100,18 @@
 		//TODO: How do you check the callback worked ? 
 		// Currently rely on no global failures as an indicator 	
 	});
+	
+	// Test Brightcove URL parsing
+	test("brightcove url parsing", function(){
+		var vid = "VID"; 
+		var tid = "APIKEY_" + vid + "_TMD5";
+		var url = "http://bcove/13_35_neontn" + tid + ".jpg";
+		var result = _neon.tracker.parseBrightcoveUrl(url)
+		equal(result[0], vid);
+		equal(result[1], tid);
+	
+	});
+
 
 
 	// Test if a given element is a thumbnail (img, div, text that anchor to a video)
@@ -176,15 +188,15 @@
 	});
 
 	test("image click event", function(){
-		_neon.TrackerEvents.sendImageClickEvent("vid", "tid", "xy", "pxy");
+		_neon.TrackerEvents.sendImageClickEvent("vid", "tid", 45, 29, 100, 110);
 		
 		// verify the creation of the script tag
 		var src = getScriptTag("a=ic");
 		notEqual(typeof(src), 'undefined');
 		equal("vid", getQueryValue(src.split("?")[1], "vid"));
 		equal("tid", getQueryValue(src.split("?")[1], "tid"));
-		equal("xy", getQueryValue(src.split("?")[1], "xy"));
-		equal("pxy", getQueryValue(src.split("?")[1], "pagexy"));
+		//equal("x", getQueryValue(src.split("?")[1], 100));
+		//equal("y", getQueryValue(src.split("?")[1], 110));
 
 	});
 	

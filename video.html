@@ -2,10 +2,33 @@
 <html>
 	<head>
 		<script src="js/jquery-1.11.0.min.js"></script>
-		<script src="js/jquery.appear.js"></script>
-		<script src="js/neon.js"></script>
-		<script language="JavaScript" type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences_all.js"></script>
+		<script src="js/neonbootloader.js?x=1"></script>
+		<script language="JavaScript" type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script>
 		<script>
+	
+		function trackVideo() {
+			//capture video play event
+			//event returns the video id
+			$(document).on('videoplay', function(e, vidId) {
+				$('#videoId').html(vidId);
+				//TODO: do we need to check for domain?
+				var referrer = document.referrer.split('?')[0]
+				var thumb = _neon.StorageModule.getThumbnail(vidId, referrer);
+			if(thumb) {
+				console.log(thumb);
+				$('#thumbId').html(thumb[0].thumbId);
+				$('#timestamp').html(thumb[0].ts);
+
+				//Sennd event request to dummy URL
+				_neon.TrackerEvents.sendVideoPlayEvent(vidId, thumb[0].thumbId);
+			} else {
+				console.log("thumbnail not found");
+				$('#thumbId').html("Not found");
+			}
+			});
+		}
+
+
 		$(function() {
 			$('#playVideo').click(function() {
 				var param = window.location.search.replace("?", "");
@@ -22,7 +45,7 @@
 		<div style="margin-bottom: 8px">Thumbnail Id: <strong id="thumbId"></strong></div>
 		<div style="margin-bottom: 8px">Timestamp: <strong id="timestamp"></strong></div>
 		<a href="index.html">Back</a>
-
+<!--
 		<object id="myExperience" class="BrightcoveExperience">
 		  <param name="bgcolor" value="#FFFFFF" />
 		  <param name="width" value="480" />
@@ -37,6 +60,6 @@
 		  <param name="templateLoadHandler" value="_neon.PlayerTracker.BCPlayerOnTemplateLoad" />
 		  <param name="templateReadyHandler" value="_neon.PlayerTracker.BCPlayerOnTemplateReady" />
 		</object>
-
+		-->
 	</body>
 </html>
