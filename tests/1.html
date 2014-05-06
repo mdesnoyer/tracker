@@ -98,18 +98,28 @@
 		_neon.JsonRequester.sendRequest(request);
 		ok(true, "callback worked");
 		//TODO: How do you check the callback worked ? 
-		// Currently rely on no global failures as an indicator 	
+		// Currently rely on no global failures as an indicator of test failing	
 	});
 	
 	// Test Brightcove URL parsing
 	test("brightcove url parsing", function(){
 		var vid = "VID"; 
-		var tid = "APIKEY_" + vid + "_TMD5";
+		var tid = "APIKEY-" + vid + "-TMD5";
 		var url = "http://bcove/13_35_neontn" + tid + ".jpg";
-		var result = _neon.tracker.parseBrightcoveUrl(url)
+		var result = _neon.tracker.parseNeonBrightcoveUrl(url)
 		equal(result[0], vid);
 		equal(result[1], tid);
-	
+		
+		//malformed url
+		var url = "http://bcove/13_35_neon3626tn" + tid + ".jpg";
+		var result = _neon.tracker.parseNeonBrightcoveUrl(url)
+		equal(result, null);
+		
+		//undefined url
+		var url; 
+		var result = _neon.tracker.parseNeonBrightcoveUrl(url)
+		equal(result, null);
+
 	});
 
 
@@ -128,7 +138,8 @@
   		$img.trigger( "click" );
 	});
 
-	/////// Test tracker events ////////
+
+	/// Helper functions ////
 
 	/// Return fake tids for testing
 	function getDummyReponse(urls) {
@@ -143,6 +154,14 @@
 				var thumbId = "thumb" + (i+1);
 			}
 			ret[urls[i]] = [vidId, thumbId];
+		}
+		return ret;
+	}
+
+	function getSizes(urls){
+		var ret = {};
+		for(var i = 0; i < urls.length; i++) {
+			ret[urls[i]] = [120, 90];
 		}
 		return ret;
 	}
@@ -167,16 +186,17 @@
 	function getScriptTag(eventName){
 		var pattern = new RegExp(eventName);
 		var scripts = document.getElementsByTagName("script");
-		for (var i=0;i<scripts.length;i++) {
-		if (pattern.test(scripts[i].src)) 
-			return scripts[i].src;
+		for (var i=0; i< scripts.length ; i++){
+			if (pattern.test(scripts[i].src)) 
+				return scripts[i].src;
 		}
 	}
 
+	/////// Test tracker events ////////
 	module("Test Tracker Events");	
 	
-	test("images loaded event", function(){
-		var urls = ["http://1", "http://2"]
+	test("images visible event", function(){
+		var urls = ["http://1", "http://2"];
 		var tmap = getDummyReponse(urls);
 		_neon.TrackerEvents.sendImagesVisibleEvent(tmap);
 		// verify the creation of the script tag
@@ -184,7 +204,17 @@
 		notEqual(typeof(src), 'undefined');
 		equal("thumb1,thumb2", getQueryValue(src.split("?")[1], "tids"));
 
-		//http://localhost:8888/track?a=iv&page=http%3A%2F%2Flocalhost%2Ftrackerv2%2Ftests%2F1.html%23&pid=null&ttype=test&referrer=&tai=test_aid&tids=thumb1,thumb2&ts=1397956636420&noCacheIE=1397956636420
+	});
+	
+	test("images loaded event", function(){
+		var urls = ["http://1", "http://2"];
+		var tmap = getDummyReponse(urls);
+		_neon.TrackerEvents.sendImagesLoadedEvent(tmap, getSizes(urls));
+		// verify the creation of the script tag
+		var src = getScriptTag("a=il");
+		notEqual(typeof(src), 'undefined');
+		equal("thumb1+120+90,thumb2+120+90", getQueryValue(src.split("?")[1], "tids"));
+
 	});
 
 	test("image click event", function(){
@@ -195,8 +225,10 @@
 		notEqual(typeof(src), 'undefined');
 		equal("vid", getQueryValue(src.split("?")[1], "vid"));
 		equal("tid", getQueryValue(src.split("?")[1], "tid"));
-		//equal("x", getQueryValue(src.split("?")[1], 100));
-		//equal("y", getQueryValue(src.split("?")[1], 110));
+		equal(100, getQueryValue(src.split("?")[1], "x"));
+		equal(110, getQueryValue(src.split("?")[1], "y"));
+		equal(45, getQueryValue(src.split("?")[1], "wx"));
+		equal(29, getQueryValue(src.split("?")[1], "wy"));
 
 	});
 	
@@ -208,19 +240,20 @@
 		equal("tid", getQueryValue(src.split("?")[1], "tid"));
 		equal("pid", getQueryValue(src.split("?")[1], "playerid"));
 	});	
+	
+	test("video click event", function(){
+		_neon.TrackerEvents.sendVideoClickEvent("vid", "tid", "pid", "pclick", "adplay", "mplay");
+		var src = getScriptTag("a=vc");
+		notEqual(typeof(src), 'undefined');
+		equal("vid", getQueryValue(src.split("?")[1], "vid"));
+		equal("tid", getQueryValue(src.split("?")[1], "tid"));
+		equal("pid", getQueryValue(src.split("?")[1], "playerid"));
+		equal("pclick", getQueryValue(src.split("?")[1], "pclick"));
+		equal("adplay", getQueryValue(src.split("?")[1], "adplay"));
+		equal("mplay", getQueryValue(src.split("?")[1], "mplay"));
+	});	
 		
-
 	// Test local storage not available or full
-
-	/*		
-	module("videoPlay", function(){
-		setup: function(){
-		},
-		teardown: function(){
-		}		
-    });
-	*/
-
 
 	</script>
 </body>

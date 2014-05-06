@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="../js/jquery-1.11.0.min.js"></script>
+		<script type="text/javascript" src="../js/neonbootloader.js" id="PROD_TEST"> </script> 
+		<script language="JavaScript" type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script>
+		<script>
+	
+		function trackVideo() {
+			//capture video play event
+			//event returns the video id
+			$(document).on('videoplay', function(e, vidId) {
+				$('#videoId').html(vidId);
+				//TODO: do we need to check for domain?
+				var referrer = document.referrer.split('?')[0]
+				var thumb = _neon.StorageModule.getThumbnail(vidId, referrer);
+			if(thumb) {
+				console.log(thumb);
+				$('#thumbId').html(thumb[0].thumbId);
+				$('#timestamp').html(thumb[0].ts);
+
+				//Sennd event request to dummy URL
+				_neon.TrackerEvents.sendVideoPlayEvent(vidId, thumb[0].thumbId);
+			} else {
+				console.log("thumbnail not found");
+				$('#thumbId').html("Not found");
+			}
+			});
+		}
+
+
+		$(function() {
+			$('#playVideo').click(function() {
+				var param = window.location.search.replace("?", "");
+				var vidId = param.split('=')[1];
+				$(document).trigger('videoplay', vidId); //fire video play event
+			});
+		});
+		</script>
+	</head>
+	<body>
+		<h1><a id="playVideo" href="javascript:void(0);">Play Video</a></h1>
+		<h2>Info stored in local storage</h2>
+		<div style="margin-bottom: 8px">Video Id: <strong id="videoId"></strong></div>
+		<div style="margin-bottom: 8px">Thumbnail Id: <strong id="thumbId"></strong></div>
+		<div style="margin-bottom: 8px">Timestamp: <strong id="timestamp"></strong></div>
+		<a href="bcove1.html">Back</a>
+		<object id="myExperience" class="BrightcoveExperience">
+		  <param name="bgcolor" value="#FFFFFF" />
+		  <param name="width" value="480" />
+		  <param name="height" value="270" />
+		  <param name="playerID" value="2296789948001" />
+		  <param name="playerKey" value="AQ~~,AAACFlFGaSk~,KO63PfDvw1wM52CosKaGrogGVsk4YwDe" />
+		  <param name="isVid" value="true" />
+		  <param name="isUI" value="true" />
+		  <param name="dynamicStreaming" value="true" />
+  		  <param name="@videoPlayer"  value="2801877295001" />	    
+		  <param name="includeAPI" value="true" />
+		  <param name="templateLoadHandler" value="NeonPlayerTracker.onTemplateLoad" />
+		  <param name="templateReadyHandler" value="NeonPlayerTracker.onTemplateReady" />
+		</object>
+	</body>
+</html>
