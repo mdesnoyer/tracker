@@ -183,7 +183,7 @@ Object.size = function(obj){
 					console.log(err);
 				}
 
-			},
+			}
 		}
 	}());
 
@@ -295,6 +295,8 @@ Object.size = function(obj){
 	//NOTE: Only IGN case handled for noe
 	function _isThumbnail($el) {
 
+		return true;
+		
 		$parent = $el.parent();
 		if(_neon.utils.isAnchor($parent)) { //check parent
 			return true;
@@ -355,13 +357,11 @@ Object.size = function(obj){
 		var wx = offset.left;
 		var wy = offset.top;
 		var coordinates = e.pageX  + "," + e.pageY;
-		console.log("image clicked" + imgSrc + " xy: "+ coordinates + " of: "+ px);
 		var thumbData = thumbMap[imgSrc];
 		/// If the image is one that Neon cares about 
 		if (typeof(thumbData) !== 'undefined'){
 			var vid = thumbData[0];
 			var tid = thumbData[1];
-			console.log("IMC",  e.pageX, e.pageY, px, py);
 			_neon.TrackerEvents.sendImageClickEvent(vid, tid, wx, wy, e.pageX, e.pageY);
 		}
 	}
@@ -372,7 +372,7 @@ Object.size = function(obj){
 		var urls = [];
 		var imgVisibleSizes = {};  
 		//Image tags
-		$('img').each(function() {
+		$('img').each(function(){
 			if(_isThumbnail($(this))) {
 				var url = $(this).attr('src');
 				//this url resolves to some thumbnail id
@@ -797,7 +797,7 @@ Object.size = function(obj){
 					}
 				}
 			}		
-		},
+		}
 
 
 		//storeLastClickedImage: function(thumbId){
@@ -865,7 +865,7 @@ Object.size = function(obj){
 		sendVideoPlayEvent: function(vid, tid, playerId, adPlay, adelta, pcount){
 			eventName = "vp";
 			var req = buildTrackerEventData();
-			req += "&vid=" + vid + "&tid=" + tid + "&adPlay=" + adPlay + "&adelta=" +adelta + "&pcount=" + pcount;
+			req += "&vid=" + vid + "&tid=" + tid + "&adPlay=" + adPlay + "&adelta=" + adelta + "&pcount=" + pcount;
 			if (typeof(playerId) !=='undefined'){
 				req += "&playerid=" + playerId;
 			}
@@ -873,10 +873,10 @@ Object.size = function(obj){
 		},
 
 		// If AD event available
-		sendAdPlayEvent: function(vid, tid, playerId){
+		sendAdPlayEvent: function(vid, tid, playerId, adelta, pcount){
 			eventName = "ap";
 			var req = buildTrackerEventData();
-			req += "&vid=" + vid + "&tid=" + tid;
+			req += "&vid=" + vid + "&tid=" + tid + "&adelta=" + adelta + "&pcount=" + pcount;
 			if (typeof(playerId) !=='undefined'){
 				req += "&playerid=" + playerId;
 			}
@@ -923,7 +923,7 @@ Object.size = function(obj){
 
 	_neon.BCNeonPlayerTracker = (function(){
 		var player = null, videoPlayer, playerId = null, content, exp, initialVideo, initialVideoId = null, adPlayTs = null, mediaPlay = null;
-		var _newMedia = true, lastTid = null, playCount = 0, adPlay = false, adelta = null;
+		var _newMedia = true, lastTid = null, playCount = 0, adPlay = false, adelta = null, _adPlayWithVidNull = false;
 		var thumbMap = {}; // url => [VID, TID]
 		var vidMap = {}; // VID => TID, location(player)  
 
@@ -939,8 +939,8 @@ Object.size = function(obj){
 		}
 
 		function _autoPlayVideo(){
-			//console.log("DELTA", adelta, lastMouseClick, adPlayTs, mediaPlay);
-			if(adelta && adelta <= 500){
+			console.log("DELTA", adelta, lastMouseClick, adPlayTs, mediaPlay);
+			if(adelta && adelta <= 2000){
 				return false;
 			}
 			return true;
@@ -981,7 +981,7 @@ Object.size = function(obj){
 					}
 
 				}else{
-						console.log("AUTOPLAY >= 2");
+						console.log("AUTOPLAY >= 2", playCount, adPlayTs, mediaPlay);
 						// Autoplayed and it was the 2nd video, send the TID from the player. Ignore the referrer 
 						return vidMap[vid];
 				}
@@ -1043,10 +1043,12 @@ Object.size = function(obj){
 
 		function onMediaBegin(evt){
 
-			if(adPlay == false)
+			if(adPlay == false){
 				playCount += 1;
+			}
 			
-			vid = evt.media.id;	
+			vid = evt.media.id;
+			console.log("Adplay", adPlay, playCount);	
 			var thumb = getTidForVid(vid);
 			var tid = null;
 			var loc = null;
@@ -1054,8 +1056,7 @@ Object.size = function(obj){
 			if(thumb != null){
 				tid = thumb[0];
 				loc = thumb[1];
-				console.log("Media begin", thumb, evt);
-
+				
 				// if data retrieved from local storage, then it was a new session start
 				// most likely it was a right-click open; hence send that image click event
 				if (loc == "local"){
@@ -1065,14 +1066,17 @@ Object.size = function(obj){
 
 			//Send the video play event
 			_neon.TrackerEvents.sendVideoPlayEvent(vid, tid, playerId, adPlay, adelta, playCount);
+				
+			if(_adPlayWithVidNull == true)
+				_neon.TrackerEvents.sendAdPlayEvent(vid, tid, playerId, adelta, playCount);
 		}
 
 		// When the user hits play button or autoplay request initiated
 		function onMediaPlay(evt){
+			//mediaPlay = new Date().getTime();
+			//console.log("VIDEO CLICK", adPlayTs, mediaPlay, mediaPlay - adPlayTs);
 			if (_newMedia){
 				_newMedia = false;
-				adPlay = false;
-				mediaPlay = new Date().getTime();
 				
 				// (time when player initiates request to play video - Last time an image or the player was clicked)
 				var lclick = _neon.tracker.getLastClickNeonElementTS();
@@ -1090,20 +1094,34 @@ Object.size = function(obj){
 		}
 
 		function onAdStart(evt){
+			if (initialVideoId == null)
+				_adPlayWithVidNull = true;
+			else
+				_adPlayWithVidNull = false; //reset flag
+
 			adPlay = true;
 			adPlayTs = new Date().getTime();
 			playCount += 1;
-			var thumb = getTidForVid(initialVideoId);
-			var tid = null;
-			if (thumb)
-				tid = thumb[0];
-			_neon.TrackerEvents.sendAdPlayEvent(initialVideoId, tid, playerId, adelta, playCount);
+			
+			// if initialVideoId == null, then delay the ad play 
+			// if not firstAdPlay we know the video id
+			if (_adPlayWithVidNull == false){
+				var thumb = getTidForVid(initialVideoId);
+				var tid = null;
+				if (thumb)
+					tid = thumb[0];
+				console.log(initialVideoId, adPlay, adPlayTs);
+				_neon.TrackerEvents.sendAdPlayEvent(initialVideoId, tid, playerId, adelta, playCount);
+			}
 		}
 	
 		// USED to reset the _newMedia flag used to track if the video play initiated for the first time	
 		function onMediaChangeOrComplete(evt){
-			console.log("Change", evt);
+			console.log("Media Change", evt);
+			mediaPlay = new Date().getTime();
 			_newMedia = true;
+			adPlay = false;
+			initialVideoId = evt.media.id;
 		}
 
 		function getPlaylists(playlists){
