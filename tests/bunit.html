@@ -1,0 +1,178 @@
+<!-- Test page with various brightcove scenarios -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta charset="utf-8">
+	<title>Neon Unit Testing</title>
+	<link rel="stylesheet" href="qunit-1.14.0.css">
+
+	<style>
+		img.hidden {display:none;}
+	</style>
+<title> Brightcove SMART Player unit testing </title>
+
+</head>
+<body style="font-family:Arial, Helvetica, sans-serif; font-size:12px">
+
+	<div id="qunit"></div>
+	<div id="qunit-fixture"></div>
+	<script>
+	 //to make sure neon.js doesn't execute main function while unit testing
+	_neon = {};
+	_neon.UNITTEST = 1;
+	</script>
+	<script src="../js/jquery-1.11.0.min.js"></script>
+	<script src="../js/testutils.js"></script>
+	<script type="text/javascript" src="../js/neonbootloader.js" id="PROD_TEST"> </script> 
+	<script src="qunit-1.14.0.js"></script>
+	<script type="text/javascript" src="funcunit.js"></script>
+
+		<a href="#">
+			<img id="I" src="img/neontnd927f1b798758dcd1d012263608f4ae8-3117749365001-aba39a40c32c01684f4f0879588bc9f8.jpg"/>
+		</a>
+
+<!-- UNIT Test -->
+<script>
+
+
+	var videoPlayer;
+	function myTemplateLoad(experienceID) {
+		var player = null;
+
+		try { player = brightcove.api.getExperience(experienceID); } catch(err) {}
+
+
+		if (player){
+			var APIModules = brightcove.api.modules.APIModules;
+			videoPlayer = player.getModule(APIModules.VIDEO_PLAYER);
+		}
+		_neon.BCNeonPlayerTracker.onTemplateLoad(experienceID);
+		console.log("unit test template load handler fired", player);
+	}
+
+	function myTemplateReady(evt){
+		if(evt.target.experience){
+			var APIModules = brightcove.api.modules.APIModules;
+			exp = evt.target.experience.getModule(APIModules.EXPERIENCE);
+			videoPlayer = exp.experience.getModule(APIModules.VIDEO_PLAYER);
+		}
+		_neon.BCNeonPlayerTracker.onTemplateReady(evt);
+	}
+
+	//function videoClick(){
+	//	videoPlayer.play();  
+	//	//Also click on the video player object
+	//	F('#myExperience').click();	
+	//}
+	asyncTest("On Player load events", function(){
+
+		// Wait for player to load
+		// TODO: Add something to wait on like a div change or something?
+
+		setTimeout(function(){
+			var src = getScriptTag("a=il");
+			notEqual(typeof(src), 'undefined');
+			var tids = getQueryValue(src.split("?")[1], "tids").split(',');
+			//console.log(tids.split(','));
+			equal(tids.length, 3, "number of tids match for the test playlist");
+
+			var src = getScriptTag("a=iv");
+			notEqual(typeof(src), 'undefined');
+			var tids = getQueryValue(src.split("?")[1], "tids").split(',');
+			equal(tids.length, 3, "number of tids match for the test playlist");
+			
+			start();
+		}, 2000);
+	
+	
+	});
+	
+	asyncTest("Video Events", function(){
+		nextVideo = "3117793385001";
+
+		if(videoPlayer){
+			videoPlayer.play();
+			setTimeout(function(){ 
+				var src = getScriptTag("a=vc");
+				notEqual(typeof(src), 'undefined');
+				var tid = getQueryValue(src.split("?")[1], "tid").split(',');
+				equal(tid, "d927f1b798758dcd1d012263608f4ae8-3117749365001-aba39a40c32c01684f4f0879588bc9f8", "Autoplay");
+		
+				// Delay looking for video play event	
+				setTimeout(function(){ 	
+					var src = getScriptTag("a=vp");
+					notEqual(typeof(src), 'undefined');
+					var tid = getQueryValue(src.split("?")[1], "tid");
+					var pcount = getQueryValue(src.split("?")[1], "pcount");
+					var adelta = getQueryValue(src.split("?")[1], "adelta");
+					equal(adelta, "null", "adelta null on autoplay");
+					equal(tid, "d927f1b798758dcd1d012263608f4ae8-3117749365001-aba39a40c32c01684f4f0879588bc9f8", "Autoplay VP");
+					equal(pcount, 1, "first video");
+				
+					// Induce a fake click on video
+					_neon.tracker.setLastClickNeonElement("object");
+					videoPlayer.pause();
+					videoPlayer.cueVideoByID(nextVideo);
+					videoPlayer.play();
+					setTimeout(function(){
+						var src = getScriptTag("a=vp");
+						var pcount = getQueryValue(src.split("?")[1], "pcount");
+						var vid = getQueryValue(src.split("?")[1], "vid");
+						var tid = getQueryValue(src.split("?")[1], "tid");
+						equal(pcount, 2, "second video");
+						equal(vid, nextVideo);
+						equal(tid, "d927f1b798758dcd1d012263608f4ae8-3117793385001-4ce090d327f195c2648ac0ccc42697ef");
+						videoPlayer.pause();
+						start();
+					}, 1000);		
+
+				}, 250);
+			}, 1500);
+
+		}else{
+			ok(true, "no player");
+			start();
+
+		}
+	});
+</script>
+
+
+<a href="http://localhost/trackerv2/tests/bunit.html"> CLICK MEEEEE </a>
+
+<!-- Start of Brightcove Player -->
+
+<div style="display:none">
+</div>
+<!--
+By use of this code snippet, I agree to the Brightcove Publisher T and C
+found at http://corp.brightcove.com/legal/terms_publisher.cfm.
+-->
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"> </script>
+
+<script language="JavaScript" type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script>
+<object id="myExperience" class="BrightcoveExperience">
+  <param name="bgcolor" value="#FFFFFF" />
+  <param name="width" value="960" />
+  <param name="height" value="445" />
+  <param name="playerID" value="2296789947001" />
+  <param name="playerKey" value="AQ~~,AAACFlFGaSk~,KO63PfDvw1wvFttP8GayNl6qTtlGGc4J" />
+  <param name="isVid" value="true" />
+  <param name="isUI" value="true" />
+  <param name="dynamicStreaming" value="true" />	
+  <param name="@playlistTabs" value="2484337219001" />  
+  <param name="@playlistTabs" value="3538087918001" />  
+  <param name="includeAPI" value="true" />
+  <param name="templateLoadHandler" value="myTemplateLoad" />
+  <param name="templateReadyHandler" value="myTemplateReady" />
+</object>
+<script type="text/javascript">brightcove.createExperiences();</script>
+
+<br/>
+<br/>
+
+</div>
+</body>
+</html>
+</body>
+</html>

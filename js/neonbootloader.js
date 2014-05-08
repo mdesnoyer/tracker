@@ -440,11 +440,11 @@ LazyLoad = (function (doc) {
     if(isJqueryRequired()) {
       LazyLoad.js('http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js', function() {
       //LazyLoad.js('http://localhost/trackerv2/js/jquery-1.11.0.min.js', function() {
-        console.log("jQuery loaded and put in no coflict mode for neon js use");
+        //console.log("jQuery loaded and put in no coflict mode for neon js use");
         _neonjQuery = $.noConflict(true); 
         //LazyLoad.js('http://cdn.neon-lab.com/neon2.js', function() {
         LazyLoad.js('http://localhost/trackerv2/js/neon.js', function() {
-          console.log("neon main js loaded, using its own jQuery");
+          //console.log("neon main js loaded, using its own jQuery");
           //run
         });
       });
@@ -452,7 +452,7 @@ LazyLoad = (function (doc) {
       _neonjQuery = jQuery;
       //LazyLoad.js('http://cdn.neon-lab.com/neon2.js', function() {
       LazyLoad.js('http://localhost/trackerv2/js/neon.js', function() {
-        console.log("neon main js loaded"); 
+        //console.log("neon main js loaded"); 
         //run
       });
     }

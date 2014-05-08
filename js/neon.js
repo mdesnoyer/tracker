@@ -180,7 +180,7 @@ Object.size = function(obj){
 					bObj.addScriptTag();  
 				}
 				catch(err){
-					console.log(err);
+					//console.log(err);
 				}
 
 			}
@@ -399,8 +399,8 @@ Object.size = function(obj){
 
 		//TODO: ThumbMAP to include the visible image size as well, currently we keep 2 maps
 		thumbMap = getThumbMapForNeonThumbnails(urls);
-		console.log("TID MAPPER", thumbMap);
-		/// Send the loaded image set that Neon is interested in 
+		// console.log("TID MAPPER", thumbMap);
+		// Send the loaded image set that Neon is interested in 
 		_neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
 		startTracking(urls);
 	}
@@ -508,8 +508,6 @@ Object.size = function(obj){
 			if(visibleSetChanged) {
 				//update our set of currently visible thumbnails
 				lastVisibleSet = newVisibleSet;
-				//TODO: Send images that havent' been sent so far	
-				//Send only the delta of visible images 
 
 				var visibleThumbMap = [];
 				//console.log("AV", allVisibleSet);
@@ -522,6 +520,8 @@ Object.size = function(obj){
 						}
 					}
 				}
+				
+				//Send only the delta of visible images 
 				// TODO: Use a Q to send images visible event	
 				if(visibleThumbMap.length >0)	
 					_neon.TrackerEvents.sendImagesVisibleEvent(visibleThumbMap);
@@ -532,9 +532,9 @@ Object.size = function(obj){
 		//on window unload, send thumbnails viewed in the current session to the server
 		//TODO: Test this properly across browsers
 		$(window).bind('beforeunload', function() {
-			console.log("sending viewed thumbnails to server");
+			// console.log("sending viewed thumbnails to server");
 			var thumbnails = _neon.StorageModule.getAllThumbnails("session");
-			//TODO: Send the Images visible event, when you have a 
+			//TODO: Send the Images visible event, when you have a Q 
 		});
 	}
 
@@ -596,7 +596,12 @@ Object.size = function(obj){
 				return lastMouseClickElement;
 				//return lastClickOnNeonElement;
 			},
-
+		
+			// Only used by test method	
+			setLastClickNeonElement: function(ele){
+				lastMouseClick = new Date().getTime();
+				lastMouseClickElement = ele;
+			},
 
 			//getLastClickedImage: function(){
 			//	return lastClickedImage;
@@ -706,7 +711,7 @@ Object.size = function(obj){
 				localStorage.setItem(uidKey, uid);
 				return uid;
 			}
-			console.log(uid);
+			//console.log(uid);
 		},
 
 		/// store thumbnail to storage    
@@ -738,12 +743,12 @@ Object.size = function(obj){
 					if (_getDomain(document.URL) != _getDomain(pageUrl))
 						return null;
 				}	
-				// TODO: create the image click event here, coz this was opened
+				// Create the image click event here, coz this was opened
 				// in a new tab via right click->open 
 
 				// Not a current session, hence get global state
 				ret = _getThumbnailLocalStorage(vidId);
-				//console.log("GET THUMB", ret);
+				_neon.TrackerEvents.sendImageClickEvent(vidId, ret ? ret[0].thumbId : null);
 				if(ret){
 					locRetrieved = "local";
 					return [ret, locRetrieved];
@@ -784,15 +789,14 @@ Object.size = function(obj){
 
 		//Clear previous session data for the page 
 		clearPageSessionData: function(pageUrl){
-			//TODO: Clear lastClickedImage data
 			if(typeof(pageUrl)==='undefined'){
 				var pageUrl = document.URL.split("?")[0];
 				var keyMatch = _getPageStorageKey(pageUrl);
 				for(var i = 0; i<sessionStorage.length; i++) {
 					var key = sessionStorage.key(i);
-					console.log("key : " + key + " ---> " + keyMatch);
+					// console.log("key : " + key + " ---> " + keyMatch);
 					if(key == keyMatch) {
-						console.log("remove " + key);
+						// console.log("remove " + key);
 						sessionStorage.removeItem(key);
 					}
 				}
@@ -895,7 +899,6 @@ Object.size = function(obj){
 		// ImageMap is a Map of thumbnail url => tid
 		// imSizeMap is map of url => visible im size 
 		sendImagesLoadedEvent: function(imageMap, imSizeMap){
-			//console.log("il", imSizeMap);
 			eventName = "il";
 			var tids = convertThumbMapToTids(imageMap, imSizeMap);
 			var req = buildTrackerEventData();
@@ -928,6 +931,7 @@ Object.size = function(obj){
 		var vidMap = {}; // VID => TID, location(player)  
 
 		function addVideoToMap(vid, url){
+			url = url.split('?')[0];
 			var vmap = _neon.tracker.parseNeonBrightcoveUrl(url);
 			if (vmap != null){
 				thumbMap[url] = vmap;
@@ -939,7 +943,7 @@ Object.size = function(obj){
 		}
 
 		function _autoPlayVideo(){
-			console.log("DELTA", adelta, lastMouseClick, adPlayTs, mediaPlay);
+			//console.log("DELTA", adelta, lastMouseClick, adPlayTs, mediaPlay);
 			if(adelta && adelta <= 2000){
 				return false;
 			}
@@ -962,7 +966,7 @@ Object.size = function(obj){
 					// 1. followed link on the same tab
 					// 2. right click and open
 					if (referrer != ""){
-						console.log("AUTOPLAY 1st video with referrer", vid, referrer);
+						//console.log("AUTOPLAY 1st video with referrer", vid, referrer);
 						thumb = _neon.StorageModule.getThumbnail(vid, referrer);
 						if (thumb){
 							tid = thumb[0].thumbId;
@@ -974,14 +978,14 @@ Object.size = function(obj){
 						return [tid, loc];
 
 					}else{
-						console.log("AUTOPLAY 1st video NO referrer");
+						//console.log("AUTOPLAY 1st video NO referrer");
 						// Since referrer is empty, you got here through a direct link 
 						// check the video playlist or video loaded in the player to see which TID was shown
 						return vidMap[vid];
 					}
 
 				}else{
-						console.log("AUTOPLAY >= 2", playCount, adPlayTs, mediaPlay);
+						//console.log("AUTOPLAY >= 2", playCount, adPlayTs, mediaPlay);
 						// Autoplayed and it was the 2nd video, send the TID from the player. Ignore the referrer 
 						return vidMap[vid];
 				}
@@ -991,12 +995,12 @@ Object.size = function(obj){
 				
 				// Click on video object, look in video storage (vidMap)
 				if(_neon.tracker.getLastClickNeonElement() == "object"){
-					console.log("You CLICKED on the player! Didn't You?");
+					//console.log("You CLICKED on the player! Didn't You?");
 					return vidMap[vid];
 				}else{
 					// Likely an image /div click	
 					// Check the session storage of the current page
-					console.log("You CLICKED on Image ! Didn't You?");
+					//console.log("You CLICKED on Image ! Didn't You?");
 					thumb = _neon.StorageModule.getThumbnail(vid);
 					if (thumb){
 						tid = thumb[0].thumbId;
@@ -1011,7 +1015,6 @@ Object.size = function(obj){
 			var imageUrls = new Array();
 			var imgVisibleSizes = {};  
 			var mediaCollection = content.getAllMediaCollections();
-			//console.log("Player video collection", mediaCollection);
 			if (mediaCollection.length >0 && mediaCollection[0].mediaCount > 0){
 				for(var i=0; i< mediaCollection[0].mediaCount; i++) {
 					url = content.getMedia(mediaCollection[0].mediaIds[i])["thumbnailURL"];
@@ -1035,7 +1038,6 @@ Object.size = function(obj){
 					
 					//Images Loaded event within the player
 					_neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
-					//console.log("Send BCOVE Player img load", thumbMap, imgVisibleSizes); 		
 				}				
 		
 			}
@@ -1048,7 +1050,7 @@ Object.size = function(obj){
 			}
 			
 			vid = evt.media.id;
-			console.log("Adplay", adPlay, playCount);	
+			//console.log("Adplay", adPlay, playCount);	
 			var thumb = getTidForVid(vid);
 			var tid = null;
 			var loc = null;
@@ -1110,14 +1112,13 @@ Object.size = function(obj){
 				var tid = null;
 				if (thumb)
 					tid = thumb[0];
-				console.log(initialVideoId, adPlay, adPlayTs);
+				//console.log(initialVideoId, adPlay, adPlayTs);
 				_neon.TrackerEvents.sendAdPlayEvent(initialVideoId, tid, playerId, adelta, playCount);
 			}
 		}
 	
 		// USED to reset the _newMedia flag used to track if the video play initiated for the first time	
 		function onMediaChangeOrComplete(evt){
-			console.log("Media Change", evt);
 			mediaPlay = new Date().getTime();
 			_newMedia = true;
 			adPlay = false;
@@ -1156,6 +1157,7 @@ Object.size = function(obj){
 			if(Object.size(thumbMap) >0){
 					//Images visible event
 					_neon.TrackerEvents.sendImagesVisibleEvent(thumbMap);
+
 					//Images Loaded event within the player
 					_neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
 			}
@@ -1185,14 +1187,13 @@ Object.size = function(obj){
 						videoPlayer.getCurrentVideo(
 								function(videoDTO) {
 									initialVideo = videoDTO;
-									console.log(initialVideo);
 									addVideoToMap(initialVideo.id, initialVideo.thumbnailURL);
 								});
 						exp.getExperienceID(function(pid){playerId=pid;});
 						playerHtmlObject = document.getElementById(player.id);
 						playlists = _neon.utils.getQueryValue(playerHtmlObject.data.split("?")[1], "%40playlistTabs");
 						getPlaylists(playlists);
-						console.log("SMART player");
+						//console.log("SMART player");
 
 					}else{
 						//Template load didn't fire -- Investigate why (Happens on IPAD)
@@ -1221,7 +1222,6 @@ Object.size = function(obj){
 			},
 
 			onTemplateLoad: function(expID) {
-				console.log("PLAYER TEMPLATE LOAD");
 				//try to fetch smart player api
 				try {
 					player = brightcove.api.getExperience(expID);
@@ -1243,7 +1243,7 @@ Object.size = function(obj){
 							trackLoadedImageUrls);
 					advertising = player.getModule(APIModules.ADVERTISING);
 					advertising.addEventListener(BCAdvertisingEvent.AD_START, onAdStart);
-					console.log("FLASHONLY", player);
+					//console.log("FLASHONLY", player);
 				}
 			}
 
@@ -1261,11 +1261,9 @@ Object.size = function(obj){
 		/// Neon Init method
 		function NeonInit(){
 			if(document.readyState === "complete" || document.readyState === "interactive"){
-				//console.log(" ---- PAGE LOAD EVENT ---- ");
-
 				//Clear the data on viewed thumbnails in session storage 
 				//and update the TS in local storage	
-				console.log(window.location.pathname);
+				//console.log(window.location.pathname);
 				//console.log(_neon.StorageModule.getAllThumbnails("session"));	
 				_neon.StorageModule.clearPageSessionData();
 				//console.log("After clearing");

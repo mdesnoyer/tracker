@@ -63,13 +63,13 @@
 		_neon.StorageModule.storeThumbnail(vidId, thumbId);
 
 		// Test retrieving the data from the same page, in the same session
-		var storageData = _neon.StorageModule.getThumbnail(vidId);
-		equal(storageData[0].thumbId, thumbId, "Saved and fetched data");
+		var val = _neon.StorageModule.getThumbnail(vidId)[0].thumbId;
+		equal(val, thumbId, "Saved and fetched data");
 		
 		// Test retrieving the data from a different page, in the same session
-		var referal_page = "http://localhost/xyz";
-		var storageData = _neon.StorageModule.getThumbnail(vidId, referal_page);
-		equal(storageData[0].thumbId, thumbId, "Fetched data for diff referal page");
+		//var referal_page = "http://localhost/xyz";
+		//var storageData = _neon.StorageModule.getThumbnail(vidId, referal_page)[0].thumbId;
+		//equal(storageData, thumbId, "Fetched data for diff referal page");
 
 		// A new session created by right-click open, hence need to check if
 		// data is in localStorage
@@ -242,15 +242,12 @@
 	});	
 	
 	test("video click event", function(){
-		_neon.TrackerEvents.sendVideoClickEvent("vid", "tid", "pid", "pclick", "adplay", "mplay");
+		_neon.TrackerEvents.sendVideoClickEvent("vid", "tid", "pid");
 		var src = getScriptTag("a=vc");
 		notEqual(typeof(src), 'undefined');
 		equal("vid", getQueryValue(src.split("?")[1], "vid"));
 		equal("tid", getQueryValue(src.split("?")[1], "tid"));
 		equal("pid", getQueryValue(src.split("?")[1], "playerid"));
-		equal("pclick", getQueryValue(src.split("?")[1], "pclick"));
-		equal("adplay", getQueryValue(src.split("?")[1], "adplay"));
-		equal("mplay", getQueryValue(src.split("?")[1], "mplay"));
 	});	
 		
 	// Test local storage not available or full
