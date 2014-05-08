@@ -554,10 +554,8 @@ Object.size = function(obj){
 	function parseNeonBrightcoveUrl(imgUrl){
 		//BCOVE URLs are of the form http://bcove/13_35_neontnAPIKEY_VID_TMD5.jpg?pb=13251 
 		if (imgUrl.indexOf("neontn") > -1) {
-			var sUrl = imgUrl.split('?')[0]; //sanitize	
-			var parts = sUrl.split('/');
-			var tidPart = parts[parts.length -1].split("neontn")[1]; 
-			var tid = tidPart.split('.jpg')[0];
+			var parts = imgUrl.split('neontn')[1];
+			var tid = parts.split('.jpg')[0];    
 			var vid = tid.split('-')[1];
 			return [vid, tid];
 		}
@@ -831,8 +829,7 @@ Object.size = function(obj){
 		pageUrl = document.URL.split("?")[0];
 		referralUrl = document.referrer.split('?')[0];
 		timestamp = new Date().getTime();
-		//TODO: FIX TRACKER URL
-		var request = "http://localhost:8888/v2/track?"+ "a=" + eventName + "&page=" + encodeURIComponent(pageUrl) + "&pageid=" + pageLoadId + "&ttype=" + trackerType + "&ref=" + encodeURIComponent(referralUrl) + "&tai=" + trackerAccountID + "&cts=" + timestamp;
+		var request = "http://trackserver-test-691751517.us-east-1.elb.amazonaws.com/v2/track?"+ "a=" + eventName + "&page=" + encodeURIComponent(pageUrl) + "&pageid=" + pageLoadId + "&ttype=" + trackerType + "&ref=" + encodeURIComponent(referralUrl) + "&tai=" + trackerAccountID + "&cts=" + timestamp;
 		return request;
 	}
 
