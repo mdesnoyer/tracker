@@ -295,18 +295,18 @@ Object.size = function(obj){
 	//NOTE: Only IGN case handled for noe
 	function _isThumbnail($el) {
 
-		return true;
+		// return true for now
+		return true; 
 		
-		$parent = $el.parent();
-		if(_neon.utils.isAnchor($parent)) { //check parent
-			return true;
-		} else { //check grandparent
-			$parent = $parent.parent();
-			return _neon.utils.isAnchor($parent);
-		}
+		//$parent = $el.parent();
+		//if(_neon.utils.isAnchor($parent)) { //check parent
+		//	return true;
+		//} else { //check grandparent
+		//	$parent = $parent.parent();
+		//	return _neon.utils.isAnchor($parent);
+		//}
 	}
 
-	
 	// TODO(Sunil): Get thumbnail ids and video_id for Brightcove images from URL
 	// STUB to be filled when Image platform is ready
 	function getNeonThumbnailIds(){
@@ -346,23 +346,77 @@ Object.size = function(obj){
 		return ret;
 	}
 
+	// Find adjacent elements with same link
+	// This is to handle cases where headlines and images have the same link
+	// Compatible with stack.com
+	// TODO: handle IGN case 
+	function _findAdjacentElementWithSameLink($el){
+		$parent = $el.parent();
+		var link = $parent.attr('href');
+		var ret; 
+		if(link != ""){
+			var $ggparent = $parent.parent().parent().parent();
+			// Only if its an Article TAG find all anchors for the children
+			if($ggparent.prop("tagName") == "ARTICLE"){
+				var x = $ggparent.children();
+				for (var i=0 ; i<x.length; i++){
+					var y = $(x[i]).find("a");
+					for (var j=0; i<y.length; y++){
+						var $cur = $(y[j]);
+						if (link == ($cur.attr('href'))){
+							if ($parent.is($cur) == false){
+								ret = $cur;
+							}
+						}
+					}
+				}
+			}
+		}
+		return ret;
+	}	
+
+	// Register Neon Image click handler to the element, its parent & grandparent
+	// Explore the use of onmouseup since onclick() may already be instrumented
+	function _registerClickEvent($el){
+		$parent = $el.parent();
+
+		//Add image src as a function parameter
+		try{
+			$el.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
+			// If the parent is an anchor with JS, then attach click handler
+			// If its normal href, then the click event may fire twice, hence skip 
+			if(_neon.utils.isAnchor($parent) && ($parent.attr('href').indexOf('http://') <0))
+				$parent.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
+
+			//var $topElement = _findAdjacentElementWithSameLink($el);
+			//if($topElement)
+			//	$topElement.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
+		}catch(err){
+			console.log(err);
+		}	
+	}
+	
 	// image click event handler
 	function imageClickEventHandler(e){
+		
 		// Store the timestamp when an image was clicked
 		// lastClickOnNeonElementTs = new Date().getTime();
 		lastMouseClick = new Date().getTime();
-
+		var imgSrc = e.data.imgsrc; //$(this).attr('src');
 		var offset = $(this).offset(); // Get position relative to document
-		var imgSrc = $(this).attr('src');
-		var wx = offset.left;
-		var wy = offset.top;
-		var coordinates = e.pageX  + "," + e.pageY;
+		var wx = offset.left - $(window).scrollLeft(); 
+		var wy = offset.top - $(window).scrollTop();
+		var px = offset.left;
+		var py = offset.top;
 		var thumbData = thumbMap[imgSrc];
 		/// If the image is one that Neon cares about 
 		if (typeof(thumbData) !== 'undefined'){
 			var vid = thumbData[0];
 			var tid = thumbData[1];
-			_neon.TrackerEvents.sendImageClickEvent(vid, tid, wx, wy, e.pageX, e.pageY);
+			_neon.TrackerEvents.sendImageClickEvent(vid, tid, wx, wy, px, py);
+		}else{
+			// May be send the img src as vid, to help track errors on resolving thumb data ?
+			//_neon.TrackerEvents.sendImageClickEvent(encodeURIComponent(imgSrc), null, wx, wy, e.pageX, e.pageY);
 		}
 	}
 
@@ -378,8 +432,9 @@ Object.size = function(obj){
 				//this url resolves to some thumbnail id
 				if (url.indexOf("neontn") > -1 ){
 					urls.push(url);
-					//Attach a click handler to the image
-					$(this).click(imageClickEventHandler);
+					//Attach a click handler to the image and its parent
+					_registerClickEvent($(this));
+					//console.log(url, $(this)[0].clientWidth, $(this).prop("scrollHeight"));
 					imgVisibleSizes[url] = [$(this).width(), $(this).height()];
 					//console.log(url, $(this).width(), $(this).height());
 				}
@@ -420,7 +475,7 @@ Object.size = function(obj){
 	function initImageLoad() {
 		//wait for page load
 		$(window).bind("load", function() {
-			mapImagesToTids()
+			mapImagesToTids();
 			//document.onmouseup = _trackLastMouseClick; 
 		});
 	}
@@ -746,7 +801,7 @@ Object.size = function(obj){
 
 				// Not a current session, hence get global state
 				ret = _getThumbnailLocalStorage(vidId);
-				_neon.TrackerEvents.sendImageClickEvent(vidId, ret ? ret[0].thumbId : null);
+				//_neon.TrackerEvents.sendImageClickEvent(vidId, ret ? ret[0].thumbId : null);
 				if(ret){
 					locRetrieved = "local";
 					return [ret, locRetrieved];
@@ -823,13 +878,16 @@ Object.size = function(obj){
 		var pageLoadId = _neon.utils.getPageRequestUUID(), 
 		trackerAccountID, trackerType, pageUrl, referralUrl, timestamp, eventName; 
 
-	function buildTrackerEventData(){
+	function buildTrackerEventData(ts){
 		trackerAccountID = _neon.tracker.getTrackerAccountId();
 		trackerType = _neon.tracker.getTrackerType();
 		pageUrl = document.URL.split("?")[0];
 		referralUrl = document.referrer.split('?')[0];
-		timestamp = new Date().getTime();
+		var timestamp = new Date().getTime();
+		if (typeof(ts) !== 'undefined')
+			timestamp = ts
 		var request = "http://trackserver-test-691751517.us-east-1.elb.amazonaws.com/v2/track?"+ "a=" + eventName + "&page=" + encodeURIComponent(pageUrl) + "&pageid=" + pageLoadId + "&ttype=" + trackerType + "&ref=" + encodeURIComponent(referralUrl) + "&tai=" + trackerAccountID + "&cts=" + timestamp;
+		//var request = "http://localhost:8888/v2/track?"+ "a=" + eventName + "&page=" + encodeURIComponent(pageUrl) + "&pageid=" + pageLoadId + "&ttype=" + trackerType + "&ref=" + encodeURIComponent(referralUrl) + "&tai=" + trackerAccountID + "&cts=" + timestamp;
 		return request;
 	}
 
@@ -874,9 +932,9 @@ Object.size = function(obj){
 		},
 
 		// If AD event available
-		sendAdPlayEvent: function(vid, tid, playerId, adelta, pcount){
+		sendAdPlayEvent: function(vid, tid, playerId, adelta, pcount, adTs){
 			eventName = "ap";
-			var req = buildTrackerEventData();
+			var req = buildTrackerEventData(adTs);
 			req += "&vid=" + vid + "&tid=" + tid + "&adelta=" + adelta + "&pcount=" + pcount;
 			if (typeof(playerId) !=='undefined'){
 				req += "&playerid=" + playerId;
@@ -1065,9 +1123,10 @@ Object.size = function(obj){
 
 			//Send the video play event
 			_neon.TrackerEvents.sendVideoPlayEvent(vid, tid, playerId, adPlay, adelta, playCount);
-				
+		
+			// Send the Ad play event here since we know the video for which the ad played previously		
 			if(_adPlayWithVidNull == true)
-				_neon.TrackerEvents.sendAdPlayEvent(vid, tid, playerId, adelta, playCount);
+				_neon.TrackerEvents.sendAdPlayEvent(vid, tid, playerId, adelta, playCount, adPlayTs);
 		}
 
 		// When the user hits play button or autoplay request initiated
@@ -1078,9 +1137,9 @@ Object.size = function(obj){
 				_newMedia = false;
 				
 				// (time when player initiates request to play video - Last time an image or the player was clicked)
-				var lclick = _neon.tracker.getLastClickNeonElementTS();
-				if (lclick)	
-					adelta = mediaPlay - lclick;
+				//var lclick = _neon.tracker.getLastClickNeonElementTS();
+				//if (lclick)	
+				//	adelta = mediaPlay - lclick;
 				
 				var vid = evt.media.id;
 				initialVideoId = vid;	
@@ -1102,7 +1161,7 @@ Object.size = function(obj){
 			adPlayTs = new Date().getTime();
 			playCount += 1;
 			
-			// if initialVideoId == null, then delay the ad play 
+			// if initialVideoId == null, then delay sending the ad play 
 			// if not firstAdPlay we know the video id
 			if (_adPlayWithVidNull == false){
 				var thumb = getTidForVid(initialVideoId);
@@ -1114,12 +1173,24 @@ Object.size = function(obj){
 			}
 		}
 	
-		// USED to reset the _newMedia flag used to track if the video play initiated for the first time	
-		function onMediaChangeOrComplete(evt){
+		// USED to reset the _newMedia flag used to track if the video play initiated for the first time
+		// This is the request to the player, which then triggers the mediaPlay event 	
+		function onMediaChange(evt){
 			mediaPlay = new Date().getTime();
 			_newMedia = true;
 			adPlay = false;
 			initialVideoId = evt.media.id;
+			// (time when player initiates request to play video - Last time an image or the player was clicked)
+			var lclick = _neon.tracker.getLastClickNeonElementTS();
+			if (lclick)	
+				adelta = mediaPlay - lclick;
+			var vid = evt.media.id;
+			initialVideoId = vid;	
+			var thumb = vidMap[vid];
+			var playerTid = null;
+			if (thumb)
+				playerTid = thumb[0];
+			_neon.TrackerEvents.sendVideoClickEvent(vid, playerTid, playerId);
 		}
 
 		function getPlaylists(playlists){
@@ -1175,9 +1246,7 @@ Object.size = function(obj){
 						videoPlayer.addEventListener(brightcove.api.events.MediaEvent.PLAY, 
 								onMediaPlay);
 						videoPlayer.addEventListener(brightcove.api.events.MediaEvent.CHANGE, 
-								onMediaChangeOrComplete);
-						videoPlayer.addEventListener(brightcove.api.events.MediaEvent.COMPLETE, 
-								onMediaChangeOrComplete);
+								onMediaChange);
 						var adModule = player.getModule(APIModules.ADVERTISING);
 						adModule.addEventListener(
 								brightcove.api.events.AdEvent.START, onAdStart); 
@@ -1204,9 +1273,7 @@ Object.size = function(obj){
 							videoPlayer.addEventListener(brightcove.api.events.MediaEvent.PLAY,
 															onMediaPlay);
 							videoPlayer.addEventListener(brightcove.api.events.MediaEvent.CHANGE, 
-															onMediaChangeOrComplete);
-							videoPlayer.addEventListener(brightcove.api.events.MediaEvent.COMPLETE, 
-															onMediaChangeOrComplete);
+															onMediaChange);
 							var adModule = exp.experience.getModule(APIModules.ADVERTISING);
 							adModule.addEventListener(brightcove.api.events.AdEvent.START, onAdStart);
 						});
@@ -1234,8 +1301,7 @@ Object.size = function(obj){
 					content = player.getModule(APIModules.CONTENT);                         
 					videoPlayer.addEventListener(BCMediaEvent.BEGIN, onMediaBegin);
 					videoPlayer.addEventListener(BCMediaEvent.PLAY, onMediaPlay);
-					videoPlayer.addEventListener(BCMediaEvent.COMPLETE, onMediaChangeOrComplete);
-					videoPlayer.addEventListener(BCMediaEvent.CHANGE, onMediaChangeOrComplete);
+					videoPlayer.addEventListener(BCMediaEvent.CHANGE, onMediaChange);
 					exp.addEventListener(BCExperienceEvent.CONTENT_LOAD, 
 							trackLoadedImageUrls);
 					advertising = player.getModule(APIModules.ADVERTISING);
