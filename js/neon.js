@@ -1066,6 +1066,17 @@ Object.size = function(obj){
 			}
 		}
 
+                // Method to send the load and visible event for video players that only 
+                // have a single video   
+                function trackSingleVideoPlayerThumbnail(){
+                        if(Object.size(thumbMap) >0){
+                                _neon.TrackerEvents.sendImagesVisibleEvent(thumbMap);
+                                imgVisibleSizes = {};
+                                imgVisibleSizes[Object.keys(thumbMap)[0]] = [120, 90];
+                                _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
+                        } 
+                }
+
 		function trackLoadedImageUrls(){
 			var imageUrls = new Array();
 			var imgVisibleSizes = {};  
@@ -1131,15 +1142,18 @@ Object.size = function(obj){
 
 		// When the user hits play button or autoplay request initiated
 		function onMediaPlay(evt){
-			//mediaPlay = new Date().getTime();
+			mediaPlay = new Date().getTime();
 			//console.log("VIDEO CLICK", adPlayTs, mediaPlay, mediaPlay - adPlayTs);
 			if (_newMedia){
 				_newMedia = false;
 				
 				// (time when player initiates request to play video - Last time an image or the player was clicked)
-				//var lclick = _neon.tracker.getLastClickNeonElementTS();
-				//if (lclick)	
-				//	adelta = mediaPlay - lclick;
+				var lclick = _neon.tracker.getLastClickNeonElementTS();
+                // For the first video play i.e adelta is null and a click has happened, 
+                // then compute the adelta. For a single bcove player, the mediachange event doesn't fire, //
+                // hence compute the adelta on media play event.
+				if (adelta == null && lclick)	
+					adelta = mediaPlay - lclick;
 				
 				var vid = evt.media.id;
 				initialVideoId = vid;	
@@ -1174,7 +1188,8 @@ Object.size = function(obj){
 		}
 	
 		// USED to reset the _newMedia flag used to track if the video play initiated for the first time
-		// This is the request to the player, which then triggers the mediaPlay event 	
+		// This is the request to the player, which then triggers the mediaPlay event 
+                // This event is not fired on a single video player, investigate why?	
 		function onMediaChange(evt){
 			mediaPlay = new Date().getTime();
 			_newMedia = true;
@@ -1254,6 +1269,7 @@ Object.size = function(obj){
 								function(videoDTO) {
 									initialVideo = videoDTO;
 									addVideoToMap(initialVideo.id, initialVideo.thumbnailURL);
+                                    trackSingleVideoPlayerThumbnail();
 								});
 						exp.getExperienceID(function(pid){playerId=pid;});
 						playerHtmlObject = document.getElementById(player.id);
