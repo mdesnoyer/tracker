@@ -413,9 +413,9 @@ Object.size = function(obj){
         if (typeof(thumbData) !== 'undefined'){
             var vid = thumbData[0];
             var tid = thumbData[1];
-            // TODO: Resolve the srcElement (Image) coordinates when it was
-            // clicked 
-            _neon.TrackerEvents.sendImageClickEvent(vid, tid, wx, wy, px, py);
+            // send the mouse click event relative to the image (e.clientX,
+            // e.clientY) 
+            _neon.TrackerEvents.sendImageClickEvent(vid, tid, wx, wy, px, py, e.clientX, e.clientY);
         }else{
             // May be send the img src as vid, to help track errors on resolving thumb data ?
             //_neon.TrackerEvents.sendImageClickEvent(encodeURIComponent(imgSrc), null, wx, wy, e.pageX, e.pageY);
@@ -892,7 +892,7 @@ Object.size = function(obj){
         if (typeof(ts) !== 'undefined')
         timestamp = ts
         var request = "http://trackserver-test-691751517.us-east-1.elb.amazonaws.com/v2/track?"+ "a=" + eventName + "&page=" + encodeURIComponent(pageUrl) + "&pageid=" + pageLoadId + "&ttype=" + trackerType + "&ref=" + encodeURIComponent(referralUrl) + "&tai=" + trackerAccountID + "&cts=" + timestamp;
-    //var request = "http://localhost:8888/v2/track?"+ "a=" + eventName + "&page=" + encodeURIComponent(pageUrl) + "&pageid=" + pageLoadId + "&ttype=" + trackerType + "&ref=" + encodeURIComponent(referralUrl) + "&tai=" + trackerAccountID + "&cts=" + timestamp;
+        //var request = "http://localhost:8888/v2/track?"+ "a=" + eventName + "&page=" + encodeURIComponent(pageUrl) + "&pageid=" + pageLoadId + "&ttype=" + trackerType + "&ref=" + encodeURIComponent(referralUrl) + "&tai=" + trackerAccountID + "&cts=" + timestamp;
     return request;
     }
 
@@ -915,12 +915,12 @@ Object.size = function(obj){
     return {
         // tid: thumbnail id
         // xy: window xy coordinate
-        sendImageClickEvent: function(vid, tid, wx, wy, px, py){
+        sendImageClickEvent: function(vid, tid, wx, wy, px, py, cx, cy){
             eventName = "ic";
             var req = buildTrackerEventData();
             req += "&vid=" + vid + "&tid=" + tid;
-            if(typeof(wx) !== 'undefined' && typeof(wy) !== 'undefined' && typeof(px) !== 'undefined' && typeof(py) !== 'undefined')
-                req += "&wx=" + wx + "&wy=" + wy + "&x=" + px + "&y=" + py;
+            if(typeof(wx) !== 'undefined' && typeof(wy) !== 'undefined' && typeof(px) !== 'undefined' && typeof(py) !== 'undefined' && typeof(cx) !== 'undefined')
+                req += "&wx=" + wx + "&wy=" + wy + "&x=" + px + "&y=" + py + "&cx=" + cx + "&cy=" + cy;
             _neon.JsonRequester.sendRequest(req);
         },
 
