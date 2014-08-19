@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- > UNIT Test to test events  <--!>
+
 <html>
 <head>
 	<meta charset="utf-8">
@@ -34,7 +36,7 @@
 	_neon.UNITTEST = 1;
 	</script>
 	<script src="../js/jquery-1.11.0.min.js"></script>
-	<script src="../js/neonbootloader.js"></script>
+	<script src="../js/neonbootloaderlocal.js"></script>
 	<script src="qunit-1.14.0.js"></script>
 	<script>
 	
@@ -218,7 +220,8 @@
 	});
 
 	test("image click event", function(){
-		_neon.TrackerEvents.sendImageClickEvent("vid", "tid", 45, 29, 100, 110);
+		_neon.TrackerEvents.sendImageClickEvent("vid", "tid", 45, 29, 100, 110,
+        10, 10);
 		
 		// verify the creation of the script tag
 		var src = getScriptTag("a=ic");
@@ -228,7 +231,10 @@
 		equal(100, getQueryValue(src.split("?")[1], "x"));
 		equal(110, getQueryValue(src.split("?")[1], "y"));
 		equal(45, getQueryValue(src.split("?")[1], "wx"));
-		equal(29, getQueryValue(src.split("?")[1], "wy"));
+        equal(45, getQueryValue(src.split("?")[1], "wx"));
+        equal(10, getQueryValue(src.split("?")[1], "cx"));
+		equal(10, getQueryValue(src.split("?")[1], "cy"));
+
 
 	});
 	
