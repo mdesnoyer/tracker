@@ -64,16 +64,15 @@ OO.plugin("NeonTrackerModule", function (OO, _, $, W) {
 		},
 
 		onPlayerReady: function(event, x){
-			this.sentPlay = false;
-			console.log("ready to play");
-			      },
+            this.sentPlay = false;
+            console.log("ready to play");
+        },
 
 		onPlayerPlay: function(event, x, y){
-			console.log(x);
-		if(this.sentPlay == false){
-			console.log("PLAY !!!");
-			this.sentPlay = true;	
-		}			
+            if(this.sentPlay == false){
+                console.log(" video PLAY !!!");
+                this.sentPlay = true;	
+            }			
 		}, 
 
         // Handles the PLAYER_CREATED event
@@ -84,12 +83,11 @@ OO.plugin("NeonTrackerModule", function (OO, _, $, W) {
         onPlayerCreate: function (event, elementId, params) {
             this.playerRoot = $("#" + elementId);
             this.rootElement = this.playerRoot.parent();
-            console.log("hello, init here!!!", this.rootElement, this.id);
         },
 
         // content that was loaded into the player
         onContentReady: function (event, content) {
-		console.log(content);
+		    //console.log(content);
             this.duration = content.duration / 1000;
         },
 
