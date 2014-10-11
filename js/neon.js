@@ -312,6 +312,7 @@ Object.size = function(obj){
     /// Detect Elements that have CSS background images with video
     /// IGN has a few web pages with this 
     function getElementsWithBackgroundImages() {
+        // TODO: Check for background-Image style
         var tags = document.getElementsByTagName('div'), //consider only divs
             len = tags.length,
             el,
@@ -482,9 +483,14 @@ Object.size = function(obj){
         //data will be an object like {url1: [vid_id, thumbnail_id], url2: [vid_id, thumbnail_id]}
         });
         */
-        
+       
+        if (videoIds.length < 1){
+            getThumbCallback(imgObjs, videoIds, '');
+            return;
+        }
+
         publisherId = "2089095449"; //IGN
-        var serviceURL = 'http://i1.neon-images.com/v1/getthumbnailid/' ;
+        var serviceURL = 'http://i1.neon-images.com/v1/getthumbnailid/';
         serviceURL +=  publisherId + '/' + '?params=' + videoIds.join(); 
 
         // Make a service call
@@ -536,8 +542,9 @@ Object.size = function(obj){
         for(var i=0; i<bgImageElArr.length; i++) {
             var el = bgImageElArr[i];
             var url = _neon.utils.getBackgroundImageUrl(el);
+            console.log("bg image", el, url);
             if (_isNeonThumbnail(url)){
-                imgObjs.push($(this));
+                imgObjs.push($(el));
                 if(_isNeonImageServingURL(url)){
                     var vid = _getNeonVideoIdFromURL(url); 
                     videoIds.push(vid);
@@ -568,8 +575,15 @@ Object.size = function(obj){
         imgVisibleSizes = {};
         imgURLs = [];
         for(var i=0; i<imgObjs.length; i++){
+            var url;
+            // TODO: Handle background Images
             var imgObj = imgObjs[i];
-            var url = imgObj.attr('src');
+            if (imgObj.is("img")){
+                url = imgObj.attr('src');
+            }else{
+                url = _neon.utils.getBackgroundImageUrl(imgObj);
+                console.log("BG", url);
+            }
             if(_isNeonImageServingURL(url)){
                 var vid = _neonISPURLToVid(url);
                 thumbMap[url] = [vid, ispMap[vid]];
@@ -588,16 +602,11 @@ Object.size = function(obj){
         startTracking(imgURLs);
     }
 
-    function _neonISPURLToVid(url){
-        // TODO: regex
-        var vid = url.split('/')[6].split('?')[0];
-        vid = vid.split('_')[1];
-        return vid;
-    }
-
-
     // Is this a thumbnail Neon is interested in
     function _isNeonThumbnail(url){
+        if(typeof(url) === 'undefined')
+            return false;
+
         if(url.indexOf("neontn") > -1 || url.indexOf("neonvid") > -1)
             return true;
         else
@@ -607,6 +616,10 @@ Object.size = function(obj){
     // IS ISP URL? 
     function _isNeonImageServingURL(url){
         //TODO: Regex
+        if(typeof(url) === 'undefined'){
+            console.log('ISP url undefined');
+            return false;
+        }
         if(url.indexOf("neonvid") > -1)
             return true;
         else
@@ -748,6 +761,7 @@ Object.size = function(obj){
                 var el = bgImageElArr[i];
                 if(_neon.utils.isOnScreen(el)) { //if element is in viewport
                     var url = _neon.utils.getBackgroundImageUrl(el);
+                    // console.log("BG Visible", el, url, thumbMap);
                     if(thumbMap.hasOwnProperty(url)) {
                         vidId = thumbMap[url][0],
                             thumbId = thumbMap[url][1];
@@ -864,6 +878,17 @@ Object.size = function(obj){
             return [vid, tid];
         }
     }
+    
+    // ISP URL to VID
+    // http://i1.neon-images.com/v1/client/2145072359/neonvid_3747AbcXYZ?height=360&width=640";
+    function _neonISPURLToVid(url){
+        var patt = new RegExp("neonvid_[A-Z,a-z,0-9,_]*");
+        var res = patt.exec(url);
+        var vid = res[0].split('neonvid_')[1];
+        //var vid = url.split('/')[6].split('?')[0];
+        //vid = vid.split('_')[1];
+        return vid;
+    }
 
     function _getNeonVideoIdFromURL(url){
        if(url.indexOf("neontn") > -1){
@@ -872,9 +897,7 @@ Object.size = function(obj){
        }
 
        if(url.indexOf("neonvid") > -1){
-           var vid = url.split('/')[6].split('?')[0];
-           vid = vid.split("_")[1];
-           return vid;
+           return _neonISPURLToVid(url);
        }
        return;
     }
