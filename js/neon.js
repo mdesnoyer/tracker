@@ -10,6 +10,10 @@
 var _neon = _neon || {};
 var neonPageId = null;
 
+// TRACKER VARIABLES
+var neonPublisherId = '2089095449';
+var trackerType = 'IGN';
+
 
 // TODO: Figure why onmouseup doesn't get registered in anonymous function
 var lastMouseClick;
@@ -380,11 +384,12 @@ Object.size = function(obj){
                 // will produce an IC event
                 var t = $($gparent.children()[0]);
                 var at = t.find("a");
+                console.log("register", at);
                 at.click({imgsrc: $el.attr('src')}, imageClickEventHandler); 
                 
                 var x = $($gparent.children()[1]);
                 // May cause double IC events
-                //x.click({imgsrc: $el.attr('src')}, imageClickEventHandler); 
+                // x.click({imgsrc: $el.attr('src')}, imageClickEventHandler); 
                 // Attach event to listElemnt-thumb
                 for (var i=0 ; i<x.length; i++){
                     if(x.prop("class") == "listElmnt-blogItem"){
@@ -392,6 +397,7 @@ Object.size = function(obj){
                         for (var j=0; j<y.length; j++){
                             var z = $(y[j]).find("a");
                             for (var k=0; k<z.length; k++){
+                                console.log("register", z[k]);
                                 $(z[k]).click({imgsrc: $el.attr('src')}, imageClickEventHandler); 
                             }
                         }
@@ -401,37 +407,71 @@ Object.size = function(obj){
         } 
     }
 
+    /// Find the video elements, check if they have a Neon thumbnail
+    /// If yes, then attach the click event
+    function attachClickEventToHTML5VideoElement(){
+        var videoElements = document.getElementsByTagName("video");
+        for(var i=0; i<videoElements.length; i++){
+            var vElement = videoElements[i];
+            var siblings = $(vElement).siblings();
+            var inpElement;
+            var imgSrc;
+            for(var j=0; j<siblings.length; j++){
+                // Find the input element with image type
+                var el = siblings[j];
+                if (el.tagName == "IMG")
+                    imgSrc= el.src;
+
+                if (el.type == "image")
+                    inpElement = el;
+            }
+            if(imgSrc && inpElement)
+                $(inpElement).click({imgsrc: imgSrc}, imageClickEventHandler);
+        }
+    
+    }
+
+
     // Register Neon Image click handler to the element, its parent & grandparent
     // Explore the use of onmouseup since onclick() may already be instrumented
+    // @input: JQuery object
     function _registerClickEvent($el){
 
         $parent = $el.parent();
 
         //Add image src as a function parameter
         try{
+
+            // Handle background images, its a BG image if src is undefined
             if (typeof($el.attr('src')) === 'undefined'){
                 $el.click({imgsrc: _neon.utils.getBackgroundImageUrl($el)}, imageClickEventHandler); 
                 $parent.click({imgsrc: _neon.utils.getBackgroundImageUrl($el)}, imageClickEventHandler);
             }
 
             // Image click handler
-            $el.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
+            // If the parent is an anchor with JS, then attach click handler
+            // If its normal href, then the click event may fire twice, so the clickhandler
+            // keeps track of tids it has fired event and skips if they trigger within a close range
             
-            // TEMP
+            $el.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
+            $parent.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
+            
+            // Handle IGN case of linking adjacent elements 
             _registerClickEventToAdjacentElementWithSameLinkIGN($el);
 
+            // May not be requested any more...
             // If the parent is an anchor with JS, then attach click handler
             // If its normal href, then the click event may fire twice, hence skip 
-            if(_neon.utils.isAnchor($parent) && ($parent.attr('href').indexOf('http://') <0))
-                $parent.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
-
+            //if(_neon.utils.isAnchor($parent) && ($parent.attr('href').indexOf('http://') <0)){
+            //    $parent.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
+            //}
             //var $topElement = _findAdjacentElementWithSameLink($el);
             //$ael =  $($topElement);
             //if($ael)
             //	$ael.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
 
         }catch(err){
-            console.log(err);
+            console.log("registgerClick", err);
         }	
     }
 
@@ -474,7 +514,7 @@ Object.size = function(obj){
     }
 
     // Get thumbnail ids and video_id for images from URL
-    function getNeonThumbnailIdsFromISP(imgObjs, videoIds, publiserId, getThumbCallback){
+    function getNeonThumbnailIdsFromISP(imgObjs, videoIds, getThumbCallback){
 
         //assuming the url list is small enough to send as GET
         /*
@@ -489,7 +529,7 @@ Object.size = function(obj){
             return;
         }
 
-        publisherId = "2089095449"; //IGN
+        var publisherId = _neon.tracker.getNeonPublisherId();
         var serviceURL = 'http://i1.neon-images.com/v1/getthumbnailid/';
         serviceURL +=  publisherId + '/' + '?params=' + videoIds.join(); 
 
@@ -520,6 +560,8 @@ Object.size = function(obj){
         var imgObjs = [];
 
         // Iterate through Image tags
+        // Add all Neon Images to imgObjs and any Image Serving URLs to
+        // a videoIds list to be resolved
         $('img').each(function(){
             if(_isThumbnail($(this))) {
                 var url = $(this).attr('src');
@@ -542,7 +584,7 @@ Object.size = function(obj){
         for(var i=0; i<bgImageElArr.length; i++) {
             var el = bgImageElArr[i];
             var url = _neon.utils.getBackgroundImageUrl(el);
-            console.log("bg image", el, url);
+            //console.log("bg image", el, url);
             if (_isNeonThumbnail(url)){
                 imgObjs.push($(el));
                 if(_isNeonImageServingURL(url)){
@@ -553,9 +595,8 @@ Object.size = function(obj){
             }
         }
 
-        publisherId = _neon.tracker.getNeonPublisherId();
-        getNeonThumbnailIdsFromISP(imgObjs, videoIds, publisherId, startTrackingNeonISPImages);
-        
+        getNeonThumbnailIdsFromISP(imgObjs, videoIds, startTrackingNeonISPImages);
+        attachClickEventToHTML5VideoElement();
     }
 
     // Start Tracking Neon ISP Images
@@ -564,7 +605,7 @@ Object.size = function(obj){
     // Populate the thumb mappings
     function startTrackingNeonISPImages(imgObjs, videoIds, thumbnailIds){
         
-        // temp
+        // TODO clean up this mapping code 
         var tids = thumbnailIds.split(',');
         var ispMap = {};
         for(var i=0; i<videoIds.length; i++)
@@ -576,13 +617,12 @@ Object.size = function(obj){
         imgURLs = [];
         for(var i=0; i<imgObjs.length; i++){
             var url;
-            // TODO: Handle background Images
             var imgObj = imgObjs[i];
             if (imgObj.is("img")){
                 url = imgObj.attr('src');
             }else{
                 url = _neon.utils.getBackgroundImageUrl(imgObj);
-                console.log("BG", url);
+                //console.log("BG", url);
             }
             if(_isNeonImageServingURL(url)){
                 var vid = _neonISPURLToVid(url);
@@ -594,6 +634,9 @@ Object.size = function(obj){
             // Populate the image sizes here
             imgVisibleSizes[url] = [imgObj.width(), imgObj.height()];
         }
+
+        console.log("T", thumbMap);
+        console.log("V", imgVisibleSizes);
 
         // Send the loaded image set that Neon is interested in 
         _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
@@ -816,9 +859,16 @@ Object.size = function(obj){
 
     //////////////////////////////////////////////////////////////////////////////
     function parseTrackerAccountId(){
+        // If TAI is embedded in the script
+        if(typeof(neonPublisherId) !== 'undefined'){
+           trackerAccountId = neonPublisherId;
+           return;
+        }
         var scriptTags = document.getElementsByTagName("script");
         for (var i = 0; i<scriptTags.length; i++) {
             sTag = scriptTags[i];
+
+            // Backward compatibility
             if(sTag.src.search("neonbootloader") >= 0 || sTag.src.search("neonbctracker.js") >=0){
                 trackerAccountId = sTag.id;
             }
@@ -826,20 +876,6 @@ Object.size = function(obj){
                 trackerAccountId = sTag.src.split('_')[1].split('.js')[0];
             }
         } 		
-    }
-
-    /// Get Thumb map for thumbnails that Neon is interested in 
-    function getThumbMapForNeonThumbnails(imgUrls){
-        var ret = {};
-        for(var i=0; i<imgUrls.length; i++){
-            var val = parseNeontnURL(imgUrls[i]);
-            if (val)
-                ret[imgUrls[i]] = val;
-            else{
-                // Its an imageserving URL
-            }
-        }
-        return ret;
     }
 
     function parseNeontnURL(imgUrl){
@@ -1189,15 +1225,14 @@ Object.size = function(obj){
         var tids = [];
         for(var tm in tmap){ 
             if (tmap[tm]){
-                //tid = tmap[tm][1];
-                tid = tmap[tm];
+                tid = tmap[tm][1];
                 // If imSizeMap is given, then create a triplet of (tid,width,height)
                 if (typeof(imSizeMap) !== 'undefined'){
                     tid += "+" + imSizeMap[tm][0] + "+" + imSizeMap[tm][1];
                 }
                 tids.push(tid);
             }
-        }	
+        }
         return tids;
     }
 
