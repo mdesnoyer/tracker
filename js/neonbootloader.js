@@ -441,19 +441,13 @@ LazyLoad = (function (doc) {
     //          });
     if(isJqueryRequired()) {
       LazyLoad.js('http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js', function() {
-      //LazyLoad.js('http://localhost/trackerv2/js/jquery-1.11.0.min.js', function() {
-        //console.log("jQuery loaded and put in no coflict mode for neon js use");
         _neonjQuery = $.noConflict(true); 
-      	LazyLoad.js('http://cdn.neon-lab.com/neon-main.js', function() {
-        //LazyLoad.js('http://cdn.neon-lab.com/neon2.js', function() {
-        //LazyLoad.js('http://localhost/trackerv2/js/neon.js', function() {
-          //console.log("neon main js loaded, using its own jQuery");
-          //run
+      	LazyLoad.js('http://assets.ign.com/thumbs/neon/v1/optimizer/neon-main.js', function() {
         });
       });
     } else {
       _neonjQuery = jQuery;
-      	LazyLoad.js('http://cdn.neon-lab.com/neon-main.js', function() {
+      	LazyLoad.js('http://assets.ign.com/thumbs/neon/v1/optimizer/neon-main.js', function() {
         //console.log("neon main js loaded"); 
         //run
       });

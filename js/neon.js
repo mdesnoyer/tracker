@@ -1,9 +1,4 @@
-//// Events to track
-// 1. Visible images loaded 
-// 2. All images loaded on the page
-// 3. Image click event
-// 4. Video play event 
-
+//// NEON Optimizer Script 
 /// Create our global object
 // All other objects will be children of this object, so we do not pollute
 // global scope thus minimizing any interference with existing code on the website
@@ -98,9 +93,9 @@ Object.size = function(obj){
                 left + _$element.width() >= window_left &&
                 left - (_$element.data('appear-left-offset') || 0) <= window_left + _$window.width()) {
                     return true;
-                } else {
-                    return false;
-                }
+        }else {
+            return false;
+        }
     }
 
     _$.fn.extend({
@@ -297,10 +292,9 @@ Object.size = function(obj){
         var lastClickThreshold  = 50; // 50ms
 
     //This function guesses if the given img element is a thumbnail or not
-    //NOTE: Only IGN case handled for noe
     function _isThumbnail($el) {
 
-        // return true for now
+        // return true for now, regardles of anchor tag or not
         return true; 
 
         //$parent = $el.parent();
@@ -316,7 +310,7 @@ Object.size = function(obj){
     /// Detect Elements that have CSS background images with video
     /// IGN has a few web pages with this 
     function getElementsWithBackgroundImages() {
-        // TODO: Check for background-Image style
+        // Check for background-Image style
         var tags = document.getElementsByTagName('div'), //consider only divs
             len = tags.length,
             el,
@@ -379,12 +373,12 @@ Object.size = function(obj){
         var ret; 
         if(typeof(link) != 'undefined' && link != ""){
             var $gparent = $parent.parent().parent(); // class listElmnt
+            console.log($gparent);
             if($gparent.prop("class") == "listElmnt"){
                 // Attach event to the anchor tag, so that click on play button
                 // will produce an IC event
                 var t = $($gparent.children()[0]);
                 var at = t.find("a");
-                console.log("register", at);
                 at.click({imgsrc: $el.attr('src')}, imageClickEventHandler); 
                 
                 var x = $($gparent.children()[1]);
@@ -397,12 +391,17 @@ Object.size = function(obj){
                         for (var j=0; j<y.length; j++){
                             var z = $(y[j]).find("a");
                             for (var k=0; k<z.length; k++){
-                                console.log("register", z[k]);
                                 $(z[k]).click({imgsrc: $el.attr('src')}, imageClickEventHandler); 
                             }
                         }
                     }
                 }
+            }
+            // Look for grid_16 alpha 
+            else if($gparent.prop("class").indexOf("grid") >-1){
+                var t = $($gparent.children()[1]); //grid_12.omega
+                var at = t.find("a");
+                at.click({imgsrc: $el.attr('src')}, imageClickEventHandler); 
             }
         } 
     }
@@ -516,14 +515,6 @@ Object.size = function(obj){
     // Get thumbnail ids and video_id for images from URL
     function getNeonThumbnailIdsFromISP(imgObjs, videoIds, getThumbCallback){
 
-        //assuming the url list is small enough to send as GET
-        /*
-           var serviceURL = 'http://neon.com/thumbnails/get/' + urls.join();
-           $.getJSON(serviceURL, function(data) {
-        //data will be an object like {url1: [vid_id, thumbnail_id], url2: [vid_id, thumbnail_id]}
-        });
-        */
-       
         if (videoIds.length < 1){
             getThumbCallback(imgObjs, videoIds, '');
             return;
@@ -543,7 +534,7 @@ Object.size = function(obj){
                         thumbCSV = xmlhttp.responseText;
                         getThumbCallback(imgObjs, videoIds, thumbCSV);
                     }else{
-                        console.log("Service error", serviceURL);
+                        //console.log("Service error", serviceURL);
                         // TODO: May be Beacon fallback ?
                     } 
                 }  
@@ -605,7 +596,6 @@ Object.size = function(obj){
     // Populate the thumb mappings
     function startTrackingNeonISPImages(imgObjs, videoIds, thumbnailIds){
         
-        // TODO clean up this mapping code 
         var tids = thumbnailIds.split(',');
         var ispMap = {};
         for(var i=0; i<videoIds.length; i++)
@@ -622,7 +612,6 @@ Object.size = function(obj){
                 url = imgObj.attr('src');
             }else{
                 url = _neon.utils.getBackgroundImageUrl(imgObj);
-                //console.log("BG", url);
             }
             if(_isNeonImageServingURL(url)){
                 var vid = _neonISPURLToVid(url);
@@ -634,9 +623,6 @@ Object.size = function(obj){
             // Populate the image sizes here
             imgVisibleSizes[url] = [imgObj.width(), imgObj.height()];
         }
-
-        console.log("T", thumbMap);
-        console.log("V", imgVisibleSizes);
 
         // Send the loaded image set that Neon is interested in 
         _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
@@ -658,9 +644,7 @@ Object.size = function(obj){
 
     // IS ISP URL? 
     function _isNeonImageServingURL(url){
-        //TODO: Regex
         if(typeof(url) === 'undefined'){
-            console.log('ISP url undefined');
             return false;
         }
         if(url.indexOf("neonvid") > -1)
@@ -736,6 +720,7 @@ Object.size = function(obj){
         //wait for page load
         $(window).bind("load", function() {
             mapImagesToTids();
+            // TODO: Figure out why this doesn't work always
             //document.onmouseup = _trackLastMouseClick; 
         });
     }
@@ -840,16 +825,13 @@ Object.size = function(obj){
                     }
                 }
 
-                //Send only the delta of visible images 
-                // TODO: Use a Q to send images visible event	
                 if(visibleThumbMap.length >0)	
                     _neon.TrackerEvents.sendImagesVisibleEvent(visibleThumbMap);
             }
 
         }, 1000); //Let's check every second
 
-        //on window unload, send thumbnails viewed in the current session to the server
-        //TODO: Test this properly across browsers
+        // on window unload, send thumbnails viewed in the current session to the server
         $(window).bind('beforeunload', function() {
             // console.log("sending viewed thumbnails to server");
             var thumbnails = _neon.StorageModule.getAllThumbnails("session");
@@ -859,11 +841,13 @@ Object.size = function(obj){
 
     //////////////////////////////////////////////////////////////////////////////
     function parseTrackerAccountId(){
-        // If TAI is embedded in the script
+        // If TAI is embedded in the script, then set that
         if(typeof(neonPublisherId) !== 'undefined'){
            trackerAccountId = neonPublisherId;
            return;
         }
+
+        // Else get TAI from the script (Backward compatability)
         var scriptTags = document.getElementsByTagName("script");
         for (var i = 0; i<scriptTags.length; i++) {
             sTag = scriptTags[i];
@@ -878,33 +862,7 @@ Object.size = function(obj){
         } 		
     }
 
-    function parseNeontnURL(imgUrl){
-        //BCOVE URLs are of the form http://bcove/13_35_neontnAPIKEY_VID_TMD5.jpg?pb=13251 
-        if (imgUrl.indexOf("neontn") > -1) {
-            var parts = imgUrl.split('neontn')[1];
-            var tid = parts.split('.jpg')[0];    
-            var vid = tid.split('-')[1];
-            return [vid, tid];
-        }
-        return null;
-    }
-
-    // Function to parse staing image urls with ?neontn=1 
-    // Treat entire image basename as TID
-    function parseIGNTemp(imgurl){
-        if (imgurl.indexOf("neontn") > -1) {
-            var parts = imgurl.split('?neontn')[0];
-            parts = parts.split('/');
-            //TODO: handle the _{compact} case for the thumb, write regex 
-            var tid = parts[parts.length -1].split(".jpg")[0]; 
-            var vid = tid.split('_')[0];
-            return [vid, tid];
-        } 
-
-    }
-
     // NEON URL Regex 
-    // @NOTE: Integrate this code  
     function _parseNeonThumbnailIdURL(imgurl){
         var patt = new RegExp("neontn[A-Z,a-z,0-9,-]*_[A-Z,a-z,0-9,-]*_[A-Z,a-z,0-9,-]*");
         var res = patt.exec(imgurl);
@@ -981,13 +939,15 @@ Object.size = function(obj){
         getNeonPublisherId: function(){
             return trackerAccountId; 
         },
-
-        mapImagesToTids: mapImagesToTids,
-        parseNeontnURL: parseNeontnURL
+        
+        mapImagesToTids: mapImagesToTids
 
     };
     })();
 
+
+    //// NEON STORAGE MODULE  /////
+    
     _neon.StorageModule = (function(){
         var uidKey = 'uid',
         thumbMap, //stores a thumbnail url -> (videoId, thumbnailId) map
@@ -1200,8 +1160,8 @@ Object.size = function(obj){
         var pageLoadId = _neon.utils.getPageRequestUUID(), 
         trackerAccountID, trackerType, pageUrl, referralUrl, timestamp, eventName; 
 
-        //var trackerURL = "http://tracker.neon-images.com";
-        var trackerURL = "http://private-9a3505-trackerneonlabcom.apiary-mock.com";
+        var trackerURL = "http://tracker.neon-images.com";
+        //var trackerURL = "http://private-9a3505-trackerneonlabcom.apiary-mock.com";
 
     function buildTrackerEventData(ts){
         trackerAccountID = _neon.tracker.getTrackerAccountId();

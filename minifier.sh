@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# USE http://closure-compiler.appspot.com/home to compile online/ error checking
 IN=$1
 OUT=$2
 if [ $# -eq 0 ]
