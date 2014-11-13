@@ -77,12 +77,7 @@ package {
 			//neonvid in the name is ISP (either neonvid... .jpg OR neonvid... ?)
 			
 			_pageURL = encodeURIComponent(_experienceModule.getExperienceURL());
-			_start = _imageURL.indexOf("neontn"); // found a Neon URL, only call trackers if this is set!
-			
-			if (_start == 0) {
-				// no neontn, check for neonvid
-				_start = _imageURL.indexOf("neonvid");
-			}
+			_start = returnStart(_imageURL);
 			
 			_tileList = _experienceModule.getElementByID("videoList") as TileList;
 			if (_tileList != null) {
@@ -100,19 +95,10 @@ package {
 					var video:VideoDTO = _tileList.getDataAtIndex(i) as VideoDTO;
 					if (video != null) {
 						_thumbURL = video.thumbnailURL;
-						var _neonThumb:Number = 0;
-						_neonThumb = _thumbURL.indexOf("neontn");
-						if (_neonThumb == 0) {
-							// no neontn, check for neonvid
-							_neonThumb = _imageURL.indexOf("neonvid");
-						}
+						var _neonThumb:Number = returnStart(_thumbURL);
 						
-						if (_neonThumb > 0) {
-							var _neonEnd:Number = 0;
-							_neonEnd = _thumbURL.indexOf(".", _neonThumb);
-							if (_neonEnd == 0) {
-								_neonEnd = _thumbURL.indexOf("?", _neonThumb);
-							}
+						if (_neonThumb > -1) {
+							var _neonEnd:Number = returnEnd(_thumbURL, _neonThumb);
 							
 							if (_neonEnd == -1) {
 								_neonEnd = _thumbURL.length;
@@ -162,7 +148,8 @@ package {
 			
 			// Now take care of the non carousel based player's 1 il & iv call
 			if (_start > 0 && _tileList == null) {
-				var end:Number = _imageURL.indexOf("?", _start);
+				var end:Number = returnEnd(_imageURL, _start);				
+				
 				if (end == -1) {
 					end = _imageURL.length;
 				}
@@ -172,6 +159,23 @@ package {
 				loadTrackingimage("il", "bns=" + _bns + "+" + width + "+" + height);
 				loadTrackingimage("iv", "bns=" + _bns);
 			}
+		}
+		
+		private function returnStart(url:String) : Number {
+			var startPos:Number = url.indexOf("neontn");
+			if (startPos == -1) {
+				startPos = url.indexOf("neonvid");
+			}
+			return startPos;
+		}
+		
+		private function returnEnd(url:String, startPos:Number) : Number {
+			var endPos:Number = url.indexOf(".", startPos);
+			if (endPos == -1) {
+				endPos = url.indexOf("?", startPos);
+			}
+			
+			return endPos;
 		}
 		
 		private function onTileListClick(pEvent:MouseEvent) : void {
@@ -193,20 +197,10 @@ package {
 							video = _tileList.getDataAtIndex((_currTileListPage*_numColumns)+i) as VideoDTO;
 							if (video != null) {
 								var thumbString:String = video.thumbnailURL;
-								var _foundNeon:Number = 0;
-								_foundNeon = thumbString.indexOf("neontn");
-								if (_foundNeon == 0) {
-									// no neontn, check for neonvid
-									_foundNeon = _imageURL.indexOf("neonvid");
-								}
+								var _foundNeon:Number = returnStart(thumbString);
 								
-								if (_foundNeon > 0) {
-									var _neonEnd:Number = 0;
-									_neonEnd = thumbString.indexOf(".", _foundNeon);
-									if (_neonEnd == 0) {
-										_neonEnd = thumbString.indexOf("?", _foundNeon);										
-									}
-									
+								if (_foundNeon > -1) {
+									var _neonEnd:Number = returnEnd(thumbString, _foundNeon);									
 									ivBNs = ivBNs + thumbString.slice(_foundNeon, _neonEnd) + ",";	
 								}
 							}
@@ -309,19 +303,11 @@ package {
 			_bns = "";
 			var video:VideoDTO = _videoPlayerModule.getCurrentVideo();
 			var thumb:String = video.thumbnailURL;
-			var icStart:Number = 0;
-			icStart = thumb.indexOf("neontn");
-			if (icStart == 0) {
-				// no neontn, check for neonvid
-				icStart = _imageURL.indexOf("neonvid");
-			}
+			var icStart:Number = returnStart(thumb);
 			
-			if (icStart > 0) {
-				var icEnd:Number = 0;
-				icEnd = thumb.indexOf(".", icStart);
-				if (icEnd == 0) {
-					icEnd = thumb.indexOf("?", icStart);										
-				}
+			if (icStart > -1) {
+				var icEnd:Number = returnEnd(thumb, icStart);
+
 				if (icEnd == -1) {
 					icEnd = thumb.length;
 				}
@@ -379,20 +365,11 @@ package {
 			_bns = "";
 			var video:VideoDTO = _videoPlayerModule.getCurrentVideo();
 			var thumb:String = video.thumbnailURL;
-			var icStart:Number = 0;
-			icStart = thumb.indexOf("neontn");
-			if (icStart == 0) {
-				// no neontn, check for neonvid
-				icStart = _imageURL.indexOf("neonvid");
-			}
+			var icStart:Number = returnStart(thumb);
 			
 			_adPlayed = true;
-			if (icStart > 0) {
-				var icEnd:Number = 0;
-				icEnd = thumb.indexOf(".", icStart);
-				if (icEnd == 0) {
-					icEnd = thumb.indexOf("?", icStart);
-				}
+			if (icStart > -1) {
+				var icEnd:Number = returnEnd(thumb, icStart);
 				
 				if (icEnd == -1) {
 					icEnd = thumb.length;
