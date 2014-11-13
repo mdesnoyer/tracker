@@ -373,7 +373,6 @@ Object.size = function(obj){
         var ret; 
         if(typeof(link) != 'undefined' && link != ""){
             var $gparent = $parent.parent().parent(); // class listElmnt
-            console.log($gparent);
             if($gparent.prop("class") == "listElmnt"){
                 // Attach event to the anchor tag, so that click on play button
                 // will produce an IC event
@@ -913,7 +912,7 @@ Object.size = function(obj){
         },
 
         getTrackerType: function(){
-            return "brightcove";	
+            return "IGN";	
         },
 
         getLastClickNeonElementTS: function(){
