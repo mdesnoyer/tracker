@@ -437,18 +437,17 @@ LazyLoad = (function (doc) {
   }
 
 	function init() {
-    //LazyLoad.js('http://neon-cdn-assets.s3.amazonaws.com/neon_isp_tracker.js', function() {
-    //          });
     if(isJqueryRequired()) {
       LazyLoad.js('http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js', function() {
         _neonjQuery = $.noConflict(true); 
-      	LazyLoad.js('http://assets.ign.com/thumbs/neon/v1/optimizer/neon-main.js', function() {
+      	//NOTE: Replace this with the Neon Main URL here
+        LazyLoad.js('http://assets.ign.com/thumbs/neon/v1/optimizer/neon-main.js', function() {
         });
       });
     } else {
       _neonjQuery = jQuery;
+      	//NOTE: Replace this with the Neon Main URL here
       	LazyLoad.js('http://assets.ign.com/thumbs/neon/v1/optimizer/neon-main.js', function() {
-        //console.log("neon main js loaded"); 
         //run
       });
     }

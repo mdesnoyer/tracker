@@ -7,7 +7,7 @@ var neonPageId = null;
 
 // TRACKER VARIABLES
 var neonPublisherId = '2089095449';
-var trackerType = 'IGN';
+var neonTrackerType = 'IGN';
 
 
 // TODO: Figure why onmouseup doesn't get registered in anonymous function
@@ -652,56 +652,6 @@ Object.size = function(obj){
             return false;
     }
 
-    /*
-     * OLD mapImageToTids code, TODO: Cleanup 
-    
-    // NOTE: This method initiates the process of identifying images on the page 
-    // Get the thumbnail IDs of all the images 
-    // This is the regular mapper where the URLs have a NEON TID (neontn)
-    function __mapImagesToTids(){
-        //batch all the thumbnail urls
-        var urls = [];
-        var imgVisibleSizes = {};  
-        //Image tags
-        $('img').each(function(){
-            if(_isThumbnail($(this))) {
-                var url = $(this).attr('src');
-                //this url resolves to some thumbnail id
-                if (_isNeonThumbnail(url)){
-                    urls.push(url);
-                    //Attach a click handler to the image and its parent
-                    _registerClickEvent($(this));
-                    //console.log(url, $(this)[0].clientWidth, $(this).prop("scrollHeight"));
-                    imgVisibleSizes[url] = [$(this).width(), $(this).height()];
-                    //console.log(url, $(this).width(), $(this).height());
-                }
-            }
-        });
-
-        //Elements with background images
-        //Example: http://www.ign.com/articles/2014/04/15/mechrunner-coming-to-ps4-vita-and-pc
-        bgImageElArr = getElementsWithBackgroundImages();
-        for(var i = 0; i < bgImageElArr.length; i++) {
-            var el = bgImageElArr[i];
-            var url = _neon.utils.getBackgroundImageUrl(el);
-            if (_isNeonThumbnail(url)){
-                urls.push(url);
-                imgVisibleSizes[url] = [$(this).width(), $(this).height()];
-                _registerClickEvent($(el));
-            }
-            //console.log(url, $(el).width(), $(el).height());
-        }
-
-        //TODO: ThumbMAP to include the visible image size as well, currently we keep 2 maps
-        thumbMap = getThumbMapForNeonThumbnails(urls);
-        
-        // Send the loaded image set that Neon is interested in 
-        _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
-        startTracking(urls);
-    }
-
-    */
-
     function _trackLastMouseClick(e){
         var elem, evt = e ? e:event;
         if (evt.srcElement)  elem = evt.srcElement;
@@ -912,7 +862,10 @@ Object.size = function(obj){
         },
 
         getTrackerType: function(){
-            return "IGN";	
+            if(typeof(neonTrackerType) !== 'undefined'){
+                return neonTrackerType;	
+            }
+            return "gen"; //default
         },
 
         getLastClickNeonElementTS: function(){
