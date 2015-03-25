@@ -8,6 +8,9 @@ Instructions:
     upload to the CDN location
     modify the templated bootloader script to reflect the new destination 
 
+Example command to generate a minified tracker
+# ./generate_tracker.py --trackerid 1234 --minify 1
+
 '''
 from optparse import OptionParser
 import sys
@@ -35,6 +38,8 @@ def compile_js(contents):
 def main(options):
     # Insert Tracker Id
     tai = options.trackerid
+
+    # Tracker filename format
     fname = "neonoptimizer_%s.js" % tai 
 
     contents = ''
@@ -71,6 +76,7 @@ def main(options):
             output = compile_js(contents)
             if not output:
                 print "Compile error, check for syntax errors in the modules"
+                sys.exit(1)
             else:
                 contents = output
             
@@ -85,8 +91,11 @@ if __name__ == '__main__':
     parser.add_option('--trackertype', default="gen", type=str)
     parser.add_option('--basic_module', default="js/basic_modules.js.template", 
                         type=str)
-    parser.add_option('--custom_module', default=None, type=str)
-    parser.add_option('--player_module', default=None, type=str)
+    # currently supports only a single module
+    parser.add_option('--custom_module', default=None, type=str, 
+                    help="path to custom module")
+    parser.add_option('--player_module', default=None, type=str, 
+                       help="path to player module")
     parser.add_option('--main_module', default="js/main_module.js.template",
                         type=str) 
     options, args = parser.parse_args()

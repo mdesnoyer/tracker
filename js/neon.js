@@ -623,11 +623,13 @@ Object.size = function(obj){
             imgVisibleSizes[url] = [imgObj.width(), imgObj.height()];
         }
 
-        // Send the loaded image set that Neon is interested in 
-        _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
-        
-        // Start Tracking
-        startTracking(imgURLs);
+        if (imgURLs.length > 0)
+        {// Send the loaded image set that Neon is interested in 
+            _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
+            
+            // Start Tracking
+            startTracking(imgURLs);
+        }
     }
 
     // Is this a thumbnail Neon is interested in
@@ -672,8 +674,14 @@ Object.size = function(obj){
             // TODO: Figure out why this doesn't work always
             //document.onmouseup = _trackLastMouseClick; 
         });
-    }
 
+        // Every time images are added as ajax, map the new images to their TID
+        $(document).bind("ajaxSend", function(){
+            //console.log("ajax send event detected");
+            }).bind("ajaxComplete", function(){
+                mapImagesToTids();
+        });
+    }
 
     // The main method that starts tracking the Images on the page
     
