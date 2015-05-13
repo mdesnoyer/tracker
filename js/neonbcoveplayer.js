@@ -7,9 +7,20 @@
         var thumbMap = {}; // url => [VID, TID]
         var vidMap = {}; // VID => TID, location(player)  
 
+        function parseNeonBrightcoveUrl(imgUrl){
+            //BCOVE URLs are of the form http://bcove/13_35_neontnAPIKEY_VID_TMD5.jpg?pb=13251 
+            if (imgUrl.indexOf("neontn") > -1) {
+                var parts = imgUrl.split('neontn')[1];
+                var tid = parts.split('.jpg')[0];    
+                var vid = tid.split('-')[1];
+                return [vid, tid];
+            }
+            return null;
+        }
+
         function addVideoToMap(vid, url){
             url = url.split('?')[0];
-            var vmap = _neon.tracker.parseNeonBrightcoveUrl(url);
+            var vmap = parseNeonBrightcoveUrl(url);
             if (vmap != null){
                 thumbMap[url] = vmap;
                 var vid = vmap[0];
