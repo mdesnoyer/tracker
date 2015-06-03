@@ -291,19 +291,13 @@ Object.size = function(obj){
         var lastClickMap = {}; // Store the timestamp of a click for a given TID
         var lastClickThreshold  = 50; // 50ms
 
-    //This function guesses if the given img element is a thumbnail or not
+    // This function guesses if the given img element is a thumbnail or not
     function _isThumbnail($el) {
 
         // return true for now, regardles of anchor tag or not
+        // TODO: Implement to check if there is a clickHandler, or a hyperlink
+        // on the element or on div a level above or CSS class 
         return true; 
-
-        //$parent = $el.parent();
-        //if(_neon.utils.isAnchor($parent)) { //check parent
-        //	return true;
-        //} else { //check grandparent
-        //	$parent = $parent.parent();
-        //	return _neon.utils.isAnchor($parent);
-        //}
     }
 
 

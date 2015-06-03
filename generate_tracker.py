@@ -11,13 +11,30 @@ Instructions:
 Example command to generate a minified tracker
 # ./generate_tracker.py --trackerid 1234 --minify 1
 
+Example command to generate a minified tracker and upload to test location
+# ./generate_tracker.py --trackerid 1234 --minify 1 --upload_location s3test
+
 '''
+import boto.s3.connection
+from boto.s3.key import Key
+from boto.exception import S3ResponseError
 from optparse import OptionParser
+import re
 import sys
+from StringIO import StringIO
 import urllib
 import urllib2
 
+# constants
 CLOSURE_URL = "http://closure-compiler.appspot.com/compile"
+BOOTLOADER_FNAME = "neonoptimizer_%s.js"
+MAINJS_FNAME = "neon_main_%s.js"
+
+# s3 locations
+s3locations = {
+    "s3test" : "neon-test",
+    "s3prod" : "neon-cdn-assets"
+}
 
 def compile_js(contents):
     data = { "compilation_level" : "SIMPLE_OPTIMIZATIONS",
@@ -35,12 +52,56 @@ def compile_js(contents):
     except Exception, e:
         print e
 
+def upload_to_s3(location, bootloader, contents, tai):
+    
+    def s3_uploader(basename, data):
+        try:
+            bucket_name = s3locations[location]
+        except KeyError:
+            print "invalid location to upload"
+            return
+            
+        # only supports if you have boto credentials locally ~/.boto
+        conn = boto.s3.connection.S3Connection()
+        bucket = conn.get_bucket(bucket_name)
+        k = Key(bucket)
+        k.name = basename
+        k.content_type = "application/javascript"
+        policy = 'public-read'
+        s3data = StringIO()
+        s3data.write(data)
+        s3data.seek(0)
+
+        try:
+            k.set_contents_from_file(s3data, policy=policy)
+        except Exception, e:
+            #TODO: More specific exceptions
+            print "Error writing the file", e
+            return
+
+        return "http://%s.s3.amazonaws.com/%s" % (bucket_name, basename)
+
+    # upload main js to the given location
+    mainjs = MAINJS_FNAME % tai
+    mainjs_s3url = s3_uploader(mainjs, contents)
+
+    # change the location in the bootloader template
+    with open(bootloader, 'r') as f:
+        bootloader_contents = f.read().strip()
+        # replace MAIN_JS_URL with actual URL
+        bootloader_contents.replace("MAIN_JS_URL", mainjs_s3url)
+
+        # upload bootloader
+        bootjs = BOOTLOADER_FNAME % tai
+        bootjs_url = s3_uploader(bootjs, bootloader_contents)
+        print "The optimizer script has been uploded to %s" % bootjs_url
+
 def main(options):
     # Insert Tracker Id
     tai = options.trackerid
 
     # Tracker filename format
-    fname = "neonoptimizer_%s.js" % tai 
+    fname = "neon_main_%s.js" % tai 
 
     contents = ''
     with open(fname, 'w') as f:
@@ -82,6 +143,10 @@ def main(options):
             
         f.write(contents)
 
+        # upload the optimizer script to S3
+        if options.upload_location is not None:
+            upload_to_s3(options.upload_location, options.bootloader, contents, tai)
+
 if __name__ == '__main__':
 
     parser = OptionParser()
@@ -89,6 +154,7 @@ if __name__ == '__main__':
     parser.add_option('--minify', default=0, type=int)
     parser.add_option('--trackerid', default=None, type=str)
     parser.add_option('--trackertype', default="gen", type=str)
+    parser.add_option('--bootloader', default="js/bootloader.js.template", type=str)
     parser.add_option('--basic_module', default="js/basic_modules.js.template", 
                         type=str)
     # currently supports only a single module
@@ -97,7 +163,9 @@ if __name__ == '__main__':
     parser.add_option('--player_module', default=None, type=str, 
                        help="path to player module")
     parser.add_option('--main_module', default="js/main_module.js.template",
-                        type=str) 
+                        type=str)
+    # options - s3test / s3prod (neon cdn)
+    parser.add_option('--upload_location', default=None, type=str)
     options, args = parser.parse_args()
 
     if options.trackerid is None:
