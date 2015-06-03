@@ -1,0 +1,158 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://oystatic.ignimgs.com/src/core/js/widgets/shared/jquery/jquery-1.6.2.min.js" type="text/javascript"></script>
+<script type="text/javascript" src="http://oystatic.ignimgs.com/cache/js/d4/49/d449413229486257a3162dd0ebba8250.js"></script>
+<script type="text/javascript"
+    src="http://localhost/trackerv2/js/neonbootloaderlocal.js"> </script>
+
+<link href="http://oystatic.ignimgs.com/cache/css/e4/bc/e4bc6bda4c84b8ba8639b9e8ae5e9e79.css" media="screen" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<script>
+function frameDim() {
+    this.width = 0;
+    this.height = 0;
+}
+var videoDim = videoDim || new frameDim();
+    function getIframeDim(dim) {
+        if( typeof( window.innerWidth ) == 'number' ) {
+                        dim.width = window.innerWidth;
+            dim.height = window.innerHeight;
+        } else if( document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight ) ) {
+                        dim.width = document.documentElement.clientWidth;
+            dim.height = document.documentElement.clientHeight;
+        }
+    }
+    getIframeDim(videoDim);
+
+</script>
+
+
+    <script>
+    var igndrones = igndrones || {};
+    igndrones.async = igndrones.async || [];
+    igndrones.async.push(function() {
+        igndrones.init({"audience":{"csid":"C07583","property":"ign","pagetype":"unmatched"},"chartbeat":{"uid":"21105","domain":"ign.com","sections":"Desktop Web,video"},"comscore":{"c2":"3000068"},"ga":{"account_number":"UA-23541058-1","_setDomainName":".ign.com","custom_vars":[[1,"pagetype","unmatched",3],[15,"action","index",3],[16,"controller","index",3],[17,"module","WidgetsIgnCom",3],[18,"resource","video",3],[20,"is-community","no",3],[21,"signed-in","no",2],[22,"subscriber","no",1]]}});
+        });
+</script>
+    <script type="text/javascript">document.getElementsByTagName("body")[0].style.margin = "0px";</script>
+    
+        <!-- START: Video Embed Content Widget -->
+        <div class="video-widget-container" id="videoWidget_8d3a4e59aa2aad79c4b69f713ed19f61" style="padding:0px;margin:0px;overflow:hidden;">
+                        <!-- START: Flash Player -->
+                <div class="video_embed_content-widget" id="IGNPlayerContainer_8d3a4e59aa2aad79c4b69f713ed19f61" style="display: block;">
+        <div class="video_embed_content-container">
+                    <div class="video_embed_content-poster"
+                        style="background-image:
+                        url('http://i1.neon-images.com/v1/client/2089095449/neonvid_78dd1668468b72f29ac51291c31c45eb');">
+                        <div class="video_embed_content-poster-detail">
+                            <a class="video_embed_content-poster-title" href="http://www.ign.com/videos/2014/01/15/23-signs-youre-a-grown-up-gamer" target="_parent">23 Signs You're A Grown-Up Gamer</a>
+                            <div class="video_embed_content-poster-duration">04:00</div>
+                            <div class="video_embed_content-poster-series">IGN Lists</div>
+                        </div>
+                    </div>
+                    <div class="video_embed_content-poster-play-button"></div>
+                </div>        </div>
+        <script type="text/javascript">
+        jQuery("#IGNPlayerContainer_8d3a4e59aa2aad79c4b69f713ed19f61" ).click(function() {            var videoDomId = 'IGNPlayerContainer_8d3a4e59aa2aad79c4b69f713ed19f61';
+            var swfVersionStr = "10.1.0";
+            var xiSwfUrlStr = "http://oystatic.ignimgs.com/src/core/swf/expressInstall.swf";
+            var videoUrl = "http://www.ign.com/videos/2014/01/15/23-signs-youre-a-grown-up-gamer";
+            var autoplay = "1";
+            var automute = "";
+            var pagetype = "";
+            var urlParts;
+
+            if(autoplay == "1" || autoplay == "true") {
+                urlParts = videoUrl.split("?");
+                videoUrl += (urlParts.length > 1) ? "&qs_autoplay=true" : "?qs_autoplay=true";
+                if(pagetype == "cover") {
+                    videoUrl += "&qs_userInitiated=false";
+                }
+            }
+
+            if(automute == "1" || automute == "true") {
+                urlParts = videoUrl.split("?");
+                videoUrl += (urlParts.length > 1) ? "&qs_automute=true" : "?qs_automute=true";
+            }
+
+            var attributes = {};
+                            attributes.id = "IGNPlayer";
+                attributes["class"] = "ign-videoplayer";
+                        var flashvars = {};
+                flashvars.cacheBusting = true;
+                flashvars.url = videoUrl;
+                flashvars.companions = "false";
+            var params = {};
+                params.quality = "high";
+                params.bgcolor = "#000000";
+                params.allowscriptaccess = "always";
+                params.allowfullscreen = "true";
+                params.wmode = "opaque";
+
+            var url = "http://oystatic.ignimgs.com/src/core/swf/IGNPlayer.swf";
+            if(flashvars.cacheBusting) {
+                url += "?version=3.20140923.06";
+                //
+            }
+
+                            if (typeof jQuery != "undefined")
+                {
+                    if(jQuery('.video-widget-container').length > 0) {
+                        jQuery('.video-widget-container').css({"width": videoDim.width+"px", "height": videoDim.height+"px"});
+                    }
+                    if(jQuery('#IGNPlayerContainer_8d3a4e59aa2aad79c4b69f713ed19f61').length > 0) {
+                        jQuery('#IGNPlayerContainer_8d3a4e59aa2aad79c4b69f713ed19f61').css({"width": videoDim.width+"px", "height": videoDim.height+"px"});
+                    }
+                }
+            
+            var swfObjectCallback = function (response) {
+                // Add Flash Player install message if embed fails.
+                if (!response.success) {
+                    // If embed fails, send GA event.
+                    window.igndrones.async.push(function () {
+                        window.igndrones.fireEvent('Flash Player:Embed Failed', 'SwfObject:Failure');
+                    });
+
+                    jQuery('#'+videoDomId).html('\
+                        <div class="get-flash-player" style="color: #fff; background-color: #000; text-align: center; padding: 20px 0;">\
+                            This site uses Adobe Flash Player to display videos.<br /><br />\
+                            <a href="http://get.adobe.com/flashplayer" style="color: blue; background: none;">Get Flash Player</a>\
+                        </div>');
+                }
+            };
+
+            // only use the determined w/h if non-zero; helps with divs that start hidden
+            if (jQuery('#'+videoDomId).width() + jQuery('#'+videoDomId).height() == 0) {
+                swfobject.embedSWF(url, videoDomId, videoDim.width.toString(), videoDim.height.toString(), swfVersionStr, xiSwfUrlStr, flashvars, params, attributes, swfObjectCallback);
+            } else {
+                swfobject.embedSWF(url, videoDomId, jQuery('#'+videoDomId).width().toString(), jQuery('#'+videoDomId).height().toString(), swfVersionStr, xiSwfUrlStr, flashvars, params, attributes, swfObjectCallback);
+            }
+
+            }).find("a").click(function(e) {
+                window.open(jQuery(this).attr("href"), "_parent");
+                return false;
+            });        </script>
+                <!-- END Flash Player -->
+                
+                <script type="text/javascript">
+            if (typeof jQuery != "undefined")
+            {
+                if(jQuery('.video-widget-container').length > 0) {
+                    jQuery('.video-widget-container').css({"width": videoDim.width+"px", "height": videoDim.height+"px"});
+                }
+                if(jQuery('#IGNPlayerContainer_8d3a4e59aa2aad79c4b69f713ed19f61').length > 0) {
+                    jQuery('#IGNPlayerContainer_8d3a4e59aa2aad79c4b69f713ed19f61').css({"width": videoDim.width+"px", "height": videoDim.height+"px"});
+                }
+            }
+        </script>
+        
+    </div>
+        <!-- END: Video Embed Content Widget -->
+    </body>
+</html>
+

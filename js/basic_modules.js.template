@@ -1,16 +1,6 @@
-//// NEON Optimizer Script 
-/// Create our global object
-// All other objects will be children of this object, so we do not pollute
-// global scope thus minimizing any interference with existing code on the website
 var _neon = _neon || {};
 var neonPageId = null;
 
-// TRACKER VARIABLES
-var neonPublisherId = '2089095449';
-var neonTrackerType = 'IGN';
-
-
-// TODO: Figure why onmouseup doesn't get registered in anonymous function
 var lastMouseClick;
 var lastMouseClickElement;
 function _trackLastMouseClick(e){
@@ -35,16 +25,6 @@ Object.size = function(obj){
 
 ///////////// JQUERY APPEAR PLUGIN ////////////
 
-/*
- * jQuery appear plugin
- *
- * Copyright (c) 2012 Andrey Sidorov
- * licensed under MIT license.
- *
- * https://github.com/morr/jquery.appear/
- *
- * Version: 0.3.1
- */
 (function(_$) {
     var selectors = [];
 
@@ -138,7 +118,6 @@ Object.size = function(obj){
 })(_neonjQuery);
 
 ///////////////////////////////////////////////////////////////
-
 
 ///////////// NEON TRACKER ////////////
 (function($) {
@@ -291,13 +270,19 @@ Object.size = function(obj){
         var lastClickMap = {}; // Store the timestamp of a click for a given TID
         var lastClickThreshold  = 50; // 50ms
 
-    // This function guesses if the given img element is a thumbnail or not
+    //This function guesses if the given img element is a thumbnail or not
     function _isThumbnail($el) {
 
         // return true for now, regardles of anchor tag or not
-        // TODO: Implement to check if there is a clickHandler, or a hyperlink
-        // on the element or on div a level above or CSS class 
         return true; 
+
+        //$parent = $el.parent();
+        //if(_neon.utils.isAnchor($parent)) { //check parent
+        //	return true;
+        //} else { //check grandparent
+        //	$parent = $parent.parent();
+        //	return _neon.utils.isAnchor($parent);
+        //}
     }
 
 
@@ -398,6 +383,7 @@ Object.size = function(obj){
             }
         } 
     }
+
 
     /// Find the video elements, check if they have a Neon thumbnail
     /// If yes, then attach the click event
@@ -617,13 +603,11 @@ Object.size = function(obj){
             imgVisibleSizes[url] = [imgObj.width(), imgObj.height()];
         }
 
-        if (imgURLs.length > 0)
-        {// Send the loaded image set that Neon is interested in 
-            _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
-            
-            // Start Tracking
-            startTracking(imgURLs);
-        }
+        // Send the loaded image set that Neon is interested in 
+        _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
+        
+        // Start Tracking
+        startTracking(imgURLs);
     }
 
     // Is this a thumbnail Neon is interested in
@@ -668,14 +652,8 @@ Object.size = function(obj){
             // TODO: Figure out why this doesn't work always
             //document.onmouseup = _trackLastMouseClick; 
         });
-
-        // Every time images are added as ajax, map the new images to their TID
-        $(document).bind("ajaxSend", function(){
-            //console.log("ajax send event detected");
-            }).bind("ajaxComplete", function(){
-                mapImagesToTids();
-        });
     }
+
 
     // The main method that starts tracking the Images on the page
     
@@ -898,8 +876,7 @@ Object.size = function(obj){
 
     };
     })();
-
-
+    
     //// NEON STORAGE MODULE  /////
     
     _neon.StorageModule = (function(){
@@ -1227,49 +1204,3 @@ Object.size = function(obj){
 
     }());
 
-
-    //Main function
-    (function() {
-        //We do not want the script to execute this main function while unit testing
-        //TODO: Break down neon.js into separate files for each module. It will solve this problem.
-        if(_neon.UNITTEST) return;
-
-        var docReadyId = setInterval(NeonInit, 100); //100ms
-
-        /// Neon Init method
-        function NeonInit(){
-            if(document.readyState === "complete" || document.readyState === "interactive"){
-                //Clear the data on viewed thumbnails in session storage 
-                //and update the TS in local storage	
-                //console.log(window.location.pathname);
-                //console.log(_neon.StorageModule.getAllThumbnails("session"));	
-                _neon.StorageModule.clearPageSessionData();
-                //console.log("After clearing");
-                //console.log(_neon.StorageModule.getAllThumbnails("session"));	
-                clearInterval(docReadyId);
-
-                /// IPAD Clicks
-                $(document).bind("touchstart", function(e){
-                    // Record any touch start on the canvas (best effort)
-                    lastMouseClick = new Date().getTime();
-                    //if(e.target)
-                    //	if(e.target.localName == "object")
-                    //		lastMouseClick = new Date().getTime();
-                });
-
-                // Create Alias for backward compatibility
-                NeonPlayerTracker = _neon.BCNeonPlayerTracker;
-            }
-
-        }
-
-        /// TODO: Handle this globally and resort to storing things in memory
-        //run the tracker only on browsers that can suppport it
-        if(sessionStorage && localStorage && JSON) {
-            _neon.tracker.init();
-        }
-    })();
-
-})(_neonjQuery); //end of _neon obj
-
-///////////////////////////////////////////////////////////////
