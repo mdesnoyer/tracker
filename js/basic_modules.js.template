@@ -504,7 +504,8 @@ Object.size = function(obj){
         serviceURL +=  publisherId + '/' + '?params=' + videoIds.join(); 
 
         // Make a service call
-        var xmlhttp = new XMLHttpRequest(); 
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.withCredentials=true; 
         if(xmlhttp){ 
             var start = (new Date()).getTime();
             xmlhttp.onreadystatechange=function(){
