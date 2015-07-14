@@ -1,5 +1,8 @@
 var _neon = _neon || {};
 var neonPageId = null;
+var videoIds = [];
+var imgObjs = [];
+var apiBaseURL = 'i3.neon-images.com';
 
 var lastMouseClick;
 var lastMouseClickElement;
@@ -13,6 +16,19 @@ function _trackLastMouseClick(e){
         lastMouseClick = new Date().getTime();
 }
 document.onmouseup = _trackLastMouseClick; 
+var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
+var eventer = window[eventMethod];
+var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
+
+// Listen to message from child window
+eventer(messageEvent,function(e) {
+    orig = e.origin;
+    if (orig.indexOf(apiBaseURL) > -1) {
+      startTrackingNeonISPImages(e.data); 
+  }
+  // call starttracking from here
+  // alert(e.data); 
+},false);
 
 
 Object.size = function(obj){
@@ -500,36 +516,19 @@ Object.size = function(obj){
         }
 
         var publisherId = _neon.tracker.getNeonPublisherId();
-        var serviceURL = 'http://i1.neon-images.com/v1/getthumbnailid/';
-        serviceURL +=  publisherId + '/' + '?params=' + videoIds.join(); 
+        var serviceURL = 'http://' + apiBaseURL + '/v1/getthumbnailid/';
+        serviceURL +=  publisherId + '.html?params=' + videoIds.join(); 
 
-        // Make a service call
-        var xmlhttp = new XMLHttpRequest();
-        xmlhttp.withCredentials=true; 
-        if(xmlhttp){ 
-            var start = (new Date()).getTime();
-            xmlhttp.onreadystatechange=function(){
-                if (xmlhttp.readyState == 4){
-                    if(xmlhttp.status == 200){
-                        thumbCSV = xmlhttp.responseText;
-                        getThumbCallback(imgObjs, videoIds, thumbCSV);
-                    }else{
-                        //console.log("Service error", serviceURL);
-                        // TODO: May be Beacon fallback ?
-                    } 
-                }  
-            } 
-        }
-        xmlhttp.open("GET", serviceURL, true);
-        xmlhttp.send();  
+        var new_i_frame = document.createElement("iframe");
+        $("body").append(new_i_frame);
+        new_i_frame.style.display = "none"; 
+        new_i_frame.id = "newIFrame";
+        new_i_frame.src = serviceURL;
     }
 
     // Map ISP served images to Neon tids, Used when images are served by ISP
     function mapImagesToTids(){
         //batch all the thumbnail urls
-        var videoIds = [];
-        var imgObjs = [];
-
         // Iterate through Image tags
         // Add all Neon Images to imgObjs and any Image Serving URLs to
         // a videoIds list to be resolved
@@ -574,7 +573,7 @@ Object.size = function(obj){
     // This is invoked as a callback after Neon ISP service call resolves
     // the video ids in to TIDs
     // Populate the thumb mappings
-    function startTrackingNeonISPImages(imgObjs, videoIds, thumbnailIds){
+    window.startTrackingNeonISPImages = function startTrackingNeonISPImages(thumbnailIds){
         
         var tids = thumbnailIds.split(',');
         var ispMap = {};
