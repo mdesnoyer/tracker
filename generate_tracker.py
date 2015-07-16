@@ -85,8 +85,6 @@ def upload_to_s3(location, bootloader, contents, tai):
     mainjs = MAINJS_FNAME % tai
     mainjs_s3url = s3_uploader(mainjs, contents)
 
-    import pdb; pdb.set_trace()
-
     # change the location in the bootloader template
     with open(bootloader, 'r') as f:
         bootloader_contents = f.read().strip()
