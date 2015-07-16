@@ -85,15 +85,17 @@ def upload_to_s3(location, bootloader, contents, tai):
     mainjs = MAINJS_FNAME % tai
     mainjs_s3url = s3_uploader(mainjs, contents)
 
+    import pdb; pdb.set_trace()
+
     # change the location in the bootloader template
     with open(bootloader, 'r') as f:
         bootloader_contents = f.read().strip()
         # replace MAIN_JS_URL with actual URL
-        bootloader_contents.replace("MAIN_JS_URL", mainjs_s3url)
+        new_boot = bootloader_contents.replace("MAIN_JS_URL", mainjs_s3url)
 
         # upload bootloader
         bootjs = BOOTLOADER_FNAME % tai
-        bootjs_url = s3_uploader(bootjs, bootloader_contents)
+        bootjs_url = s3_uploader(bootjs, new_boot)
         print "The optimizer script has been uploded to %s" % bootjs_url
 
 def main(options):
