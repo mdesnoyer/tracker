@@ -574,40 +574,41 @@ Object.size = function(obj){
     // the video ids in to TIDs
     // Populate the thumb mappings
     window.startTrackingNeonISPImages = function startTrackingNeonISPImages(thumbnailIds){
-        
-        var tids = thumbnailIds.split(',');
-        var ispMap = {};
-        for(var i=0; i<videoIds.length; i++)
-            ispMap[videoIds[i]] = tids[i];
+        if (thumbnailIds != "") {
+            var tids = thumbnailIds.split(',');
+            var ispMap = {};
+            for(var i=0; i<videoIds.length; i++)
+                ispMap[videoIds[i]] = tids[i];
 
-        // Create the ThumbMap, URL => TID Map
-        thumbMap = {};
-        imgVisibleSizes = {};
-        imgURLs = [];
-        for(var i=0; i<imgObjs.length; i++){
-            var url;
-            var imgObj = imgObjs[i];
-            if (imgObj.is("img")){
-                url = imgObj.attr('src');
-            }else{
-                url = _neon.utils.getBackgroundImageUrl(imgObj);
+            // Create the ThumbMap, URL => TID Map
+            thumbMap = {};
+            imgVisibleSizes = {};
+            imgURLs = [];
+            for(var i=0; i<imgObjs.length; i++){
+                var url;
+                var imgObj = imgObjs[i];
+                if (imgObj.is("img")){
+                    url = imgObj.attr('src');
+                }else{
+                    url = _neon.utils.getBackgroundImageUrl(imgObj);
+                }
+                if(_isNeonImageServingURL(url)){
+                    var vid = _neonISPURLToVid(url);
+                    thumbMap[url] = [vid, ispMap[vid]];
+                }else{
+                    thumbMap[url] = _parseNeonThumbnailIdURL(url);
+                }
+                imgURLs.push(url);
+                // Populate the image sizes here
+                imgVisibleSizes[url] = [imgObj.width(), imgObj.height()];
             }
-            if(_isNeonImageServingURL(url)){
-                var vid = _neonISPURLToVid(url);
-                thumbMap[url] = [vid, ispMap[vid]];
-            }else{
-                thumbMap[url] = _parseNeonThumbnailIdURL(url);
-            }
-            imgURLs.push(url);
-            // Populate the image sizes here
-            imgVisibleSizes[url] = [imgObj.width(), imgObj.height()];
+
+            // Send the loaded image set that Neon is interested in 
+            _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
+            
+            // Start Tracking
+            startTracking(imgURLs);
         }
-
-        // Send the loaded image set that Neon is interested in 
-        _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
-        
-        // Start Tracking
-        startTracking(imgURLs);
     }
 
     // Is this a thumbnail Neon is interested in
