@@ -79,7 +79,7 @@ def upload_to_s3(location, bootloader, contents, tai):
             print "Error writing the file", e
             return
 
-        return "http://%s.s3.amazonaws.com/%s" % (bucket_name, basename)
+        return "//%s.s3.amazonaws.com/%s" % (bucket_name, basename)
 
     # upload main js to the given location
     mainjs = MAINJS_FNAME % tai
