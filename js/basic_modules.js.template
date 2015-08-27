@@ -26,8 +26,6 @@ eventer(messageEvent,function(e) {
     if (orig.indexOf(apiBaseURL) > -1) {
       startTrackingNeonISPImages(e.data); 
   }
-  // call starttracking from here
-  // alert(e.data); 
 },false);
 
 
@@ -137,7 +135,9 @@ Object.size = function(obj){
 
 ///////////// NEON TRACKER ////////////
 (function($) {
-    /// JSON Script Requester 
+    // we want to know everytime a node is inserted
+ 
+    /// JSON Script Requester
     _neon.JsonRequester = (function() {
 
         function JSONscriptRequest(fullUrl) {
@@ -278,6 +278,9 @@ Object.size = function(obj){
         thumbMap, //stores a thumbnail url => (videoId, thumbnailId) map of All Images (visible/ invisible)
         thumbViewKey = 'viewedThumbnails', //key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
         bgImageElArr = [], //array of elements which have background images
+        videoIdsCount = 0,
+        trackerProcessedCount = 0,
+        initialLoadComplete = false, 
         lastClickedImage = null,
         lastClickOnNeonElementTs = null,
         lastClickOnNeonElement = null;
@@ -430,8 +433,8 @@ Object.size = function(obj){
     // Explore the use of onmouseup since onclick() may already be instrumented
     // @input: JQuery object
     function _registerClickEvent($el){
-
         $parent = $el.parent();
+        $gparent = $parent.parent();
 
         //Add image src as a function parameter
         try{
@@ -449,7 +452,9 @@ Object.size = function(obj){
             
             $el.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
             $parent.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
-            
+
+            // DISCOVERY specific
+            //$gparent.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
             // Handle IGN case of linking adjacent elements 
             _registerClickEventToAdjacentElementWithSameLinkIGN($el);
 
@@ -501,6 +506,12 @@ Object.size = function(obj){
             // send the mouse click event relative to the image (e.clientX,
             // e.clientY) 
             _neon.TrackerEvents.sendImageClickEvent(vid, tid, wx, wy, px, py, e.clientX, e.clientY);
+                try {
+                    window.dataLayer.push({'event':'custom','category':'neon','action':'click','label':vid});
+                } catch(err) {
+                    console.log("registgerClick", err);
+                }
+
         }else{
             // May be send the img src as vid, to help track errors on resolving thumb data ?
             //_neon.TrackerEvents.sendImageClickEvent(encodeURIComponent(imgSrc), null, wx, wy, e.pageX, e.pageY);
@@ -508,7 +519,7 @@ Object.size = function(obj){
     }
 
     // Get thumbnail ids and video_id for images from URL
-    function getNeonThumbnailIdsFromISP(imgObjs, videoIds, getThumbCallback){
+    function getNeonThumbnailIdsFromISP(videoIds, getThumbCallback){
 
         if (videoIds.length < 1){
             getThumbCallback(imgObjs, videoIds, '');
@@ -525,7 +536,53 @@ Object.size = function(obj){
         new_i_frame.id = publisherId;
         new_i_frame.src = serviceURL;
     }
+    
+    function getNewImages(element) {
+        if (initialLoadComplete) {
+            var images = $(element).find("img"); 
+            if (images.length > 0) {
+               $(images).each(function() {
+                   _testAndAddImageElement($(this));  
+               });  
+            }  
+        }
+    } 
+    
+    // After the initial load, we want to set up an interval to submit to ISP 
+    // for when new images are dynmanically added to the page, instead of firing 
+    // it for each image
+    function startISPSubmitInterval() { 
+        setInterval(function() {
+            _submitToISP(); 
+        }, 2000);  
+    } 
+ 
+    // This function is fired, if the videoIds array has grown, it calls out to ISP 
+    // and will end up in an event firing, from a separate window
+    function _submitToISP() { 
+        if (videoIds.length > videoIdsCount) { 
+            getNeonThumbnailIdsFromISP(videoIds.slice(videoIdsCount, videoIds.length), startTrackingNeonISPImages);
+            attachClickEventToHTML5VideoElement();
+        }
+        videoIdsCount = videoIds.length; 
+    } 
 
+    function _testAndAddImageElement(element) { 
+        var url = $(element).attr('src');
+        if (!url) { 
+            url = _neon.utils.getBackgroundImageUrl(element);
+        } 
+        if (_isNeonThumbnail(url)){
+            if(_isNeonImageServingURL(url)){
+               var vid = _getNeonVideoIdFromURL(url);
+               if ($.inArray(vid, videoIds) == -1) { 
+                    videoIds.push(vid);
+                    imgObjs.push(element);
+               } 
+            }
+            _registerClickEvent($(element));
+        }
+    }  
     // Map ISP served images to Neon tids, Used when images are served by ISP
     function mapImagesToTids(){
         //batch all the thumbnail urls
@@ -533,19 +590,7 @@ Object.size = function(obj){
         // Add all Neon Images to imgObjs and any Image Serving URLs to
         // a videoIds list to be resolved
         $('img').each(function(){
-            if(_isThumbnail($(this))) {
-                var url = $(this).attr('src');
-                //this url resolves to some thumbnail id
-                if (_isNeonThumbnail(url)){
-                    imgObjs.push($(this));
-                    if(_isNeonImageServingURL(url)){
-                        var vid = _getNeonVideoIdFromURL(url); 
-                        videoIds.push(vid);
-                    }
-                    // Attach a click handler to the image and its parent
-                    _registerClickEvent($(this));
-                }
-            }
+            _testAndAddImageElement($(this));  
         });
        
         //Elements with background images
@@ -553,20 +598,11 @@ Object.size = function(obj){
         bgImageElArr = getElementsWithBackgroundImages();
         for(var i=0; i<bgImageElArr.length; i++) {
             var el = bgImageElArr[i];
-            var url = _neon.utils.getBackgroundImageUrl(el);
-            //console.log("bg image", el, url);
-            if (_isNeonThumbnail(url)){
-                imgObjs.push($(el));
-                if(_isNeonImageServingURL(url)){
-                    var vid = _getNeonVideoIdFromURL(url); 
-                    videoIds.push(vid);
-                }
-                _registerClickEvent($(el));
-            }
+            _testAndAddImageElement(el);  
         }
-
-        getNeonThumbnailIdsFromISP(imgObjs, videoIds, startTrackingNeonISPImages);
-        attachClickEventToHTML5VideoElement();
+        // we've added some more videos, we need to track them
+        initialLoadComplete = true; 
+        _submitToISP();  
     }
 
     // Start Tracking Neon ISP Images
@@ -577,14 +613,14 @@ Object.size = function(obj){
         if (thumbnailIds != "") {
             var tids = thumbnailIds.split(',');
             var ispMap = {};
-            for(var i=0; i<videoIds.length; i++)
-                ispMap[videoIds[i]] = tids[i];
+            for(var i=trackerProcessedCount, j=0; i<videoIds.length; i++,j++)
+                ispMap[videoIds[i]] = tids[j];
 
             // Create the ThumbMap, URL => TID Map
             thumbMap = {};
             imgVisibleSizes = {};
             imgURLs = [];
-            for(var i=0; i<imgObjs.length; i++){
+            for(var i=trackerProcessedCount; i<imgObjs.length; i++){
                 var url;
                 var imgObj = imgObjs[i];
                 if (imgObj.is("img")){
@@ -602,11 +638,10 @@ Object.size = function(obj){
                 // Populate the image sizes here
                 imgVisibleSizes[url] = [imgObj.width(), imgObj.height()];
             }
-
             // Send the loaded image set that Neon is interested in 
             _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
-            
             // Start Tracking
+            trackerProcessedCount = imgObjs.length;
             startTracking(imgURLs);
         }
     }
@@ -650,6 +685,12 @@ Object.size = function(obj){
         //wait for page load
         $(window).bind("load", function() {
             mapImagesToTids();
+            $(document).bind('DOMNodeInserted', function(e) {
+                var element = e.target;
+                getNewImages(element);
+                 
+            }); 
+            startISPSubmitInterval();  
             // TODO: Figure out why this doesn't work always
             //document.onmouseup = _trackLastMouseClick; 
         });
@@ -667,7 +708,6 @@ Object.size = function(obj){
         var imagesSentSet = {}; //images sent to server
 
         var forced = false;
-        //We check for the appearance of all images after a fixed interval
         var $imgArr = [];
         for(var i=0; i<imgUrls.length; i++) {
             var $el = $('img[src$="' + imgUrls[i] + '"]');
@@ -697,9 +737,6 @@ Object.size = function(obj){
                         if(thumbMap.hasOwnProperty(url)){
                             vidId = thumbMap[url][0];
                             thumbId = thumbMap[url][1];
-
-                            //console.log("Visible: " + url);
-
                             if(!lastVisibleSet.hasOwnProperty(url)) { //image just appeared, store it
                                 allVisibleSet[url] = 1;
                                 //store the video_id-thumbnail_id pair as viewed
@@ -707,12 +744,13 @@ Object.size = function(obj){
                                 //console.log(StorageModule.getAllThumbnails("session"));
                             }
                             newVisibleSet[url] = 1; //add to the visible set
-                            visibleSetChanged = true;
+                            
+                            if (lastVisibleSet[url] !== 1) { 
+                                visibleSetChanged = true;
+                            }
                         }
                     }
-                    //console.log("ALL ", allVisibleSet);
             }
-
 
             //loop through all elements with background images and check which of them are visible
             for(var i = 0; i < bgImageElArr.length; i++) {
@@ -730,9 +768,7 @@ Object.size = function(obj){
                             allVisibleSet[url] = 1;
                             //store the video_id-thumbnail_id pair as viewed
                             _neon.StorageModule.storeThumbnail(vidId, thumbId);
-                            //console.log(StorageModule.getAllThumbnails("session"));
                         }
-
                         newVisibleSet[url] = 1; //add to the visible set
                         visibleSetChanged = true;
                     }
@@ -742,12 +778,11 @@ Object.size = function(obj){
             if(visibleSetChanged) {
                 //update our set of currently visible thumbnails
                 lastVisibleSet = newVisibleSet;
-
                 var visibleThumbMap = [];
+
                 //console.log("AV", allVisibleSet);
                 for(var iurl in allVisibleSet){
                     if(allVisibleSet[iurl] === 1){
-                        //console.log("IM visible", iurl, imagesSentSet[iurl]);
                         if(imagesSentSet[iurl] == 0){
                             imagesSentSet[iurl] = 1;
                             visibleThumbMap.push(thumbMap[iurl]);
@@ -758,7 +793,6 @@ Object.size = function(obj){
                 if(visibleThumbMap.length >0)	
                     _neon.TrackerEvents.sendImagesVisibleEvent(visibleThumbMap);
             }
-
         }, 1000); //Let's check every second
 
         // on window unload, send thumbnails viewed in the current session to the server
@@ -794,7 +828,7 @@ Object.size = function(obj){
 
     // NEON URL Regex 
     function _parseNeonThumbnailIdURL(imgurl){
-        var patt = new RegExp("neontn[A-Z,a-z,0-9,-]*_[A-Z,a-z,0-9,-]*_[A-Z,a-z,0-9,-]*");
+        var patt = new RegExp("neontn[A-Z,a-z,0-9,-]*_[A-Z,a-z,0-9,-,.]*_[A-Z,a-z,0-9,-]*");
         var res = patt.exec(imgurl);
         if (res){    
             tid = res[0];
@@ -804,14 +838,11 @@ Object.size = function(obj){
     }
     
     // ISP URL to VID
-    // http://i1.neon-images.com/v1/client/2145072359/neonvid_3747AbcXYZ?height=360&width=640";
+    // http://i1.neon-images.com/v1/client/2145072359/neonvid_3747AbcXYZ.jpg?height=360&width=640";
     function _neonISPURLToVid(url){
-        var patt = new RegExp("neonvid_[A-Z,a-z,0-9,_,-]*");
-        var res = patt.exec(url);
-        var vid = res[0].split('neonvid_')[1];
-        //var vid = url.split('/')[6].split('?')[0];
-        //vid = vid.split('_')[1];
-        return vid;
+        var patt = new RegExp("neonvid_(?=.*\.jpg|\.png)([A-Z,a-z,0-9,_,-,.]*).(jpg|png)");
+        var match = patt.exec(url); 
+        return match[1];
     }
 
     function _getNeonVideoIdFromURL(url){
@@ -873,7 +904,9 @@ Object.size = function(obj){
             return trackerAccountId; 
         },
         
-        mapImagesToTids: mapImagesToTids
+        mapImagesToTids: mapImagesToTids,
+        getNewImages: getNewImages,
+        startISPSubmitInterval: startISPSubmitInterval
 
     };
     })();
@@ -1069,17 +1102,6 @@ Object.size = function(obj){
                 }
             }		
         }
-
-
-        //storeLastClickedImage: function(thumbId){
-        //	return _storeLastClickedImage(thumbId);	
-        //},
-
-        //getLastClickedImage: function(){
-        //	return _getLastClickedImage();
-        //}
-
-
     }
 
     }());
@@ -1171,8 +1193,10 @@ Object.size = function(obj){
             eventName = "iv";
             var tids = convertThumbMapToTids(imageMap);
             var req = buildTrackerEventData();
-            req += "&tids="+ tids;
-            _neon.JsonRequester.sendRequest(req);
+            if (tids.length > 0) { 
+                req += "&tids="+ tids;
+                _neon.JsonRequester.sendRequest(req);
+            }
         },
 
         // ImageMap is a Map of thumbnail url => tid
@@ -1181,8 +1205,10 @@ Object.size = function(obj){
             eventName = "il";
             var tids = convertThumbMapToTids(imageMap, imSizeMap);
             var req = buildTrackerEventData();
-            req += "&tids=" + tids;
-            _neon.JsonRequester.sendRequest(req);
+            if (tids.length > 0) { 
+                req += "&tids=" + tids;
+                _neon.JsonRequester.sendRequest(req);
+            }
         },
 
         // When user clicks on the thumbnail within the player
