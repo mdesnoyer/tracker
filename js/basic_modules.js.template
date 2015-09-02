@@ -1,3 +1,5 @@
+var neonPublisherId = '2089095449';
+var neonTrackerType = 'gen';
 var _neon = _neon || {};
 var neonPageId = null;
 var videoIds = [];
@@ -12,7 +14,7 @@ function _trackLastMouseClick(e){
     else if (evt.target) elem = evt.target;
     lastMouseClickElement = elem.localName;
     //if object then store click
-    if (lastMouseClickElement == "object")	
+    if (lastMouseClickElement == "object")  
         lastMouseClick = new Date().getTime();
 }
 document.onmouseup = _trackLastMouseClick; 
@@ -266,7 +268,7 @@ Object.size = function(obj){
             }
         }
 
-        // Get script tag	
+        // Get script tag   
     };
 
     /////// Tracker Methods ////////
@@ -297,10 +299,10 @@ Object.size = function(obj){
 
         //$parent = $el.parent();
         //if(_neon.utils.isAnchor($parent)) { //check parent
-        //	return true;
+        //  return true;
         //} else { //check grandparent
-        //	$parent = $parent.parent();
-        //	return _neon.utils.isAnchor($parent);
+        //  $parent = $parent.parent();
+        //  return _neon.utils.isAnchor($parent);
         //}
     }
 
@@ -359,7 +361,7 @@ Object.size = function(obj){
             }
         }
         return ret;
-    }	
+    }   
 
     // Register click event to adjacent element of the image
     // IGN uses the following hirearchy
@@ -376,7 +378,10 @@ Object.size = function(obj){
                 // will produce an IC event
                 var t = $($gparent.children()[0]);
                 var at = t.find("a");
-                at.click({imgsrc: $el.attr('src')}, imageClickEventHandler); 
+                var attr_src = $el.attr('src');
+                var click_attr = attr_src ? attr_src : $el.attr('data-original');
+                at.click({imgsrc: click_attr}, imageClickEventHandler);
+
                 
                 var x = $($gparent.children()[1]);
                 // May cause double IC events
@@ -388,7 +393,7 @@ Object.size = function(obj){
                         for (var j=0; j<y.length; j++){
                             var z = $(y[j]).find("a");
                             for (var k=0; k<z.length; k++){
-                                $(z[k]).click({imgsrc: $el.attr('src')}, imageClickEventHandler); 
+                                $(z[k]).click({imgsrc: click_attr}, imageClickEventHandler); 
                             }
                         }
                     }
@@ -398,7 +403,7 @@ Object.size = function(obj){
             else if($gparent.prop("class").indexOf("grid") >-1){
                 var t = $($gparent.children()[1]); //grid_12.omega
                 var at = t.find("a");
-                at.click({imgsrc: $el.attr('src')}, imageClickEventHandler); 
+                at.click({imgsrc: click_attr}, imageClickEventHandler); 
             }
         } 
     }
@@ -438,9 +443,12 @@ Object.size = function(obj){
 
         //Add image src as a function parameter
         try{
+            
+            var attr_src = $el.attr('src');
+            var click_attr = attr_src ? attr_src : $el.attr('data-original');
 
             // Handle background images, its a BG image if src is undefined
-            if (typeof($el.attr('src')) === 'undefined'){
+            if (typeof(click_attr) === 'undefined'){
                 $el.click({imgsrc: _neon.utils.getBackgroundImageUrl($el)}, imageClickEventHandler); 
                 $parent.click({imgsrc: _neon.utils.getBackgroundImageUrl($el)}, imageClickEventHandler);
             }
@@ -450,8 +458,8 @@ Object.size = function(obj){
             // If its normal href, then the click event may fire twice, so the clickhandler
             // keeps track of tids it has fired event and skips if they trigger within a close range
             
-            $el.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
-            $parent.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
+            $el.click({imgsrc: click_attr}, imageClickEventHandler);
+            $parent.click({imgsrc: click_attr}, imageClickEventHandler);
 
             // DISCOVERY specific
             //$gparent.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
@@ -467,11 +475,11 @@ Object.size = function(obj){
             //var $topElement = _findAdjacentElementWithSameLink($el);
             //$ael =  $($topElement);
             //if($ael)
-            //	$ael.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
+            //  $ael.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
 
         }catch(err){
             console.log("registgerClick", err);
-        }	
+        }   
     }
 
     // image click event handler
@@ -537,9 +545,15 @@ Object.size = function(obj){
         new_i_frame.src = serviceURL;
     }
     
+    // TODO figure out what is getting found and passed to here.
     function getNewImages(element) {
         if (initialLoadComplete) {
             var images = $(element).find("img"); 
+            //console.log('jquery says Im a:' + $(element));
+            //console.log(images);
+
+            // TODO this keeps showing as null length
+            
             if (images.length > 0) {
                $(images).each(function() {
                    _testAndAddImageElement($(this));  
@@ -568,7 +582,9 @@ Object.size = function(obj){
     } 
 
     function _testAndAddImageElement(element) { 
-        var url = $(element).attr('src');
+        var attr_src = $(element).attr('src');
+        var url = attr_src ? attr_src : $(element).attr('data-original');
+
         if (!url) { 
             url = _neon.utils.getBackgroundImageUrl(element);
         } 
@@ -582,7 +598,8 @@ Object.size = function(obj){
             }
             _registerClickEvent($(element));
         }
-    }  
+    } 
+
     // Map ISP served images to Neon tids, Used when images are served by ISP
     function mapImagesToTids(){
         //batch all the thumbnail urls
@@ -624,7 +641,8 @@ Object.size = function(obj){
                 var url;
                 var imgObj = imgObjs[i];
                 if (imgObj.is("img")){
-                    url = imgObj.attr('src');
+                    var attr_src = imgObj.attr('src');
+                    url = attr_src ? attr_src : imgObj.attr('data-original');
                 }else{
                     url = _neon.utils.getBackgroundImageUrl(imgObj);
                 }
@@ -675,7 +693,7 @@ Object.size = function(obj){
         var srcElementClick = elem.localName;
         lastClickOnNeonElement = srcElementClick;
         //if object then store click
-        if (srcElementClick == "object")	
+        if (srcElementClick == "object")    
             lastClickOnNeonElementTs = new Date().getTime();
     }
 
@@ -727,13 +745,12 @@ Object.size = function(obj){
             var newVisibleSet = {}; //set of thumbnails visible now
             var visibleSetChanged = false;
 
-            //console.log("L Vset", lastVisibleSet);
-
             //loop through all images on the page and check which of them are visible
             for(var i=0; i<$imgArr.length; i++) {
                     var $img = $imgArr[i];
                     if($img.is(':appeared')) {
-                        var url = $img.attr('src');
+                        var attr_src = $img.attr('src');
+                        var url = attr_src ? attr_src : $img.attr('data-original');
                         if(thumbMap.hasOwnProperty(url)){
                             vidId = thumbMap[url][0];
                             thumbId = thumbMap[url][1];
@@ -790,7 +807,7 @@ Object.size = function(obj){
                     }
                 }
 
-                if(visibleThumbMap.length >0)	
+                if(visibleThumbMap.length >0)   
                     _neon.TrackerEvents.sendImagesVisibleEvent(visibleThumbMap);
             }
         }, 1000); //Let's check every second
@@ -823,7 +840,7 @@ Object.size = function(obj){
             if(sTag.src.search("neonoptimizer") >=0){
                 trackerAccountId = sTag.src.split('_')[1].split('.js')[0];
             }
-        } 		
+        }       
     }
 
     // NEON URL Regex 
@@ -875,7 +892,7 @@ Object.size = function(obj){
 
         getTrackerType: function(){
             if(typeof(neonTrackerType) !== 'undefined'){
-                return neonTrackerType;	
+                return neonTrackerType; 
             }
             return "gen"; //default
         },
@@ -890,14 +907,14 @@ Object.size = function(obj){
             //return lastClickOnNeonElement;
         },
 
-        // Only used by test method	
+        // Only used by test method 
         setLastClickNeonElement: function(ele){
             lastMouseClick = new Date().getTime();
             lastMouseClickElement = ele;
         },
 
         //getLastClickedImage: function(){
-        //	return lastClickedImage;
+        //  return lastClickedImage;
         //},
 
         getNeonPublisherId: function(){
@@ -958,7 +975,7 @@ Object.size = function(obj){
         }
     }
 
-    /// Store thumbnails in storage	
+    /// Store thumbnails in storage 
     // Session storage: data is stored per page, keyed by page
     // Global thumbnail state is stored in local storage
     function _storeThumbnail(storage, vidId, thumbId) {
@@ -981,7 +998,7 @@ Object.size = function(obj){
         storage.setItem(storageKey, JSON.stringify(data));
     }
 
-    /// Get thumbnail from storage	
+    /// Get thumbnail from storage  
     function _getThumbnail(storage, storageKey, videoId) {
         var data = JSON.parse(storage.getItem(storageKey));
         //console.log("Session:", storageKey, data, videoId);
@@ -1042,7 +1059,7 @@ Object.size = function(obj){
                     //console.log(_getDomain(pageUrl));
                     if (_getDomain(document.URL) != _getDomain(pageUrl))
                         return null;
-                }	
+                }   
                 // Create the image click event here, coz this was opened
                 // in a new tab via right click->open 
 
@@ -1070,7 +1087,7 @@ Object.size = function(obj){
         // Get all thumbnail data from particular storage
         getAllThumbnails: function (storage){
             if (storage == "session"){
-                var	pattern = new RegExp(thumbViewKeyPrefix);
+                var pattern = new RegExp(thumbViewKeyPrefix);
                 for(var i = 0; i < sessionStorage.length; i++) {
                     var key = sessionStorage.key(i);
                     //console.log("key == " + key);
@@ -1100,13 +1117,13 @@ Object.size = function(obj){
                         sessionStorage.removeItem(key);
                     }
                 }
-            }		
+            }       
         }
     }
 
     }());
 
-    //////	 End of storage module //////////
+    //////   End of storage module //////////
 
     ////// TRACKER Events sent to NEON //////////
 
@@ -1231,3 +1248,36 @@ Object.size = function(obj){
 
     }());
 
+//Main function
+(function() {
+    //We do not want the script to execute this main function while unit testing
+    if(_neon.UNITTEST) return;
+
+    var docReadyId = setInterval(NeonInit, 100); //100ms
+
+    /// Neon Init method
+    function NeonInit(){
+        if(document.readyState === "complete" || document.readyState === "interactive"){
+            //Clear the data on viewed thumbnails in session storage 
+            //and update the TS in local storage    
+            _neon.StorageModule.clearPageSessionData();
+            clearInterval(docReadyId);
+
+            /// IPAD Clicks
+            $(document).bind("touchstart", function(e){
+                // Record any touch start on the canvas (best effort)
+                lastMouseClick = new Date().getTime();
+            });
+
+        }
+
+    }
+
+    /// TODO: Handle this globally and resort to storing things in memory
+    //run the tracker only on browsers that can suppport it
+    if(sessionStorage && localStorage && JSON) {
+        _neon.tracker.init();
+    }
+})();
+
+})(_neonjQuery); //end of _neon obj
