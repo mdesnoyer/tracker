@@ -505,11 +505,6 @@ Object.size = function(obj){
             // send the mouse click event relative to the image (e.clientX,
             // e.clientY) 
             _neon.TrackerEvents.sendImageClickEvent(vid, tid, wx, wy, px, py, e.clientX, e.clientY);
-                try {
-                    window.dataLayer.push({'event':'custom','category':'neon','action':'click','label':vid});
-                } catch(err) {
-                    console.log("registgerClick", err);
-                }
 
         }else{
             // May be send the img src as vid, to help track errors on resolving thumb data ?
