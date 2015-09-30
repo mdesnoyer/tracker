@@ -207,7 +207,7 @@ Object.size = function(obj) {
         },
 
         beacon: function() {
-            if (true) {
+            if (false) {
                 console.log(arguments);
             }
         },
@@ -491,7 +491,7 @@ Object.size = function(obj) {
 
         }
         catch(err) {
-            console.log('registerClick', err);
+            // console.log('registerClick', err);
         }   
     }
 
