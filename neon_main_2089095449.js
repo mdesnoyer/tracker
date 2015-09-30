@@ -1,4 +1,5 @@
-var _neon = _neon || {},
+var neonPublisherId = '2089095449';
+var neonTrackerType = 'gen';var _neon = _neon || {},
     neonPageId = null,
     videoIds = [],
     imgObjs = [],
@@ -1280,4 +1281,38 @@ _neon.TrackerEvents = (function() {
     }
 
 }());
-    
+    //Main function
+(function() {
+    //We do not want the script to execute this main function while unit testing
+    if(_neon.UNITTEST) return;
+
+    var docReadyId = setInterval(NeonInit, 100); //100ms
+
+    /// Neon Init method
+    function NeonInit(){
+        if(document.readyState === "complete" || document.readyState === "interactive"){
+            //Clear the data on viewed thumbnails in session storage 
+            //and update the TS in local storage	
+            _neon.StorageModule.clearPageSessionData();
+            clearInterval(docReadyId);
+
+            /// IPAD Clicks
+            $(document).bind("touchstart", function(e){
+                // Record any touch start on the canvas (best effort)
+                lastMouseClick = new Date().getTime();
+            });
+
+        }
+
+    }
+
+    /// TODO: Handle this globally and resort to storing things in memory
+    //run the tracker only on browsers that can suppport it
+    if(sessionStorage && localStorage && JSON) {
+        _neon.tracker.init();
+    }
+})();
+
+})(_neonjQuery); //end of _neon obj
+
+
