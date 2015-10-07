@@ -193,8 +193,6 @@ Object.size = function(obj) {
 
     _neon.utils = {
 
-        // imageSourceLocations: ['src', 'data-original'],
-
         // Generate a random string of given length
         getRandomString: function(len) {
             var n = parseInt((1 + Math.random()) * 100000000, 10); // a random number
@@ -206,7 +204,7 @@ Object.size = function(obj) {
         },
 
         beacon: function() {
-            if (false) {
+            if (true) {
                 console.log('[neon]', arguments);
             }
         },
@@ -256,27 +254,58 @@ Object.size = function(obj) {
             return (!(viewport.right < bounds.left || viewport.left > bounds.right || viewport.bottom < bounds.top || viewport.top > bounds.bottom));
         },
 
-        getBackgroundImageUrl: function(el) {
-            var $el = _neon.utils.makeJQueryObject(el),
-                bg = $el.css('background-image');
-            bg = bg.replace('url(', '').replace(')', '');
-            return bg.substr(7); // remove http:// - https?
-        },
-
         // Check object and if it is a jQuery object, return it, otherwise cast
         // it to a jQuery object.
         makeJQueryObject: function(obj) {
             return (obj instanceof jQuery ? obj : $(obj));
         },
 
-        getElementImageSource: function(el) {
+        getMysteryElementImageSource: function (el) {
             var $el = _neon.utils.makeJQueryObject(el);
-            return ($el.attr('data-original') || $el.attr('src') || '');
+            return _neon.utils.getElementImageSource($el) || _neon.utils.getElementBackgroundImageSource($el);
         },
 
-        getElementUsingImageSourceSelector: function(source) {
-            var $el = $('img[src$="' + source + '"], img[data-original$="' + source + '"]');
-            return $el;
+        getElementImageSource: function(el) {
+            var $el = _neon.utils.makeJQueryObject(el),
+                returnValue = $el.attr('data-original') || $el.attr('src') || ''
+            ;
+            return returnValue;
+        },
+
+        getElementBackgroundImageSource: function(el) {
+            var $el = _neon.utils.makeJQueryObject(el),
+                returnValue = $el.attr('data-background-image') || $el.css('background-image') || ''
+            ;
+            if (returnValue === 'none') { // ugh
+                returnValue = '';
+            }
+            return returnValue;
+        },
+
+        // given a root element (jQuery or Javascript), look for:
+        // 1. regular <img /> with src attribute
+        // 2. sleepy <img /> with source in other attribute(s)
+        // 3. regular element with background-image in style attribute
+        // 3. sleepy element with background-image in other attribute(s)
+
+        getElementsUsingImageSourceSelector: function(imageSource, rootElement) {
+
+            var specificSource = imageSource ? '$="' + imageSource + '"' : '',
+                $rootElement = _neon.utils.makeJQueryObject(rootElement),
+                $images = $rootElement.find('img[data-original' + specificSource + '], img[src' + specificSource + ']');
+
+            var $others = $rootElement.find('*').filter(function() {
+                var backgroundImageUrl = _neon.utils.getElementBackgroundImageSource(this);
+                if (imageSource) {
+                    return backgroundImageUrl.indexOf(imageSource) > -1;
+                }
+                else {
+                    return backgroundImageUrl !== '';
+                }
+            });
+
+            var $all = $images.add($others);
+            return $all;
         },
 
         getQueryValue: function(qstring, param) {
@@ -303,53 +332,18 @@ Object.size = function(obj) {
     _neon.tracker = (function() {
 
         var trackerAccountId,
-        uidKey = 'uid',
-        thumbMap, // stores a thumbnail url => (videoId, thumbnailId) map of All Images (visible/ invisible)
-        thumbViewKey = 'viewedThumbnails', // key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
-        bgImageElArr = [], // array of elements which have background images
-        videoIdsCount = 0,
-        trackerProcessedCount = 0,
-        initialLoadComplete = false, 
-        lastClickedImage = null,
-        lastClickOnNeonElementTs = null,
-        lastClickOnNeonElement = null;
-
-        // Maintain state & avoid the double click trigger issue
-        var lastClickMap = {}; // Store the timestamp of a click for a given TID
-        var lastClickThreshold  = 50; // 50ms
-
-    //This function guesses if the given img element is a thumbnail or not
-    function _isThumbnail($el) {
-
-        // return true for now, regardles of anchor tag or not
-        return true; 
-
-    }
-
-    /// Detect Elements that have CSS background images with video
-    /// IGN has a few web pages with this 
-    function getElementsWithBackgroundImages() {
-        // Check for background-Image style
-        var tags = document.getElementsByTagName('div'), // consider only divs
-            len = tags.length,
-            el,
-            ret = [];
-
-        for(var i = 0; i < len; i++) {
-            el = tags[i];
-            if (el.currentStyle) {
-                if (el.currentStyle['backgroundImage'] !== 'none' ) {
-                    ret.push(el);
-                }
-            } else if (window.getComputedStyle) {
-                if (document.defaultView.getComputedStyle(el, null).getPropertyValue('background-image') !== 'none' ) {
-                    ret.push(el);
-                }
-            }
-        }
-
-        return ret;
-    }
+            uidKey = 'uid',
+            thumbMap, // stores a thumbnail url => (videoId, thumbnailId) map of All Images (visible/ invisible)
+            thumbViewKey = 'viewedThumbnails', // key to localstorage which stores (video_ids, thumbnailIds) of viewed thumbnails
+            videoIdsCount = 0,
+            trackerProcessedCount = 0,
+            initialLoadComplete = false, 
+            lastClickedImage = null,
+            lastClickOnNeonElementTs = null,
+            lastClickOnNeonElement = null
+            lastClickMap = {}; // Store the timestamp of a click for a given TID
+            lastClickThreshold  = 50 // 50ms
+        ;
 
     // Find adjacent elements with same link
     // This is to handle cases where headlines and images have the same link
@@ -368,7 +362,7 @@ Object.size = function(obj) {
                 var x = $ggparent.children();
                 for (var i=0 ; i < x.length; i++) {
                     var y = $(x[i]).find("a");
-                    for (var j=0; i<y.length; y++) {
+                    for (var j=0; i < y.length; y++) {
                         var $cur = $(y[j]);
                         if (link == ($cur.attr('href'))) {
                             if ($parent.is($cur) == false) {
@@ -392,12 +386,12 @@ Object.size = function(obj) {
         var ret; 
         if (typeof(link) != 'undefined' && link != "") {
             var $gparent = $parent.parent().parent(); // class listElmnt
-            if ($gparent.prop("class") == "listElmnt") {
+            if ($gparent.prop('class') == "listElmnt") {
                 // Attach event to the anchor tag, so that click on play button
                 // will produce an IC event
                 var t = $($gparent.children()[0]),
                     at = t.find('a'),
-                    click_attr = _neon.utils.getElementImageSource($el)
+                    click_attr = _neon.utils.getMysteryElementImageSource($el)
                 ;
                 at.click({imgsrc: click_attr}, imageClickEventHandler);
 
@@ -432,7 +426,7 @@ Object.size = function(obj) {
     /// If yes, then attach the click event
     function attachClickEventToHTML5VideoElement() {
         var videoElements = document.getElementsByTagName("video");
-        for(var i=0; i<videoElements.length; i++) {
+        for(var i = 0; i <videoElements.length; i++) {
             var vElement = videoElements[i];
             var siblings = $(vElement).siblings();
             var inpElement;
@@ -460,27 +454,17 @@ Object.size = function(obj) {
         $parent = $el.parent();
         $gparent = $parent.parent();
 
-        //Add image src as a function parameter
+        // Add image src as a function parameter
         try {
             
-            var click_attr = _neon.utils.getElementImageSource($el);
-
-            // Handle background images, its a BG image if src is undefined
-            if (typeof(click_attr) === 'undefined') {
-                $el.click({imgsrc: _neon.utils.getBackgroundImageUrl($el)}, imageClickEventHandler); 
-                $parent.click({imgsrc: _neon.utils.getBackgroundImageUrl($el)}, imageClickEventHandler);
-            }
-
-            // Image click handler
-            // If the parent is an anchor with JS, then attach click handler
-            // If its normal href, then the click event may fire twice, so the clickhandler
-            // keeps track of tids it has fired event and skips if they trigger within a close range
-            
+            var click_attr = _neon.utils.getMysteryElementImageSource($el);
+            _neon.utils.beacon('_registerClickEvent', click_attr);
             $el.click({imgsrc: click_attr}, imageClickEventHandler);
             $parent.click({imgsrc: click_attr}, imageClickEventHandler);
 
             // DISCOVERY specific
             //$gparent.click({imgsrc: $el.attr('src')}, imageClickEventHandler);
+            
             // Handle IGN case of linking adjacent elements 
             _registerClickEventToAdjacentElementWithSameLinkIGN($el);
 
@@ -507,34 +491,35 @@ Object.size = function(obj) {
         // Store the timestamp when an image was clicked
         // lastClickOnNeonElementTs = new Date().getTime();
         lastMouseClick = new Date().getTime();
-        var imgSrc = e.data.imgsrc; //$(this).attr('src');
-        var offset = $(this).offset(); // Get position relative to document
 
-        // If background image, then window is this element, create dummy offset
-        //if (typeof(offset) === 'undefined') {
-        //    offset = {}; offset.left = 0; 
-        //}
-        var wx = offset.left - $(window).scrollLeft(); 
-        var wy = offset.top - $(window).scrollTop();
-        var px = offset.left;
-        var py = offset.top;
-        var thumbData = thumbMap[imgSrc];
-        /// If the image is one that Neon cares about 
+        var imgSrc = e.data.imgsrc,
+            offset = $(this).offset() // Get position relative to document
+            wx = offset.left - $(window).scrollLeft(),
+            wy = offset.top - $(window).scrollTop(),
+            px = offset.left,
+            py = offset.top,
+            thumbData = thumbMap[imgSrc]
+        ;
+
+        // If the image is one that Neon cares about 
         if (typeof(thumbData) !== 'undefined') {
+            _neon.utils.beacon('click hit', imgSrc);
             var vid = thumbData[0];
             var tid = thumbData[1];
            
             if (typeof(lastClickMap[tid]) !== 'undefined' && (lastMouseClick - lastClickMap[tid] < lastClickThreshold)) {
                 return;
-            }else {
+            }
+            else {
                 lastClickMap[tid] = lastMouseClick; 
             } 
 
             // send the mouse click event relative to the image (e.clientX,
             // e.clientY) 
             _neon.TrackerEvents.sendImageClickEvent(vid, tid, wx, wy, px, py, e.clientX, e.clientY);
-
-        }else {
+        }
+        else {
+            _neon.utils.beacon('click miss', imgSrc);
             // May be send the img src as vid, to help track errors on resolving thumb data ?
             //_neon.TrackerEvents.sendImageClickEvent(encodeURIComponent(imgSrc), null, wx, wy, e.pageX, e.pageY);
         }
@@ -559,17 +544,19 @@ Object.size = function(obj) {
         new_i_frame.id = publisherId;
         new_i_frame.src = serviceURL;
     }
+
+    function imageHunter (rootElement) {
+        var $elements = _neon.utils.getElementsUsingImageSourceSelector('', rootElement);
+        if ($elements.length > 0) {
+           $elements.each(function() {
+               _testAndAddImageElement(this);
+           });  
+        }
+    }
     
     function getNewImages(element) {
         if (initialLoadComplete) {
-            var $element = _neon.utils.makeJQueryObject(element),
-                $images = $element.find('img')
-            ;
-            if ($images.length > 0) {
-               $images.each(function() {
-                   _testAndAddImageElement(this);
-               });  
-            }  
+            imageHunter(element);
         }
     } 
     
@@ -594,11 +581,11 @@ Object.size = function(obj) {
 
     function _testAndAddImageElement(potentialElement) {
         var $element = _neon.utils.makeJQueryObject(potentialElement),
-            url = _neon.utils.getElementImageSource($element) || _neon.utils.getBackgroundImageUrl($element);
+            url = _neon.utils.getMysteryElementImageSource($element);
 
         if (_isNeonThumbnail(url)) {
             var vid = _getNeonVideoIdFromURL(url);
-            if ($.inArray(vid, videoIds) == -1) { 
+            if ($.inArray(vid, videoIds) === -1) { 
                 videoIds.push(vid);
                 imgObjs.push($element);
             } 
@@ -608,23 +595,7 @@ Object.size = function(obj) {
 
     // Map ISP served images to Neon tids, used when images are served by ISP
     function mapImagesToTids() {
-        // Batch all the thumbnail URLs. Iterate through image tags
-        // Add all Neon Images to imgObjs and any Image Serving URLs to a
-        // Video IDs list to be resolved.
-        $('img').each(function() {
-            _testAndAddImageElement(this);
-        });
-       
-        //Elements with background images
-        //Example: http://www.ign.com/articles/2014/04/15/mechrunner-coming-to-ps4-vita-and-pc
-        bgImageElArr = getElementsWithBackgroundImages();
-        var i = 0,
-            bgImageElArrLength = bgImageElArr.length
-        ;
-        for(; i < bgImageElArrLength; i++) {
-            _testAndAddImageElement(bgImageElArr[i]);
-        }
-        // we've added some more videos, we need to track them
+        imageHunter(document);
         initialLoadComplete = true; 
         _submitToISP();  
     }
@@ -637,7 +608,7 @@ Object.size = function(obj) {
         if (thumbnailIds != '') {
             var tids = thumbnailIds.split(',');
             var ispMap = {};
-            for (var i = trackerProcessedCount, j = 0; i<videoIds.length; i++, j++) {
+            for (var i = trackerProcessedCount, j = 0; i < videoIds.length; i++, j++) {
                 ispMap[videoIds[i]] = tids[j];
             }
 
@@ -646,14 +617,8 @@ Object.size = function(obj) {
             imgVisibleSizes = {};
             imgURLs = [];
             for (var i = trackerProcessedCount; i < imgObjs.length; i++) {
-                var url,
-                    imgObj = imgObjs[i];
-                if (imgObj.is('img')) {
-                    url = _neon.utils.getElementImageSource(imgObj);
-                }
-                else {
-                    url = _neon.utils.getBackgroundImageUrl(imgObj);
-                }
+                var imgObj = imgObjs[i]
+                    url = _neon.utils.getMysteryElementImageSource(imgObj);
                 if (_isNeonImageServingURL(url)) {
                     var vid = _neonISPURLToVid(url);
                     thumbMap[url] = [vid, ispMap[vid]];
@@ -749,10 +714,12 @@ Object.size = function(obj) {
             i = 0
         ;
         for (; i < imgUrlsLength; i++) {
-            var source = imgUrls[i];
-            $imgArr.push(_neon.utils.getElementUsingImageSourceSelector(source));
-            allVisibleSet[source] = 0; // default to invisible
-            imagesSentSet[source] = 0; // default to not sent 
+            var imageSource = imgUrls[i],
+                $newElements = _neon.utils.getElementsUsingImageSourceSelector(imageSource, document)
+            ;
+            Array.prototype.push.apply($imgArr, $newElements);
+            allVisibleSet[imageSource] = 0; // default to invisible
+            imagesSentSet[imageSource] = 0; // default to not sent 
         }
 
         var lastVisibleSet = {}; // set of thumbnails visible currently
@@ -766,9 +733,9 @@ Object.size = function(obj) {
 
             // loop through all images on the page and check which of them are visible
             for (var i = 0; i < $imgArr.length; i++) {
-                var $img = $imgArr[i];
+                var $img = _neon.utils.makeJQueryObject($imgArr[i]);
                 if ($img.is(':appeared')) {
-                    var url = _neon.utils.getElementImageSource($img);
+                    var url = _neon.utils.getMysteryElementImageSource($img);
                     if (thumbMap.hasOwnProperty(url)) {
                         vidId = thumbMap[url][0];
                         thumbId = thumbMap[url][1];
@@ -785,43 +752,18 @@ Object.size = function(obj) {
                 }
             }
 
-            // loop through all elements with background images and check which of them are visible
-            for (var i = 0; i < bgImageElArr.length; i++) {
-                var el = bgImageElArr[i];
-                if (_neon.utils.isOnScreen(el)) { // if element is in viewport
-                    var url = _neon.utils.getBackgroundImageUrl(el);
-                    // console.log("BG Visible", el, url, thumbMap);
-                    if (thumbMap.hasOwnProperty(url)) {
-
-                        vidId = thumbMap[url][0];
-                        thumbId = thumbMap[url][1];
-
-                        if (!lastVisibleSet.hasOwnProperty(url)) { // image just appeared, store it
-                            allVisibleSet[url] = 1;
-                            // store the video_id-thumbnail_id pair as viewed
-                            _neon.StorageModule.storeThumbnail(vidId, thumbId);
-                        }
-                        newVisibleSet[url] = 1; // add to the visible set
-                        visibleSetChanged = true;
-                    }
-                }
-            }
-
             if (visibleSetChanged) {
                 // update our set of currently visible thumbnails
                 lastVisibleSet = newVisibleSet;
                 var visibleThumbMap = [];
-
-                // console.log('AV', allVisibleSet);
-                for (var iurl in allVisibleSet) {
-                    if (allVisibleSet[iurl] === 1) {
-                        if (imagesSentSet[iurl] === 0) {
-                            imagesSentSet[iurl] = 1;
-                            visibleThumbMap.push(thumbMap[iurl]);
+                for (var iUrl in allVisibleSet) {
+                    if (allVisibleSet[iUrl] === 1) {
+                        if (imagesSentSet[iUrl] === 0) {
+                            imagesSentSet[iUrl] = 1;
+                            visibleThumbMap.push(thumbMap[iUrl]);
                         }
                     }
                 }
-
                 if (visibleThumbMap.length > 0) {  
                     _neon.TrackerEvents.sendImagesVisibleEvent(visibleThumbMap);
                 }
@@ -847,7 +789,7 @@ Object.size = function(obj) {
 
         // Else get TAI from the script (Backward compatability)
         var scriptTags = document.getElementsByTagName('script');
-        for (var i = 0; i<scriptTags.length; i++) {
+        for (var i = 0; i < scriptTags.length; i++) {
             sTag = scriptTags[i];
 
             // Backward compatibility
@@ -880,12 +822,12 @@ Object.size = function(obj) {
     }
 
     function _getNeonVideoIdFromURL(url) {
-       if (url.indexOf("neontn") > -1) {
+       if (url.indexOf('neontn') > -1) {
             var ret = _parseNeonThumbnailIdURL(url);
             return ret[0];
        }
 
-       if (url.indexOf("neonvid") > -1) {
+       if (url.indexOf('neonvid') > -1) {
            return _neonISPURLToVid(url);
        }
        return;
@@ -1157,9 +1099,9 @@ _neon.TrackerEvents = (function() {
             referralUrl,
             timestamp,
             eventName,
-            trackerURL = "http://tracker.neon-images.com"
+            trackerURL = 'http://tracker.neon-images.com'
         ;
-        //var trackerURL = "http://private-9a3505-trackerneonlabcom.apiary-mock.com";
+        // var trackerURL = 'http://private-9a3505-trackerneonlabcom.apiary-mock.com';
 
     function buildTrackerEventData(ts) {
         trackerAccountID = _neon.tracker.getTrackerAccountId();
@@ -1207,6 +1149,7 @@ _neon.TrackerEvents = (function() {
             if (typeof(wx) !== 'undefined' && typeof(wy) !== 'undefined' && typeof(px) !== 'undefined' && typeof(py) !== 'undefined' && typeof(cx) !== 'undefined') {
                 req += '&wx=' + wx + '&wy=' + wy + '&x=' + px + '&y=' + py + '&cx=' + cx + '&cy=' + cy;
             }
+            _neon.utils.beacon(eventName, req);
             _neon.JsonRequester.sendRequest(req);
         },
 
@@ -1243,7 +1186,7 @@ _neon.TrackerEvents = (function() {
             var req = buildTrackerEventData();
             if (tids.length > 0) { 
                 req += '&tids=' + tids;
-                _neon.utils.beacon(eventName, req);
+                _neon.utils.beacon(eventName, tids.length, req);
                 _neon.JsonRequester.sendRequest(req);
             }
         },
@@ -1256,7 +1199,7 @@ _neon.TrackerEvents = (function() {
             var req = buildTrackerEventData();
             if (tids.length > 0) { 
                 req += '&tids=' + tids;
-                _neon.utils.beacon(eventName, req);
+                _neon.utils.beacon(eventName, tids.length, req);
                 _neon.JsonRequester.sendRequest(req);
             }
         },
