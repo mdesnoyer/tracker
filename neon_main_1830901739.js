@@ -1,4 +1,5 @@
-var _neon = _neon || {},
+var neonPublisherId = '1830901739';
+var neonTrackerType = 'gen';var _neon = _neon || {},
     neonPageId = null,
     videoIds = [],
     imgObjs = [],
@@ -206,7 +207,7 @@ Object.size = function(obj) {
         },
 
         beacon: function() {
-            if (false) {
+            if (true) {
                 console.log('[neon]', arguments);
             }
         },
@@ -595,8 +596,9 @@ Object.size = function(obj) {
         videoIdsCount = videoIds.length; 
     } 
 
-    function _testAndAddImageElement(potentialElement) {
-        var $element = _neon.utils.makeJQueryObject(potentialElement),
+    function _testAndAddImageElement(element) {
+
+        var $element = _neon.utils.makeJQueryObject(element),
             url = _neon.utils.getElementImageSource($element) || _neon.utils.getBackgroundImageUrl($element);
 
         if (_isNeonThumbnail(url)) {
@@ -725,11 +727,13 @@ Object.size = function(obj) {
     // BIND to Page load event
     // This function runs at page load and maps all the images to their TIDs
     function initImageLoad() {
+        //wait for page load
         $(window).bind('load', function() {
             mapImagesToTids();
             $(document).bind('DOMNodeInserted', function(e) {
                 var element = e.target;
                 getNewImages(element);
+                 
             }); 
             startISPSubmitInterval();  
             // TODO: Figure out why this doesn't work always
@@ -838,7 +842,7 @@ Object.size = function(obj) {
         // on window unload, send thumbnails viewed in the current session to the server
         $(window).bind('beforeunload', function() {
             // console.log("sending viewed thumbnails to server");
-            var thumbnails = _neon.StorageModule.getAllThumbnails('session');
+            var thumbnails = _neon.StorageModule.getAllThumbnails("session");
             // TODO: Send the Images visible event, when you have a Q 
         });
     }
@@ -853,7 +857,7 @@ Object.size = function(obj) {
         }
 
         // Else get TAI from the script (Backward compatability)
-        var scriptTags = document.getElementsByTagName('script');
+        var scriptTags = document.getElementsByTagName("script");
         for (var i = 0; i<scriptTags.length; i++) {
             sTag = scriptTags[i];
 
@@ -861,7 +865,7 @@ Object.size = function(obj) {
             if (sTag.src.search("neonbootloader") >= 0 || sTag.src.search("neonbctracker.js") >=0) {
                 trackerAccountId = sTag.id;
             }
-            if (sTag.src.search("neonoptimizer") >= 0) {
+            if (sTag.src.search("neonoptimizer") >=0) {
                 trackerAccountId = sTag.src.split('_')[1].split('.js')[0];
             }
         }       
@@ -1288,4 +1292,38 @@ _neon.TrackerEvents = (function() {
     }
 
 }());
-    
+    //Main function
+(function() {
+    //We do not want the script to execute this main function while unit testing
+    if(_neon.UNITTEST) return;
+
+    var docReadyId = setInterval(NeonInit, 100); //100ms
+
+    /// Neon Init method
+    function NeonInit(){
+        if(document.readyState === "complete" || document.readyState === "interactive"){
+            //Clear the data on viewed thumbnails in session storage 
+            //and update the TS in local storage	
+            _neon.StorageModule.clearPageSessionData();
+            clearInterval(docReadyId);
+
+            /// IPAD Clicks
+            $(document).bind("touchstart", function(e){
+                // Record any touch start on the canvas (best effort)
+                lastMouseClick = new Date().getTime();
+            });
+
+        }
+
+    }
+
+    /// TODO: Handle this globally and resort to storing things in memory
+    //run the tracker only on browsers that can suppport it
+    if(sessionStorage && localStorage && JSON) {
+        _neon.tracker.init();
+    }
+})();
+
+})(_neonjQuery); //end of _neon obj
+
+
