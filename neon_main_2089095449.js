@@ -58,7 +58,7 @@ Object.size = function(obj) {
     var check_lock = false;
     var defaults = {
         interval: 250,
-    force_process: false
+        force_process: false
     }
     var _$window = _$(window);
 
@@ -208,7 +208,7 @@ Object.size = function(obj) {
 
         beacon: function() {
             if (false) {
-                console.log(arguments);
+                console.log('[neon]', arguments);
             }
         },
 
@@ -258,14 +258,21 @@ Object.size = function(obj) {
         },
 
         getBackgroundImageUrl: function(el) {
-            var bg = $(el).css('background-image');
+            var $el = _neon.utils.makeJQueryObject(el),
+                bg = $el.css('background-image');
             bg = bg.replace('url(', '').replace(')', '');
             return bg.substr(7); // remove http:// - https?
         },
 
+        // Check object and if it is a jQuery object, return it, otherwise cast
+        // it to a jQuery object.
+        makeJQueryObject: function(obj) {
+            return (obj instanceof jQuery ? obj : $(obj));
+        },
+
         getElementImageSource: function(el) {
-            var $el = el instanceof jQuery ? el : $(el);
-            return ($el.attr('src') || $el.attr('data-original') || '');
+            var $el = _neon.utils.makeJQueryObject(el);
+            return ($el.attr('data-original') || $el.attr('src') || '');
         },
 
         getElementUsingImageSourceSelector: function(source) {
@@ -554,18 +561,14 @@ Object.size = function(obj) {
         new_i_frame.src = serviceURL;
     }
     
-    // TODO figure out what is getting found and passed to here.
     function getNewImages(element) {
         if (initialLoadComplete) {
-            var images = $(element).find('img'); 
-            // console.log('jquery says Im a:' + $(element));
-            // console.log(images);
-
-            // TODO this keeps showing as null length
-            
-            if (images.length > 0) {
-               $(images).each(function() {
-                   _testAndAddImageElement($(this));  
+            var $element = _neon.utils.makeJQueryObject(element),
+                $images = $element.find('img')
+            ;
+            if ($images.length > 0) {
+               $images.each(function() {
+                   _testAndAddImageElement(this);
                });  
             }  
         }
@@ -590,36 +593,37 @@ Object.size = function(obj) {
         videoIdsCount = videoIds.length; 
     } 
 
-    function _testAndAddImageElement(element) {
-
-        var url = _neon.utils.getElementImageSource(element) || _neon.utils.getBackgroundImageUrl(element);
+    function _testAndAddImageElement(potentialElement) {
+        var $element = _neon.utils.makeJQueryObject(potentialElement),
+            url = _neon.utils.getElementImageSource($element) || _neon.utils.getBackgroundImageUrl($element);
 
         if (_isNeonThumbnail(url)) {
             var vid = _getNeonVideoIdFromURL(url);
             if ($.inArray(vid, videoIds) == -1) { 
                 videoIds.push(vid);
-                imgObjs.push(element);
+                imgObjs.push($element);
             } 
-            _registerClickEvent($(element));
+            _registerClickEvent($element);
         }
     } 
 
-    // Map ISP served images to Neon tids, Used when images are served by ISP
+    // Map ISP served images to Neon tids, used when images are served by ISP
     function mapImagesToTids() {
-        //batch all the thumbnail urls
-        // Iterate through Image tags
-        // Add all Neon Images to imgObjs and any Image Serving URLs to
-        // a videoIds list to be resolved
+        // Batch all the thumbnail URLs. Iterate through image tags
+        // Add all Neon Images to imgObjs and any Image Serving URLs to a
+        // Video IDs list to be resolved.
         $('img').each(function() {
-            _testAndAddImageElement($(this));  
+            _testAndAddImageElement(this);
         });
        
         //Elements with background images
         //Example: http://www.ign.com/articles/2014/04/15/mechrunner-coming-to-ps4-vita-and-pc
         bgImageElArr = getElementsWithBackgroundImages();
-        for(var i = 0; i < bgImageElArr.length; i++) {
-            var el = bgImageElArr[i];
-            _testAndAddImageElement(el);  
+        var i = 0,
+            bgImageElArrLength = bgImageElArr.length
+        ;
+        for(; i < bgImageElArrLength; i++) {
+            _testAndAddImageElement(bgImageElArr[i]);
         }
         // we've added some more videos, we need to track them
         initialLoadComplete = true; 
@@ -688,7 +692,7 @@ Object.size = function(obj) {
         if (typeof(url) === 'undefined') {
             return false;
         }
-        if (url.indexOf("neonvid") > -1) {
+        if (url.indexOf('neonvid') > -1) {
             return true;
         }
         else {
@@ -720,13 +724,10 @@ Object.size = function(obj) {
     // BIND to Page load event
     // This function runs at page load and maps all the images to their TIDs
     function initImageLoad() {
-        //wait for page load
         $(window).bind('load', function() {
             mapImagesToTids();
             $(document).bind('DOMNodeInserted', function(e) {
-                var element = e.target;
-                getNewImages(element);
-                 
+                getNewImages(e.target);
             }); 
             startISPSubmitInterval();  
             // TODO: Figure out why this doesn't work always
@@ -773,14 +774,11 @@ Object.size = function(obj) {
                         vidId = thumbMap[url][0];
                         thumbId = thumbMap[url][1];
                         if (!lastVisibleSet.hasOwnProperty(url)) { // image just appeared, store it
-                            _neon.utils.beacon('Spotted image', url);
                             allVisibleSet[url] = 1;
                             // store the video_id-thumbnail_id pair as viewed
                             _neon.StorageModule.storeThumbnail(vidId, thumbId);
-                            // console.log(StorageModule.getAllThumbnails("session"));
                         }
                         newVisibleSet[url] = 1; // add to the visible set
-                        
                         if (lastVisibleSet[url] !== 1) { 
                             visibleSetChanged = true;
                         }
@@ -800,7 +798,6 @@ Object.size = function(obj) {
                         thumbId = thumbMap[url][1];
 
                         if (!lastVisibleSet.hasOwnProperty(url)) { // image just appeared, store it
-                            _neon.utils.beacon('Spotted background image', url);
                             allVisibleSet[url] = 1;
                             // store the video_id-thumbnail_id pair as viewed
                             _neon.StorageModule.storeThumbnail(vidId, thumbId);
@@ -835,7 +832,7 @@ Object.size = function(obj) {
         // on window unload, send thumbnails viewed in the current session to the server
         $(window).bind('beforeunload', function() {
             // console.log("sending viewed thumbnails to server");
-            var thumbnails = _neon.StorageModule.getAllThumbnails("session");
+            var thumbnails = _neon.StorageModule.getAllThumbnails('session');
             // TODO: Send the Images visible event, when you have a Q 
         });
     }
@@ -850,7 +847,7 @@ Object.size = function(obj) {
         }
 
         // Else get TAI from the script (Backward compatability)
-        var scriptTags = document.getElementsByTagName("script");
+        var scriptTags = document.getElementsByTagName('script');
         for (var i = 0; i<scriptTags.length; i++) {
             sTag = scriptTags[i];
 
@@ -858,7 +855,7 @@ Object.size = function(obj) {
             if (sTag.src.search("neonbootloader") >= 0 || sTag.src.search("neonbctracker.js") >=0) {
                 trackerAccountId = sTag.id;
             }
-            if (sTag.src.search("neonoptimizer") >=0) {
+            if (sTag.src.search("neonoptimizer") >= 0) {
                 trackerAccountId = sTag.src.split('_')[1].split('.js')[0];
             }
         }       
@@ -1160,7 +1157,7 @@ _neon.TrackerEvents = (function() {
             pageUrl,
             referralUrl,
             timestamp,
-            eventName
+            eventName,
             trackerURL = "http://tracker.neon-images.com"
         ;
         //var trackerURL = "http://private-9a3505-trackerneonlabcom.apiary-mock.com";
@@ -1224,6 +1221,7 @@ _neon.TrackerEvents = (function() {
             if (typeof(playerId) !=='undefined') {
                 req += '&playerid=' + playerId;
             }
+            _neon.utils.beacon(eventName, req);
             _neon.JsonRequester.sendRequest(req);
         },
 
@@ -1235,6 +1233,7 @@ _neon.TrackerEvents = (function() {
             if (typeof(playerId) !=='undefined') {
                 req += '&playerid=' + playerId;
             }
+            _neon.utils.beacon(eventName, req);
             _neon.JsonRequester.sendRequest(req);
         },
 
@@ -1245,7 +1244,7 @@ _neon.TrackerEvents = (function() {
             var req = buildTrackerEventData();
             if (tids.length > 0) { 
                 req += '&tids=' + tids;
-                _neon.utils.beacon('iv: ', req);
+                _neon.utils.beacon(eventName, req);
                 _neon.JsonRequester.sendRequest(req);
             }
         },
@@ -1258,6 +1257,7 @@ _neon.TrackerEvents = (function() {
             var req = buildTrackerEventData();
             if (tids.length > 0) { 
                 req += '&tids=' + tids;
+                _neon.utils.beacon(eventName, req);
                 _neon.JsonRequester.sendRequest(req);
             }
         },
@@ -1267,6 +1267,7 @@ _neon.TrackerEvents = (function() {
             eventName = 'vc';
             var req = buildTrackerEventData();
             req += '&vid=' + vid + '&tid='+ tid + '&playerid=' + playerId;
+            _neon.utils.beacon(eventName, req);
             _neon.JsonRequester.sendRequest(req);
         },
 
