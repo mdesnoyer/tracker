@@ -24,6 +24,7 @@ import sys
 from StringIO import StringIO
 import urllib
 import urllib2
+from functools import partial
 
 # constants
 CLOSURE_URL = "http://closure-compiler.appspot.com/compile"
@@ -96,7 +97,22 @@ def upload_to_s3(location, bootloader, contents, tai):
         bootjs_url = s3_uploader(bootjs, new_boot)
         print "The optimizer script has been uploded to %s" % bootjs_url
 
+def include_replace(match, tai):
+    matches = match.groups()
+    filename = str(matches[0])
+    id = str(matches[1])
+    if id == tai:
+        filepath = '_partials/' + filename
+        try:
+            with open(filepath, 'r') as inc:
+                return inc.read()
+        except Exception, e:
+            openerror = '// ERROR could not find file, %s' % filepath
+            print openerror
+            return openerror
+
 def main(options):
+
     # Insert Tracker Id
     tai = options.trackerid
 
@@ -107,8 +123,7 @@ def main(options):
     with open(fname, 'w') as f:
         # Insert Tracker type
         contents = "var neonPublisherId = '%s';\n" % tai
-
-        contents += "var neonTrackerType = '%s';" % options.trackertype
+        contents += "var neonTrackerType = '%s';\n" % options.trackertype
 
         # Insert basic modules
         with open(options.basic_module, 'r') as bm:
@@ -131,6 +146,13 @@ def main(options):
         with open(options.main_module, 'r') as mm:
             main_module = mm.read()
             contents += main_module
+
+        # We need to check for items such as {% include 2089095449.test.js id="2089095449" %}
+        pattern = re.compile('{% include (.*) id="(.*)" %}')
+
+        # Wrap the function call in a partial so we can pass in tai
+        # http://stackoverflow.com/questions/3218283/how-to-pass-a-variable-to-a-re-sub-callback
+        contents = re.sub(pattern, partial(include_replace, tai=tai), contents)
     
         # Compile the file 
         if options.minify != 0:
