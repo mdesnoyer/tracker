@@ -340,9 +340,8 @@ Object.size = function(obj) {
             initialLoadComplete = false, 
             lastClickedImage = null,
             lastClickOnNeonElementTs = null,
-            lastClickOnNeonElement = null
-            lastClickMap = {}; // Store the timestamp of a click for a given TID
-            lastClickThreshold  = 50 // 50ms
+            lastClickOnNeonElement = null,
+            lastClickMap = {} // Store the timestamp of a click for a given TID
         ;
 
     // Find adjacent elements with same link
@@ -504,10 +503,10 @@ Object.size = function(obj) {
         // If the image is one that Neon cares about 
         if (typeof(thumbData) !== 'undefined') {
             _neon.utils.beacon('click hit', imgSrc);
-            var vid = thumbData[0];
-            var tid = thumbData[1];
-           
-            if (typeof(lastClickMap[tid]) !== 'undefined' && (lastMouseClick - lastClickMap[tid] < lastClickThreshold)) {
+            var vid = thumbData[0],
+                tid = thumbData[1]
+            ;
+            if (typeof(lastClickMap[tid]) !== 'undefined') {
                 return;
             }
             else {
@@ -520,7 +519,7 @@ Object.size = function(obj) {
         }
         else {
             _neon.utils.beacon('click miss', imgSrc);
-            // May be send the img src as vid, to help track errors on resolving thumb data ?
+            // Maybe send the img src as vid, to help track errors on resolving thumb data ?
             //_neon.TrackerEvents.sendImageClickEvent(encodeURIComponent(imgSrc), null, wx, wy, e.pageX, e.pageY);
         }
     }
