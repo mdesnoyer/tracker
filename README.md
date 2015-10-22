@@ -31,6 +31,12 @@ For example:
 
 ## Testing
 
+## Discovery
+
+- https://docs.google.com/a/neon-lab.com/document/d/1MP28sVWpckEM3ee0bfN1ojepdVPZdVSOVTpSnDu95TM/edit?usp=sharing
+
+### Includes
+
 There are two test you can include in the template `basic_modules.js.template` that can be used for testing. Add in:
 
 ```
