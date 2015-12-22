@@ -161,7 +161,7 @@ Object.size = function(obj) {
         // Node
         return require('jquery');
     } else {
-        return jQuery;
+        return _neonjQuery;
     }
 }());
 
@@ -402,7 +402,6 @@ Object.size = function(obj) {
                         click_attr = _neon.utils.getMysteryElementImageSource($el)
                     ;
                     at.click({imgsrc: click_attr}, imageClickEventHandler);
-
                     
                     var x = $($gparent.children()[1]);
                     // May cause double IC events
@@ -455,18 +454,36 @@ Object.size = function(obj) {
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        function _attachClickHandler($el, callingFunction, clickAttr, handler) {
-            // use a namespace on the click so we can remove the existing first
+        function _clickHandlerOn($el, clickAttr, handler) {
+            $el.on('click.neon', { imgsrc: clickAttr }, handler).attr('neon-click-handler', clickAttr);
+        }
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+        function _clickHandlerOff($el) {
             $el.off('click.neon').removeAttr('neon-click-handler');
-            $el.on('click.neon', {imgsrc: clickAttr}, handler).attr('neon-click-handler', clickAttr);
-            _neon.utils.beacon(callingFunction + ' added', clickAttr);
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         function _registerClickEvent($el) {
-            var clickAttr = _neon.utils.getMysteryElementImageSource($el);
-            _attachClickHandler($el, '_registerClickEvent', clickAttr, imageClickEventHandler);
+            
+            var clickAttr = _neon.utils.getMysteryElementImageSource($el),
+                $elBonusEl // if you need to add a bonus Element, do so in a partial
+            ;
+
+            {% include fox.register-click-event.js id="1930337906" %}
+            
+            _clickHandlerOff($el);
+            _clickHandlerOn($el, clickAttr, imageClickEventHandler);
+            _neon.utils.beacon('_registerClickEvent' + ' added', clickAttr);
+
+            if ($elBonusEl.length === 1) {
+                _clickHandlerOff($elBonusEl);
+                _clickHandlerOn($elBonusEl, clickAttr, imageClickEventHandler);
+                _neon.utils.beacon('Bonus _registerClickEvent' + ' added', clickAttr);
+            }
+
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -866,6 +883,7 @@ Object.size = function(obj) {
             },
             
             reInitNeon: reInitNeon,
+            masterControlProgram: masterControlProgram,
             mapImagesToTids: mapImagesToTids,
             getNewImages: getNewImages,
             startISPSubmitInterval: startISPSubmitInterval
