@@ -1,0 +1,1 @@
+return !($originalElement.hasClass('videoStill') && $originalElement.closest('.video-carousel-item-wrap').hasClass('active'));
