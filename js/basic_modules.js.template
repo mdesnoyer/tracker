@@ -219,7 +219,8 @@ Object.size = function(obj) {
             // add partials here which will do specific work per client, they
             // need a return value otherwise the code will fall through to
             // the return value below
-            {% include 1554964958.bounds.js id="1554964958" %}
+            {% include gannett.bounds.js id="1554964958" %}
+            {% include gannett.bounds.js id="1600036805" %}
 
             // * Leave me please *
             return false;
