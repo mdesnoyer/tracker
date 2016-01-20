@@ -805,7 +805,7 @@ Object.size = function(obj) {
         // ISP URL to VID
         // http://i1.neon-images.com/v1/client/2145072359/neonvid_3747AbcXYZ.jpg?height=360&width=640";
         function _neonISPURLToVid(url) {
-            var patt = new RegExp("neonvid_(?=.*\.jpg|\.png)([A-Z,a-z,0-9,_,-,.]*).(jpg|png)");
+            var patt = new RegExp("neonvid_(?=.*\.jpg|\.png)([A-Z,a-z,0-9,_,\-,.]*).(jpg|png)");
             var match = patt.exec(url); 
             return match[1];
         }
