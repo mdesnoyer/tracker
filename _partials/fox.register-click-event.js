@@ -9,7 +9,7 @@ if ($elParent.is('a.neonized-image')) {
 $elBonusEl = $($el.closest('.views-row').find('.info .views-field-title a')[0]);
 
 // Try Desktop
-if ($elBonusEl.length === 0) {
+if ((typeof $elBonusEl != 'undefined') && ($elBonusEl.length === 0)) {
 	$elBonusEl = $($el.closest('.fox-video-full-episodes-listing').find('.views-field-title a')[0]);
 }
 

@@ -18,6 +18,9 @@ Temp repo for Neon tracker v2
 
 ```./generate_tracker.py --trackerid 1930337906```
 
+### CNN
+```./generate_tracker.py --trackerid 1657678658```
+
 ## includes
 
 This will compare the ID of the customer we are generating the Javascript for with the id parameter passed in the include. The goal here is to have one master file and drive the customer specific code through the use of conditional includes.

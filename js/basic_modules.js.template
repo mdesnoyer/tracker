@@ -267,7 +267,7 @@ Object.size = function(obj) {
         // Check object and if it is a jQuery object, return it, otherwise cast
         // it to a jQuery object.
         makeJQueryObject: function(obj) {
-            return (obj instanceof jQuery ? obj : $(obj));
+            return (obj instanceof _neonjQuery ? obj : $(obj));
         },
 
         getMysteryElementImageSource: function (el) {
@@ -473,17 +473,17 @@ Object.size = function(obj) {
             ;
 
             {% include fox.register-click-event.js id="1930337906" %}
+            {% include cnn.register-click-event.js id="1657678658" %}
             
             _clickHandlerOff($el);
             _clickHandlerOn($el, clickAttr, imageClickEventHandler);
             _neon.utils.beacon('_registerClickEvent' + ' added', clickAttr);
 
-            if ($elBonusEl.length === 1) {
+            if ((typeof $elBonusEl != 'undefined') && ($elBonusEl.length === 1)) {
                 _clickHandlerOff($elBonusEl);
                 _clickHandlerOn($elBonusEl, clickAttr, imageClickEventHandler);
                 _neon.utils.beacon('Bonus _registerClickEvent' + ' added', clickAttr);
             }
-
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -810,7 +810,7 @@ Object.size = function(obj) {
 
         // NEON URL Regex 
         function _parseNeonThumbnailIdURL(imgurl) {
-            var patt = new RegExp("neontn[A-Z,a-z,0-9,-]*_[A-Z,a-z,0-9,\-,.]*_[A-Z,a-z,0-9,-]*");
+            var patt = new RegExp("neontn[A-Z,a-z,0-9,-]*_[A-Z,a-z,0-9,\-,~,.]*_[A-Z,a-z,0-9,\-,~]*");
             var res = patt.exec(imgurl);
             if (res) {    
                 tid = res[0];
@@ -822,7 +822,7 @@ Object.size = function(obj) {
         // ISP URL to VID
         // http://i1.neon-images.com/v1/client/2145072359/neonvid_3747AbcXYZ.jpg?height=360&width=640
         function _neonISPURLToVid(url) {
-            var patt = new RegExp("neonvid_(?=.*\.jpg|\.png)([A-Z,a-z,0-9,_,\-,.]*).(jpg|png)");
+            var patt = new RegExp("neonvid_([A-Za-z0-9_,\-~\.]*).(jpg|png)");
             var match = patt.exec(url); 
             return match[1];
         }
