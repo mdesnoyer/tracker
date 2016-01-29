@@ -1155,6 +1155,10 @@ _neon.TrackerEvents = (function() {
             }
             _neon.utils.beacon(eventName, req);
             _neon.JsonRequester.sendRequest(req);
+
+            // 3RD Party Click Validators get called here
+            {% include gannett.click.js id="1554964958" %}
+            {% include gannett.click.js id="1600036805" %}
         },
 
         // PlayerID of the player, if available
