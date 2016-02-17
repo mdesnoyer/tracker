@@ -2,7 +2,9 @@ var _neon = _neon || {},
     neonPageId = null,
     videoIds = [],
     imgObjs = [],
+    BASE_NEON_IMAGES_URL = 'neon-images.com',
     apiBaseURL = 'i3.neon-images.com',
+    TAG_NAME_BLACK_LIST = 'area, audio, base, canvas, col, colgroup, datalist, dialog, del, details, embed, head, iframe, img, input, ins, keygen, link, map, menu, menuitem, meta, noscript, object, optgroup, option, param, progress, script, select, source, style, summary, title, track, video',
     lastMouseClick,
     lastMouseClickElement,
     eventMethod = window.addEventListener ? 'addEventListener' : 'attachEvent',
@@ -206,7 +208,6 @@ Object.size = function(obj) {
                     bObj.addScriptTag();  
                 }
                 catch(err) {
-                    // console.log(err);
                 }
             }
         }
@@ -299,22 +300,21 @@ Object.size = function(obj) {
         // 3. sleepy element with background-image in other attribute(s)
 
         getElementsUsingImageSourceSelector: function(imageSource, rootElement) {
-
-            var specificSource = imageSource ? '$="' + imageSource + '"' : '',
+            var specificSource = imageSource ? ('$="' + imageSource + '"') : ('*="' + BASE_NEON_IMAGES_URL + '"'),
                 $rootElement = _neon.utils.makeJQueryObject(rootElement),
-                $images = $rootElement.find('img[data-original' + specificSource + '], img[src' + specificSource + ']');
-
-            var $others = $rootElement.find('*').filter(function() {
-                var backgroundImageUrl = _neon.utils.getElementBackgroundImageSource(this);
-                if (imageSource) {
-                    return backgroundImageUrl.indexOf(imageSource) > -1;
-                }
-                else {
-                    return backgroundImageUrl !== '';
-                }
-            });
-
-            var $all = $images.add($others);
+                $images = $rootElement.find('img[data-original' + specificSource + '], img[src' + specificSource + ']'),
+                // get ALL elements but lets save time and not bother with some types
+                $others = $rootElement.find('*').not(_neon.TAG_NAME_BLACK_LIST).filter(function() {
+                    var backgroundImageUrl = _neon.utils.getElementBackgroundImageSource(this);
+                    if (imageSource) {
+                        return backgroundImageUrl.indexOf(imageSource) > -1;
+                    }
+                    else {
+                        return backgroundImageUrl !== '';
+                    }
+                }),
+                $all = $images.add($others)
+            ;
             return $all;
         },
 
@@ -431,8 +431,8 @@ Object.size = function(obj) {
         /// Find the video elements, check if they have a Neon thumbnail
         /// If yes, then attach the click event
         function attachClickEventToHTML5VideoElement() {
-            var videoElements = document.getElementsByTagName("video");
-            for(var i = 0; i <videoElements.length; i++) {
+            var videoElements = document.getElementsByTagName('video');
+            for(var i = 0; i < videoElements.length; i++) {
                 var vElement = videoElements[i];
                 var siblings = $(vElement).siblings();
                 var inpElement;
@@ -542,7 +542,7 @@ Object.size = function(obj) {
             new_i_frame.src = serviceURL;
         }
 
-        function imageHunter (rootElement) {
+        function imageHunter(rootElement) {
             var $elements = _neon.utils.getElementsUsingImageSourceSelector('', rootElement);
             if ($elements.length > 0) {
                $elements.each(function() {
@@ -594,22 +594,24 @@ Object.size = function(obj) {
 
         // Map ISP served images to Neon tids, used when images are served by ISP
         function mapImagesToTids() {
-            imageHunter(document);
+            imageHunter(document.body);
             initialLoadComplete = true;
             _submitToISP();  
         }
 
-        function masterControlProgram() {
+        function masterControlProgram(bindForNewContent) {
             mapImagesToTids();
-            $(document).bind('DOMNodeInserted', function(e) {
+                if (bindForNewContent) {
+                    $(document.body).bind('DOMNodeInserted.neon', function(e) {
+                }
                 getNewImages(e.target);
-            }); 
+            });
             startISPSubmitInterval();
         }
 
         function reInitNeon() {
             _neon.utils.beacon('reInitNeon');
-            masterControlProgram();
+            masterControlProgram(false);
         }
 
         // Start Tracking Neon ISP Images
@@ -617,7 +619,7 @@ Object.size = function(obj) {
         // the video ids in to TIDs
         // Populate the thumb mappings
         window.startTrackingNeonISPImages = function startTrackingNeonISPImages(thumbnailIds) {
-            if (thumbnailIds != '') {
+            if (thumbnailIds != '' && (typeof thumbnailIds === 'string' || thumbnailIds instanceof String)) {
                 var tids = thumbnailIds.split(',');
                 var ispMap = {};
                 for (var i = trackerProcessedCount, j = 0; i < videoIds.length; i++, j++) {
@@ -700,8 +702,8 @@ Object.size = function(obj) {
         // BIND to Page load event
         // This function runs at page load and maps all the images to their TIDs       
         function initImageLoad() {
-            $(window).bind('load', function() {        
-                masterControlProgram();
+            $(window).bind('load.neon', function() {        
+                masterControlProgram(true);
             });
         }
 
@@ -721,7 +723,7 @@ Object.size = function(obj) {
             ;
             for (; i < imgUrlsLength; i++) {
                 var imageSource = imgUrls[i],
-                    $newElements = _neon.utils.getElementsUsingImageSourceSelector(imageSource, document)
+                    $newElements = _neon.utils.getElementsUsingImageSourceSelector(imageSource, document.body)
                 ;
                 Array.prototype.push.apply($imgArr, $newElements);
                 allVisibleSet[imageSource] = 0; // default to invisible
@@ -777,10 +779,8 @@ Object.size = function(obj) {
             }, 1000); // Let's check every second
 
             // on window unload, send thumbnails viewed in the current session to the server
-            $(window).bind('beforeunload', function() {
-                // console.log("sending viewed thumbnails to server");
+            $(window).bind('beforeunload.neon', function() {
                 var thumbnails = _neon.StorageModule.getAllThumbnails('session');
-                // TODO: Send the Images visible event, when you have a Q 
             });
         }
 
@@ -969,7 +969,6 @@ Object.size = function(obj) {
     /// Get thumbnail from storage  
     function _getThumbnail(storage, storageKey, videoId) {
         var data = JSON.parse(storage.getItem(storageKey));
-        // console.log("Session:", storageKey, data, videoId);
         if (data) {
             return data[videoId];
         } else {
@@ -995,7 +994,6 @@ Object.size = function(obj) {
                 localStorage.setItem(uidKey, uid);
                 return uid;
             }
-            // console.log(uid);
         },
 
         /// store thumbnail to storage    
@@ -1014,16 +1012,12 @@ Object.size = function(obj) {
             // pageUrl !null, look if data is session, then local
             var locRetrieved = "session";
             var storageKey = _getPageStorageKey(pageUrl);
-            // console.log("Storage key: " + storageKey);
             var ret = _getThumbnail(sessionStorage, storageKey, vidId);
             if (ret) { //if found in session storage
-                // console.log("accessing session storage data");
                 return [ret, locRetrieved];
             } else { // check localstorage (user might have opened video in new tab)
                 if (pageUrl) {
                     //If the domain of pageUrl and the document.url doesn't match return null
-                    // console.log(_getDomain(document.URL)); 
-                    // console.log(_getDomain(pageUrl));
                     if (_getDomain(document.URL) != _getDomain(pageUrl)) {
                         return null;
                     }
@@ -1058,8 +1052,6 @@ Object.size = function(obj) {
                 var pattern = new RegExp(thumbViewKeyPrefix);
                 for(var i = 0; i < sessionStorage.length; i++) {
                     var key = sessionStorage.key(i);
-                    // console.log("key == " + key);
-                    // console.log(pattern);
                     if (pattern.test(key)) {
                         var data = sessionStorage.getItem(key);
                         return data;
@@ -1079,9 +1071,7 @@ Object.size = function(obj) {
                 var keyMatch = _getPageStorageKey(pageUrl);
                 for(var i = 0; i < sessionStorage.length; i++) {
                     var key = sessionStorage.key(i);
-                    // console.log("key : " + key + " ---> " + keyMatch);
                     if (key == keyMatch) {
-                        // console.log("remove " + key);
                         sessionStorage.removeItem(key);
                     }
                 }
@@ -1096,16 +1086,16 @@ Object.size = function(obj) {
     ////// TRACKER Events sent to NEON //////////
 
 _neon.TrackerEvents = (function() {
-        var pageLoadId = _neon.utils.getPageRequestUUID(), 
-            trackerAccountID,
-            trackerType,
-            pageUrl,
-            referralUrl,
-            timestamp,
-            eventName,
-            trackerURL = 'http://tracker.neon-images.com'
-        ;
-        // var trackerURL = 'http://private-9a3505-trackerneonlabcom.apiary-mock.com';
+
+    var pageLoadId = _neon.utils.getPageRequestUUID(), 
+        trackerAccountID,
+        trackerType,
+        pageUrl,
+        referralUrl,
+        timestamp,
+        eventName,
+        trackerURL = 'http://tracker.neon-images.com'
+    ;
 
     function buildTrackerEventData(ts) {
         trackerAccountID = _neon.tracker.getTrackerAccountId();
@@ -1156,7 +1146,7 @@ _neon.TrackerEvents = (function() {
             _neon.utils.beacon(eventName, req);
             _neon.JsonRequester.sendRequest(req);
 
-            // 3RD Party Click Validators get called here
+            // Third Party Click Validators get called here
             {% include gannett.click.js id="1554964958" %}
             {% include gannett.click.js id="1600036805" %}
         },
