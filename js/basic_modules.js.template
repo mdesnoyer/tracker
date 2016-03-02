@@ -607,11 +607,11 @@ Object.size = function(obj) {
 
         function masterControlProgram(bindForNewContent) {
             mapImagesToTids();
-                if (bindForNewContent) {
-                    $(document.body).bind('DOMNodeInserted.neon', function(e) {
-                }
-                getNewImages(e.target);
-            });
+            if (bindForNewContent) {
+                $(document.body).bind('DOMNodeInserted.neon', function(e) {
+                    getNewImages(e.target);
+                });
+            }
             startISPSubmitInterval();
         }
 
