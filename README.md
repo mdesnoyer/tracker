@@ -20,6 +20,7 @@ Temp repo for Neon tracker v2
 
 ### CNN
 ```./generate_tracker.py --trackerid 1657678658```
+```./generate_tracker.py --trackerid 1657678658 --minify 1 --upload_location s3prod```
 
 ## includes
 

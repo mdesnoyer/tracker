@@ -67,14 +67,13 @@ def upload_to_s3(location, bootloader, contents, tai):
         bucket = conn.get_bucket(bucket_name)
         k = Key(bucket)
         k.name = basename
-        k.content_type = "application/javascript"
         policy = 'public-read'
         s3data = StringIO()
         s3data.write(data)
         s3data.seek(0)
 
         try:
-            k.set_contents_from_file(s3data, policy=policy)
+            k.set_contents_from_file(s3data, policy=policy, headers= { "Cache-Control": "max-age=3600", "Content-Type": "application/javascript" })
         except Exception, e:
             #TODO: More specific exceptions
             print "Error writing the file", e
