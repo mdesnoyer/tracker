@@ -215,6 +215,20 @@ Object.size = function(obj) {
 
     _neon.utils = {
 
+        // Is this a thumbnail Neon is interested in
+        isNeonThumbnail: function(url) {
+            if (typeof(url) === 'undefined') {
+                return false;
+            }
+
+            if (url.indexOf('neontn') > -1 || url.indexOf('neonvid') > -1) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        },
+
         isElementOutOfBounds: function($originalElement) {
 
             // add partials here which will do specific work per client, they
@@ -236,7 +250,7 @@ Object.size = function(obj) {
 
         beacon: function() {
             if (true) {
-                console.log('[neon]', arguments);
+                setTimeout(console.log('[neon]', arguments), 0);
             }
         },
 
@@ -273,7 +287,14 @@ Object.size = function(obj) {
 
         getMysteryElementImageSource: function (el) {
             var $el = _neon.utils.makeJQueryObject(el);
-            return _neon.utils.getElementImageSource($el) || _neon.utils.getElementBackgroundImageSource($el);
+            return _neon.utils.getVideoPosterSource($el) || _neon.utils.getElementImageSource($el) || _neon.utils.getElementBackgroundImageSource($el);
+        },
+
+        getVideoPosterSource: function(el) {
+            var $el = _neon.utils.makeJQueryObject(el),
+                returnValue = $el.attr('poster') || ''
+            ;
+            return returnValue;
         },
 
         getElementImageSource: function(el) {
@@ -281,6 +302,14 @@ Object.size = function(obj) {
                 returnValue = $el.attr('data-original') || $el.attr('src') || ''
             ;
             return returnValue;
+        },
+
+        isElementBackgroundNeon: function(el, src) {
+            var $el = _neon.utils.makeJQueryObject(el);
+            return
+                ($el.attr('data-background-image').indexOf(src) > -1) ||
+                ($el.attr('style').indexOf(src) > -1)
+            ;
         },
 
         getElementBackgroundImageSource: function(el) {
@@ -298,30 +327,58 @@ Object.size = function(obj) {
         // 2. sleepy <img /> with source in other attribute(s)
         // 3. regular element with background-image in style attribute
         // 4. sleepy element with background-image in other attribute(s)
+        // 5. video elements with neon poster attribute
+        // 6. video elements with non-neon poster attribute (to be watched)
 
         getElementsUsingImageSourceSelector: function(imageSource, rootElement) {
             
             var specificSource = imageSource ? ('$="' + imageSource + '"') : ('*="' + BASE_NEON_IMAGES_URL + '"'),
                 $rootElement = _neon.utils.makeJQueryObject(rootElement),
                 $fgImages,
-                $bgImages
+                $bgImages,
+                $videoPostersKnown,
+                $videoPostersUnknown
             ;
 
             // Get all 1 and 2
             $fgImages = $rootElement.find('img[data-original' + specificSource + '], img[src' + specificSource + ']');
             
             // get ALL 3 and 4 but lets save time and not bother with some types
-            $bgImages = $rootElement.find('*').not(_neon.TAG_NAME_BLACK_LIST).filter(function() {
-                var backgroundImageUrl = _neon.utils.getElementBackgroundImageSource(this);
-                if (imageSource) {
-                    return backgroundImageUrl.indexOf(imageSource) > -1;
-                }
-                else {
-                    return backgroundImageUrl !== '';
-                }
+            $bgImages = $rootElement.find('*').not(TAG_NAME_BLACK_LIST).filter(function() {
+                var src = imageSource ? imageSource : BASE_NEON_IMAGES_URL;
+                return _neon.utils.isElementBackgroundNeon(this, src);
             });
             
-            return $fgImages.add($bgImages);
+            // Get 5 - include root element in case its a video
+            var videoPostersKnownSource = 'video[poster' + specificSource + ']';
+            $videoPostersKnown = $rootElement.find(videoPostersKnownSource).addBack(videoPostersKnownSource);
+
+            // Get 6 - include root element in case its a video
+            var videoPostersUknownSource = 'video';
+            $videoPostersUnknown = $rootElement.find(videoPostersUknownSource).addBack(videoPostersUknownSource);
+            if ((typeof $videoPostersUnknown != 'undefined') && ($videoPostersUnknown.length > 0)) {
+                $videoPostersUnknown.each(function() {
+                    // We want to watch them in case they get updated to a Neon URL
+                    var observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            if (mutation.type === 'attributes' && mutation.attributeName === 'poster') {
+                                var $potentialHit = _neon.utils.makeJQueryObject(mutation.target);
+                                if (_neon.utils.isNeonThumbnail($potentialHit.attr('poster'))) {
+                                    _neon.tracker._testAndAddImageElement($potentialHit);
+                                }
+                            }
+                        });
+                    });
+                    observer.observe(this, {
+                        attributes: true,
+                        childList: false,
+                        characterData: false
+                    });
+                });  
+            }
+            
+            // return
+            return $fgImages.add($bgImages).add($videoPostersKnown);
         },
 
         getQueryValue: function(qstring, param) {
@@ -407,11 +464,11 @@ Object.size = function(obj) {
                         at = t.find('a'),
                         click_attr = _neon.utils.getMysteryElementImageSource($el)
                     ;
-                    at.click({imgsrc: click_attr}, imageClickEventHandler);
+                    at.click({imgsrc: click_attr}, elementClickEventHandler);
                     
                     var x = $($gparent.children()[1]);
                     // May cause double IC events
-                    // x.click({imgsrc: $el.attr('src')}, imageClickEventHandler); 
+                    // x.click({imgsrc: $el.attr('src')}, elementClickEventHandler); 
                     // Attach event to listElemnt-thumb
                     for (var i = 0 ; i < x.length; i++) {
                         if (x.prop("class") == "listElmnt-blogItem") {
@@ -419,7 +476,7 @@ Object.size = function(obj) {
                             for (var j=0; j<y.length; j++) {
                                 var z = $(y[j]).find("a");
                                 for (var k=0; k<z.length; k++) {
-                                    $(z[k]).click({imgsrc: click_attr}, imageClickEventHandler); 
+                                    $(z[k]).click({imgsrc: click_attr}, elementClickEventHandler); 
                                 }
                             }
                         }
@@ -429,7 +486,7 @@ Object.size = function(obj) {
                 else if ($gparent.prop("class").indexOf("grid") > -1) {
                     var t = $($gparent.children()[1]); //grid_12.omega
                     var at = t.find("a");
-                    at.click({imgsrc: click_attr}, imageClickEventHandler); 
+                    at.click({imgsrc: click_attr}, elementClickEventHandler); 
                 }
             } 
         }
@@ -453,7 +510,7 @@ Object.size = function(obj) {
                         inpElement = el;
                 }
                 if (imgSrc && inpElement) {
-                    $(inpElement).click({imgsrc: imgSrc}, imageClickEventHandler);
+                    $(inpElement).click({imgsrc: imgSrc}, elementClickEventHandler);
                 }
             }
         }
@@ -461,13 +518,19 @@ Object.size = function(obj) {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         function _clickHandlerOn($el, clickAttr, handler) {
-            $el.on('click.neon', { imgsrc: clickAttr }, handler).attr('neon-click-handler', clickAttr);
+            _neon.utils.beacon('_clickHandlerOn', clickAttr);
+            $el
+                .on('click.neon', { imgsrc: clickAttr }, handler)
+                .one('play.neon', { imgsrc: clickAttr }, handler)
+                .attr('neon-click-handler', clickAttr)
+            ;
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         function _clickHandlerOff($el) {
-            $el.off('click.neon').removeAttr('neon-click-handler');
+            _neon.utils.beacon('_clickHandlerOff');
+            $el.off('click.neon play.neon').removeAttr('neon-click-handler');
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -475,27 +538,38 @@ Object.size = function(obj) {
         function _registerClickEvent($el) {
             
             var clickAttr = _neon.utils.getMysteryElementImageSource($el),
-                $elBonusEl // if you need to add a bonus Element, do so in a partial
+                $elBonusEl1,
+                $elBonusEl2
             ;
 
             {% include fox.register-click-event.js id="1930337906" %}
             {% include cnn.register-click-event.js id="1657678658" %}
             
+            // Element
             _clickHandlerOff($el);
-            _clickHandlerOn($el, clickAttr, imageClickEventHandler);
-            _neon.utils.beacon('_registerClickEvent' + ' added', clickAttr);
+            _clickHandlerOn($el, clickAttr, elementClickEventHandler);
+             _neon.utils.beacon('_registerClickEvent' + ' added', clickAttr);
 
-            if ((typeof $elBonusEl != 'undefined') && ($elBonusEl.length === 1)) {
-                _clickHandlerOff($elBonusEl);
-                _clickHandlerOn($elBonusEl, clickAttr, imageClickEventHandler);
-                _neon.utils.beacon('Bonus _registerClickEvent' + ' added', clickAttr);
+            // Bonus Element
+            if ((typeof $elBonusEl1 != 'undefined') && ($elBonusEl1.length === 1)) {
+                _clickHandlerOff($elBonusEl1);
+                _clickHandlerOn($elBonusEl1, clickAttr, elementClickEventHandler);
+                _neon.utils.beacon('Bonus 1 _registerClickEvent' + ' added', clickAttr);
             }
+
+            // Bonus Element
+            if ((typeof $elBonusEl2 != 'undefined') && ($elBonusEl2.length === 1)) {
+                _clickHandlerOff($elBonusEl2);
+                _clickHandlerOn($elBonusEl2, clickAttr, elementClickEventHandler);
+                _neon.utils.beacon('Bonus 2 _registerClickEvent' + ' added', clickAttr);
+            }
+
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         // image click event handler
-        function imageClickEventHandler(e) {
+        function elementClickEventHandler(e) {
 
             // Store the timestamp when an image was clicked
             lastMouseClick = new Date().getTime();
@@ -521,7 +595,7 @@ Object.size = function(obj) {
                 ;
                 // send the mouse click event relative to the image (e.clientX,
                 // e.clientY) 
-                _neon.TrackerEvents.sendImageClickEvent(vid, tid, wx, wy, px, py, e.clientX, e.clientY);
+                setTimeout(_neon.TrackerEvents.sendImageClickEvent(vid, tid, wx, wy, px, py, e.clientX, e.clientY), 0);
             }
             else {
                 _neon.utils.beacon('click miss', imgSrc);
@@ -553,7 +627,7 @@ Object.size = function(obj) {
             if ($elements.length > 0) {
                $elements.each(function() {
                    _testAndAddImageElement(this);
-               });  
+               });
             }
         }
     
@@ -586,7 +660,7 @@ Object.size = function(obj) {
             var $element = _neon.utils.makeJQueryObject(potentialElement),
                 url = _neon.utils.getMysteryElementImageSource($element)
             ;
-            if (_isNeonThumbnail(url)) {
+            if (_neon.utils.isNeonThumbnail(url)) {
                 var vid = _getNeonVideoIdFromURL(url);
                 if ($.inArray(vid, videoIds) === -1) { 
                     videoIds.push(vid);
@@ -606,6 +680,7 @@ Object.size = function(obj) {
         }
 
         function masterControlProgram(bindForNewContent) {
+            bindForNewContent = bindForNewContent || false;
             mapImagesToTids();
             if (bindForNewContent) {
                 $(document.body).bind('DOMNodeInserted.neon', function(e) {
@@ -651,23 +726,10 @@ Object.size = function(obj) {
                     imgVisibleSizes[url] = [imgObj.width(), imgObj.height()];
                 }
                 // Send the loaded image set that Neon is interested in 
-                _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
+                setTimeout(_neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes), 0);
                 // Start Tracking
                 trackerProcessedCount = imgObjs.length;
                 startTracking(imgURLs);
-            }
-        }
-
-        // Is this a thumbnail Neon is interested in
-        function _isNeonThumbnail(url) {
-            if (typeof(url) === 'undefined')
-                return false;
-
-            if (url.indexOf('neontn') > -1 || url.indexOf('neonvid') > -1) {
-                return true;
-            }
-            else {
-                return false;
             }
         }
 
@@ -745,7 +807,7 @@ Object.size = function(obj) {
                 var newVisibleSet = {}; //set of thumbnails visible now
                 var visibleSetChanged = false;
 
-                // loop through all images on the page and check which of them are visible
+                // Loop through all images on the page and check which of them are visible
                 for (var i = 0; i < $imgArr.length; i++) {
                     var $img = _neon.utils.makeJQueryObject($imgArr[i]);
                     if ($img.is(':appeared') && !_neon.utils.isElementOutOfBounds($img)) {
@@ -755,7 +817,7 @@ Object.size = function(obj) {
                             thumbId = thumbMap[url][1];
                             if (!lastVisibleSet.hasOwnProperty(url)) { // image just appeared, store it
                                 allVisibleSet[url] = 1;
-                                // store the video_id-thumbnail_id pair as viewed
+                                // Store the video_id-thumbnail_id pair as viewed
                                 _neon.StorageModule.storeThumbnail(vidId, thumbId);
                             }
                             newVisibleSet[url] = 1; // add to the visible set
@@ -778,8 +840,8 @@ Object.size = function(obj) {
                             }
                         }
                     }
-                    if (visibleThumbMap.length > 0) {  
-                        _neon.TrackerEvents.sendImagesVisibleEvent(visibleThumbMap);
+                    if (visibleThumbMap.length > 0) {
+                        setTimeout(_neon.TrackerEvents.sendImagesVisibleEvent(visibleThumbMap), 0);
                     }
                 }
             }, 1000); // Let's check every second
@@ -866,12 +928,11 @@ Object.size = function(obj) {
                 if (typeof(neonTrackerType) !== 'undefined') {
                     return neonTrackerType; 
                 }
-                return "gen"; //default
+                return 'gen';
             },
 
             getLastClickNeonElementTS: function() {
                 return lastMouseClick;
-                //return lastClickOnNeonElementTs;
             },
 
             getLastClickNeonElement: function() {
@@ -892,7 +953,8 @@ Object.size = function(obj) {
             masterControlProgram: masterControlProgram,
             mapImagesToTids: mapImagesToTids,
             getNewImages: getNewImages,
-            startISPSubmitInterval: startISPSubmitInterval
+            startISPSubmitInterval: startISPSubmitInterval,
+            _testAndAddImageElement: _testAndAddImageElement
 
         };
 
@@ -1033,7 +1095,6 @@ Object.size = function(obj) {
 
                 // Not a current session, hence get global state
                 ret = _getThumbnailLocalStorage(vidId);
-                //_neon.TrackerEvents.sendImageClickEvent(vidId, ret ? ret[0].thumbId : null);
                 if (ret) {
                     locRetrieved = 'local';
                     return [ret, locRetrieved];
