@@ -18,6 +18,7 @@ Temp repo for Neon tracker v2
 ### FOX
 
 - ```./generate_tracker.py --trackerid 1930337906```
+- ```./generate_tracker.py --trackerid 1930337906 --minify 0 --upload_location s3test```
 
 ### CNN
 - ```./generate_tracker.py --trackerid 1657678658```

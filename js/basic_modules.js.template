@@ -472,24 +472,35 @@ Object.size = function(obj) {
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        function _registerClickEvent($el) {
+        function _registerClickEvent($elToCheck) {
             
-            var clickAttr = _neon.utils.getMysteryElementImageSource($el),
+            var $el = $elToCheck,
+                clickAttr = _neon.utils.getMysteryElementImageSource($el),
+                extraElements = [],
                 $elBonusEl // if you need to add a bonus Element, do so in a partial
             ;
 
             {% include fox.register-click-event.js id="1930337906" %}
             {% include cnn.register-click-event.js id="1657678658" %}
             
-            _clickHandlerOff($el);
-            _clickHandlerOn($el, clickAttr, imageClickEventHandler);
-            _neon.utils.beacon('_registerClickEvent' + ' added', clickAttr);
+            if ((typeof $el != 'undefined') && ($el.length === 1)) {            
+                _clickHandlerOff($el);
+                _clickHandlerOn($el, clickAttr, imageClickEventHandler);
+                _neon.utils.beacon('_registerClickEvent' + ' added', clickAttr);
+            }
 
             if ((typeof $elBonusEl != 'undefined') && ($elBonusEl.length === 1)) {
                 _clickHandlerOff($elBonusEl);
                 _clickHandlerOn($elBonusEl, clickAttr, imageClickEventHandler);
                 _neon.utils.beacon('Bonus _registerClickEvent' + ' added', clickAttr);
             }
+
+            extraElements.forEach(function(extraElement) {
+                var $extraElement = $(extraElement);
+                _clickHandlerOff($extraElement);
+                _clickHandlerOn($extraElement, clickAttr, imageClickEventHandler);
+                _neon.utils.beacon('Extra _registerClickEvent' + ' added', clickAttr);
+            });
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
