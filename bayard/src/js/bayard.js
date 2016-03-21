@@ -11,7 +11,9 @@ var Bayard = Bayard || (function () {
         _eventer = window[_eventMethod],
         _messageEvent = _eventMethod === 'attachEvent' ? 'onmessage' : 'message',
         _API_BASE_URL = 'i3.neon-images.com',
-        _messageCount = 0
+        _wormholeCount = 0,
+        _DOM_PREFIX = 'neon-',
+        _rootElement = document.body
     ;
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -44,7 +46,7 @@ var Bayard = Bayard || (function () {
         document.addEventListener('DOMContentLoaded', function(event) {
             console.log('DOMContentLoaded');
             _start();
-            _scan(document.body);
+            _scan(_rootElement);
         });
     }
 
@@ -101,6 +103,12 @@ var Bayard = Bayard || (function () {
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    function _processMutations(mutations) {
+        mutations.forEach(_processMutation);
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
     function _processMutation(mutation) {
         switch (mutation.type) {
             case 'childList':
@@ -110,6 +118,7 @@ var Bayard = Bayard || (function () {
                 _scan(mutation.target.getAttribute(mutation.attributeName))
                 break;
             default: 
+                console.log('Unknown Mutation ' + mutation.type);
                 debugger;
                 break;
         }
@@ -122,19 +131,17 @@ var Bayard = Bayard || (function () {
             newIframe = document.createElement('iframe')
         ;
         newIframe.setAttribute('style', 'display: none');
-        newIframe.setAttribute('id', 'message-' + _messageCount++);
+        newIframe.setAttribute('id', _DOM_PREFIX + _wormholeCount++);
         newIframe.setAttribute('src', url);
-        document.body.appendChild(newIframe);    
+        _rootElement.appendChild(newIframe);    
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     function _start() {
         console.log('_start');
-        var observer = new MutationObserver(function(mutations) {
-            mutations.forEach(_processMutation);
-        });
-        observer.observe(document.body, {
+        var observer = new MutationObserver(_processMutations);
+        observer.observe(_rootElement, {
             attributes: true,
             childList: true,
             subtree: true
