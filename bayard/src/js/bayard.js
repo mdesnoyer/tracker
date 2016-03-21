@@ -97,7 +97,7 @@ var Bayard = Bayard || (function () {
                 isCacheChanged = true;
                 lookupVids.push(vid);
                 _tempCache[vid] = {
-                    tid: 'TODO'
+                    tid: 'null'
                 };
             }
         }
@@ -145,13 +145,21 @@ var Bayard = Bayard || (function () {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     function _processMessage(data) {
-        var _tempCache = _getCache();
-        for (var cacheItem in _tempCache) {
-            if (_tempCache.hasOwnProperty(cacheItem)) {
-                if (_tempCache[cacheItem].tid === 'TODO') {
-                    _tempCache[cacheItem].tid = data;
+        var _tempCache = _getCache(),
+            tids = data.split(','),
+            isCacheChanged = false
+        ;
+        tids.forEach(function(tid) {
+            var vid = tid.split('_')[1] || 'null';
+            if (_tempCache.hasOwnProperty(vid)) {
+                if (_tempCache[vid].tid === 'null') {
+                    isCacheChanged = true;
+                    _tempCache[vid].tid = tid;
                 }
-            } 
+            }
+        });
+        if (isCacheChanged === true) {
+            _setCache(_tempCache);
         }
     }
 

@@ -19,3 +19,7 @@ window.setTimeout(function() {
     var div = document.getElementById('id2');
     div.setAttribute('data-original', 'http://i3.neon-images.com/v1/client/1830901739/neonvid_888888.888.88.88.jpg');
 }, 5000);
+window.setTimeout(function() {
+    var div = document.getElementById('id2');
+    div.setAttribute('data-moo', 'http://i3.neon-images.com/v1/client/1830901739/neonvid_152655.006.01.197.jpg');
+}, 7000);
