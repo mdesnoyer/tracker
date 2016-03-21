@@ -13,7 +13,7 @@ var Bayard = Bayard || (function () {
         _API_BASE_URL = 'i3.neon-images.com',
         _wormholeCount = 0,
         _DOM_PREFIX = 'neon-',
-        _rootElement = document.body
+        _observer = undefined
     ;
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -34,7 +34,7 @@ var Bayard = Bayard || (function () {
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    function init (cid) {
+    function _init (cid) {
         if (_storageAvailable('sessionStorage')) {
             console.log('Can use Tracker');
         }
@@ -43,11 +43,17 @@ var Bayard = Bayard || (function () {
             return false;
         }
         _clientId = cid;
-        document.addEventListener('DOMContentLoaded', function(event) {
+        document.addEventListener('DOMContentLoaded', function(e) {
             console.log('DOMContentLoaded');
-            _start();
-            _scan(_rootElement);
+            _start(this.body);
+            _scan(this.body);
         });
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    function _killCache() {
+        sessionStorage.clear();
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -133,31 +139,59 @@ var Bayard = Bayard || (function () {
         newIframe.setAttribute('style', 'display: none');
         newIframe.setAttribute('id', _DOM_PREFIX + _wormholeCount++);
         newIframe.setAttribute('src', url);
-        _rootElement.appendChild(newIframe);    
+        document.body.appendChild(newIframe);    
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    function _start() {
+    function _processMessage(data) {
+        var _tempCache = _getCache();
+        for (var cacheItem in _tempCache) {
+            if (_tempCache.hasOwnProperty(cacheItem)) {
+                if (_tempCache[cacheItem].tid === 'TODO') {
+                    _tempCache[cacheItem].tid = data;
+                }
+            } 
+        }
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    function _handleMessage(e) {
+        var messageOrigin = e.origin;
+        if (messageOrigin.indexOf(_API_BASE_URL) > -1) {
+            _processMessage(e.data);
+        }
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    function _end() {
+        console.log('_end');
+        _observer.disconnect();
+        // kill the _eventer
+        _killCache();
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    function _start(rootElement) {
         console.log('_start');
         var observer = new MutationObserver(_processMutations);
-        observer.observe(_rootElement, {
+        observer.observe(rootElement, {
             attributes: true,
             childList: true,
             subtree: true
         });
-        _eventer(_messageEvent, function(e) {
-            orig = e.origin;
-            if (orig.indexOf(_API_BASE_URL) > -1) {
-                debugger;
-            }
-        }, false);
+        _observer = observer;
+        _eventer(_messageEvent, _handleMessage, false);
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
     return {
-        init: init
+        init: _init,
+        end: _end
     };
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
