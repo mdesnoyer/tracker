@@ -6,11 +6,11 @@ if ($elParent.is('a.neonized-image')) {
 }
 
 // Try Mobile
-$elBonusEl = $($el.closest('.views-row').find('.info .views-field-title a')[0]);
+$elBonusEl1 = $($el.closest('.views-row').find('.info .views-field-title a')[0]);
 
 // Try Desktop
-if ((typeof $elBonusEl != 'undefined') && ($elBonusEl.length === 0)) {
-	$elBonusEl = $($el.closest('.fox-video-full-episodes-listing').find('.views-field-title a')[0]);
+if ((typeof $elBonusEl1 != 'undefined') && ($elBonusEl1.length === 0)) {
+	$elBonusEl1 = $($el.closest('.fox-video-full-episodes-listing').find('.views-field-title a')[0]);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

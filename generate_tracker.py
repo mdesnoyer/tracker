@@ -94,7 +94,7 @@ def upload_to_s3(location, bootloader, contents, tai):
         # upload bootloader
         bootjs = BOOTLOADER_FNAME % tai
         bootjs_url = s3_uploader(bootjs, new_boot)
-        print "The optimizer script has been uploded to %s" % bootjs_url
+        print "The optimizer script has been uploaded to %s" % bootjs_url
 
 def include_replace(match, tai):
     matches = match.groups()
