@@ -12,15 +12,16 @@ Temp repo for Neon tracker v2
 
 ### Gannett
 
-```./generate_tracker.py --trackerid 1554964958 --custom_module 'js/neonbcoveplayer.js'```
+- ```./generate_tracker.py --trackerid 1554964958 --custom_module 'js/neonbcoveplayer.js'```
+- ```./generate_tracker.py --trackerid 1554964958 --minify 1 --upload_location s3prod --custom_module 'js/neonbcoveplayer.js'```
 
 ### FOX
 
-```./generate_tracker.py --trackerid 1930337906```
+- ```./generate_tracker.py --trackerid 1930337906```
 
 ### CNN
-```./generate_tracker.py --trackerid 1657678658```
-```./generate_tracker.py --trackerid 1657678658 --minify 1 --upload_location s3prod```
+- ```./generate_tracker.py --trackerid 1657678658```
+- ```./generate_tracker.py --trackerid 1657678658 --minify 1 --upload_location s3prod```
 
 ## includes
 
