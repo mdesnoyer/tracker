@@ -10,6 +10,13 @@ Temp repo for Neon tracker v2
 
 ## Generation
 
+### Dixon (generic)
+
+- `./generate_tracker.py --minify 0 --upload_location s3test`
+- `./generate_tracker.py --minify 1 --upload_location s3prod`
+
+* Note to test somewhat, run a local web server and point at `http://localhost/dixon/snippet.html`
+
 ### Gannett
 
 - ```./generate_tracker.py --trackerid 1554964958 --custom_module 'js/neonbcoveplayer.js'```

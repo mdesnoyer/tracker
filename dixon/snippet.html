@@ -1,0 +1,21 @@
+<html>
+    <head>
+        <title>Dixon Test | Neon</title>
+        <!-- Neon -->
+        <script>
+            var neonPublisherId = '1830901739';  // Discovery
+        </script>
+        <script src='//neon-test.s3.amazonaws.com/neonoptimizer_dixon.js'></script>
+        <!-- Neon -->
+    </head>
+    <body>
+        <pre>
+console.log(neonPublisherId);
+console.log(_neon.tracker.getVideoIds());
+_neon.tracker.addVideoId('iamavideoid');
+console.log(_neon.tracker.getVideoIds());
+_neon.tracker.addVideoId('iamavideoid');
+console.log(_neon.tracker.getVideoIds());
+        </pre>
+    </body>
+</html>

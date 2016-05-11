@@ -1,5 +1,4 @@
 var _neon = _neon || {},
-    neonPageId = null,
     videoIds = [],
     imgObjs = [],
     BASE_NEON_IMAGES_URL = 'neon-images.com',
@@ -473,10 +472,23 @@ Object.size = function(obj) {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         function _registerClickEvent($elToCheck) {
-            
+
             var $el = $elToCheck,
-                clickAttr = _neon.utils.getMysteryElementImageSource($el),
-                extraElements = [],
+                clickAttr = _neon.utils.getMysteryElementImageSource($el)
+            ;
+
+            // mode=brightcovegallery
+            if (neonTrackerMode === 'brightcovegallery') {
+                // We look for the anchor
+                var $a = $el.closest('a');
+                _clickHandlerOff($a);
+                _clickHandlerOn($a, clickAttr, imageClickEventHandler);
+                return true;
+            }
+
+            // mode=normal
+
+            var extraElements = [],
                 $elBonusEl // if you need to add a bonus Element, do so in a partial
             ;
 
@@ -501,6 +513,16 @@ Object.size = function(obj) {
                 _clickHandlerOn($extraElement, clickAttr, imageClickEventHandler);
                 _neon.utils.beacon('Extra _registerClickEvent' + ' added', clickAttr);
             });
+        }
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+        function _getDataFromUrl(url) {
+            var thumbData;
+            if (thumbMap && thumbMap.hasOwnProperty(url)) {
+                thumbData = thumbMap[url];
+            }
+            return thumbData;
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -539,18 +561,20 @@ Object.size = function(obj) {
             }
         }
 
-        // Get thumbnail ids and video_id for images from URL
-        function getNeonThumbnailIdsFromISP(videoIds, getThumbCallback) {
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-            if (videoIds.length < 1) {
-                getThumbCallback(imgObjs, videoIds, '');
+        // Get thumbnail ids and video_id for images from URL
+        function getNeonThumbnailIdsFromISP(vids, getThumbCallback) {
+
+            if (vids.length < 1) {
+                getThumbCallback(imgObjs, vids, '');
                 return;
             }
 
             var publisherId = _neon.tracker.getNeonPublisherId(),
                 serviceURL = 'http://' + apiBaseURL + '/v1/getthumbnailid/';
 
-            serviceURL +=  publisherId + '.html?params=' + videoIds.join(); 
+            serviceURL +=  publisherId + '.html?params=' + vids.join(); 
 
             var new_i_frame = document.createElement('iframe');
             $('body').append(new_i_frame);
@@ -558,6 +582,8 @@ Object.size = function(obj) {
             new_i_frame.id = publisherId;
             new_i_frame.src = serviceURL;
         }
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         function imageHunter(rootElement) {
             var $elements = _neon.utils.getElementsUsingImageSourceSelector('', rootElement);
@@ -567,7 +593,9 @@ Object.size = function(obj) {
                });  
             }
         }
-    
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
         function getNewImages(element) {
             if (initialLoadComplete) {
                 imageHunter(element);
@@ -592,6 +620,8 @@ Object.size = function(obj) {
             }
             videoIdsCount = videoIds.length; 
         } 
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         function _testAndAddImageElement(potentialElement) {
             var $element = _neon.utils.makeJQueryObject(potentialElement),
@@ -865,6 +895,16 @@ Object.size = function(obj) {
             init: function() {
                 initImageLoad();
                 parseTrackerAccountId(); 
+            },
+
+            addVideoId: function(videoId) {
+                if (videoIds.indexOf(videoId) === -1) {
+                    videoIds.push(videoId);
+                }
+            },
+
+            getVideoIds: function() {
+                return videoIds;
             },
 
             // Get the Tracker AccountID from the script tag "id" field
@@ -1149,6 +1189,7 @@ _neon.TrackerEvents = (function() {
     }
 
     return {
+
         // tid: thumbnail id
         // wx, wy: window xy coordinate
         // px, py: page xy coordinate
@@ -1166,6 +1207,19 @@ _neon.TrackerEvents = (function() {
             // Third Party Click Validators get called here
             {% include gannett.click.js id="1554964958" %}
             {% include gannett.click.js id="1600036805" %}
+        },
+
+        // Wrapper around sendImageClickEvent, we pass the url instead and use this
+        // to find the tid
+        sendImageClickEventByUrl: function(vid, url, wx, wy, px, py, cx, cy) {
+            var thumbData = _neon.tracker._getDataFromUrl(url);
+            try  {
+                var tid = thumbData[1];
+                sendImageClickEvent(vid, tid, wx, wy, px, py, cx, cy);
+            }
+            catch(err) {
+                _neon.utils.beacon('sendImageClickEventByUrl', 'Could not find tid for ' + url);
+            }
         },
 
         // PlayerID of the player, if available
@@ -1206,6 +1260,21 @@ _neon.TrackerEvents = (function() {
             }
         },
 
+        sendImageVisibleEventByUrl: function(url) {
+            var thumbData = _neon.tracker._getDataFromUrl(url);
+            try  {
+                var vid = thumbData[0],
+                    tid = thumbData[1],
+                    imageMap = {}
+                ;
+                imageMap[url] = [vid, tid];
+                sendImagesVisibleEvent(imageMap);
+            }
+            catch(err) {
+                _neon.utils.beacon('sendImageVisibleEventByUrl', 'Could not find vid/tid for ' + url);
+            }
+        },
+
         // ImageMap is a Map of thumbnail url => tid
         // imSizeMap is map of url => visible im size 
         sendImagesLoadedEvent: function(imageMap, imSizeMap) {
@@ -1216,6 +1285,23 @@ _neon.TrackerEvents = (function() {
                 req += '&tids=' + tids;
                 _neon.utils.beacon(eventName, tids.length, req);
                 _neon.JsonRequester.sendRequest(req);
+            }
+        },
+
+        sendImageLoadedEventByUrl: function(url, width, height) {
+            var thumbData = _neon.tracker._getDataFromUrl(url);
+            try  {
+                var vid = thumbData[0],
+                    tid = thumbData[1],
+                    imageMap = {},
+                    imSizeMap = {}
+                ;
+                imageMap[url] = [vid, tid];
+                imSizeMap[url] = [width, height];
+                sendImagesLoadedEvent(imageMap, imSizeMap);
+            }
+            catch(err) {
+                _neon.utils.beacon('sendImageLoadedEventByUrl', 'Could not find vid/tid for ' + url);
             }
         },
 
