@@ -91,10 +91,19 @@ def upload_to_s3(location, bootloader, contents, tai):
         # replace MAIN_JS_URL with actual URL
         new_boot = bootloader_contents.replace("MAIN_JS_URL", mainjs_s3url)
 
+        #minify
+        if options.minify != 0:
+            output = compile_js(new_boot)
+            if not output:
+                print "Compile error, check for syntax errors in the bootloader"
+                sys.exit(1)
+            else:
+                new_boot = output
+
         # upload bootloader
         bootjs = BOOTLOADER_FNAME % tai
         bootjs_url = s3_uploader(bootjs, new_boot)
-        print "The optimizer script has been uploded to %s" % bootjs_url
+        print "The optimizer script has been uploaded to %s" % bootjs_url
 
 def include_replace(match, tai):
     matches = match.groups()
@@ -113,7 +122,10 @@ def include_replace(match, tai):
 def main(options):
 
     # Insert Tracker Id
-    tai = options.trackerid
+    if options.trackerid is None:
+        tai = 'dixon'
+    else:
+        tai = options.trackerid
 
     # Tracker filename format
     fname = "neon_main_%s.js" % tai 
@@ -121,8 +133,12 @@ def main(options):
     contents = ''
     with open(fname, 'w') as f:
         # Insert Tracker type
-        contents = "var neonPublisherId = '%s';\n" % tai
+        if options.trackerid is None:
+            contents = "// var neonPublisherId = '%s';\n" % tai
+        else:
+            contents = "var neonPublisherId = '%s';\n" % tai
         contents += "var neonTrackerType = '%s';\n" % options.trackertype
+        contents += "var neonTrackerMode = '%s';\n" % options.trackermode
 
         # Insert basic modules
         with open(options.basic_module, 'r') as bm:
@@ -175,6 +191,7 @@ if __name__ == '__main__':
     parser.add_option('--minify', default=0, type=int)
     parser.add_option('--trackerid', default=None, type=str)
     parser.add_option('--trackertype', default="gen", type=str)
+    parser.add_option('--trackermode', default="normal", type=str)
     parser.add_option('--bootloader', default="js/bootloader.js.template", type=str)
     parser.add_option('--basic_module', default="js/basic_modules.js.template", 
                         type=str)
@@ -190,6 +207,6 @@ if __name__ == '__main__':
     options, args = parser.parse_args()
 
     if options.trackerid is None:
-        print "TrackerId has not be specified"
-        sys.exit(0)
+        print "TrackerId has not been specified, generating dixon."
+        # sys.exit(0)
     main(options)
