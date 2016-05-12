@@ -893,7 +893,7 @@ Object.size = function(obj) {
                 }
             },
 
-            _getDataFromUrl: function(url) {
+            getDataFromUrl: function(url) {
                 var thumbData;
                 if (thumbMap && thumbMap.hasOwnProperty(url)) {
                     thumbData = thumbMap[url];
@@ -1210,7 +1210,7 @@ _neon.TrackerEvents = (function() {
         // Wrapper around sendImageClickEvent, we pass the url instead and use this
         // to find the tid
         sendImageClickEventByUrl: function(vid, url, wx, wy, px, py, cx, cy) {
-            var thumbData = _neon.tracker._getDataFromUrl(url);
+            var thumbData = _neon.tracker.getDataFromUrl(url);
             try  {
                 var tid = thumbData[1];
                 sendImageClickEvent(vid, tid, wx, wy, px, py, cx, cy);
@@ -1259,7 +1259,7 @@ _neon.TrackerEvents = (function() {
         },
 
         sendImageVisibleEventByUrl: function(url) {
-            var thumbData = _neon.tracker._getDataFromUrl(url);
+            var thumbData = _neon.tracker.getDataFromUrl(url);
             try  {
                 var vid = thumbData[0],
                     tid = thumbData[1],
@@ -1287,7 +1287,7 @@ _neon.TrackerEvents = (function() {
         },
 
         sendImageLoadedEventByUrl: function(url, width, height) {
-            var thumbData = _neon.tracker._getDataFromUrl(url);
+            var thumbData = _neon.tracker.getDataFromUrl(url);
             try  {
                 var vid = thumbData[0],
                     tid = thumbData[1],
