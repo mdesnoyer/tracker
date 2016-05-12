@@ -1,8 +1,8 @@
 <html>
     <head>
-        <title>Dixon Test | Neon</title>
-        <!-- Neon -->
-        <!--<script>
+        <title>Dixon | Neon</title>
+        <!-- Uncompressed -->
+        <!--<script id="neon">
             var neonPublisherId = '1830901739';  // Discovery
             (function(doc, tag, url, scr, fir) {
                 scr = doc.createElement(tag);
@@ -12,22 +12,47 @@
                 fir.parentNode.insertBefore(scr, fir);
             })(document, 'script', '//neon-test.s3.amazonaws.com/neonoptimizer_dixon.js');
         </script>-->
-        <!-- Neon -->
-        <!-- Neon -->
-        <script>
-        var neonPublisherId = '1830901739';  // Discovery
-        !function(e,n,t,o,s){o=e.createElement(n),s=e.getElementsByTagName(n)[0],o.async=1,o.src=t,s.parentNode.insertBefore(o,s)}(document,"script","//neon-test.s3.amazonaws.com/neonoptimizer_dixon.js");
-        </script>
-        <!-- Neon -->
+        <style>
+            textarea {
+                font-family: monospace;
+                width: 100%;
+                font-size: 1em;
+            }
+        </style>
     </head>
     <body>
-        <pre>
-console.log(neonPublisherId);
-console.log(_neon.tracker.getVideoIds());
-_neon.tracker.addVideoId('iamavideoid');
-console.log(_neon.tracker.getVideoIds());
-_neon.tracker.addVideoId('iamavideoid');
-console.log(_neon.tracker.getVideoIds());
-        </pre>
+
+        <h1>Dixon (Generic Tracker)</h1>
+        
+        <!-- TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST --> 
+        <h2>Test</h2>
+        <p>
+            <code>
+./generate_tracker.py --minify 0 --upload_location s3test --trackermode simple
+            </code>
+        </p>
+        <textarea rows="7">
+<script id="neon">
+var neonPublisherId = 'XXXXXXXXXX';
+!function(e,n,t,o,s){o=e.createElement(n),s=e.getElementsByTagName(n)[0],o.async=1,o.src=t,s.parentNode.insertBefore(o,s)}(document,"script","//neon-test.s3.amazonaws.com/neonoptimizer_dixon.js");
+</script>
+        </textarea>
+        <!-- TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST --> 
+
+
+        <!-- PROD PROD PROD PROD PROD PROD PROD PROD PROD PROD PROD PROD --> 
+        <h2>Production</h2>
+        <p>
+            <code>
+./generate_tracker.py --minify 1 --upload_location s3prod --trackermode simple
+        </code>
+        </p>
+        <textarea rows="7">
+<script id="neon">
+var neonPublisherId = 'XXXXXXXXXX';
+!function(e,n,t,o,s){o=e.createElement(n),s=e.getElementsByTagName(n)[0],o.async=1,o.src=t,s.parentNode.insertBefore(o,s)}(document,"script","//neon-cdn-assets.s3.amazonaws.com/neonoptimizer_dixon.js");
+</script>
+        </textarea>
+        <!-- PROD PROD PROD PROD PROD PROD PROD PROD PROD PROD PROD PROD --> 
     </body>
 </html>

@@ -182,7 +182,7 @@ if __name__ == '__main__':
     parser.add_option('--minify', default=0, type=int)
     parser.add_option('--trackerid', default=None, type=str)
     parser.add_option('--trackertype', default="gen", type=str)
-    parser.add_option('--mode', default="normal", type=str)
+    parser.add_option('--trackermode', default="normal", type=str)
     parser.add_option('--bootloader', default="js/bootloader.js.template", type=str)
     parser.add_option('--basic_module', default="js/basic_modules.js.template", 
                         type=str)
