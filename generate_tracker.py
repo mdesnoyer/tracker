@@ -129,7 +129,7 @@ def main(options):
         else:
             contents = "var neonPublisherId = '%s';\n" % tai
         contents += "var neonTrackerType = '%s';\n" % options.trackertype
-        contents += "var neonTrackerMode = '%s';\n" % options.mode
+        contents += "var neonTrackerMode = '%s';\n" % options.trackermode
 
         # Insert basic modules
         with open(options.basic_module, 'r') as bm:

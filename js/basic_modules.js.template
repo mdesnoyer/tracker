@@ -477,8 +477,8 @@ Object.size = function(obj) {
                 clickAttr = _neon.utils.getMysteryElementImageSource($el)
             ;
 
-            // mode=brightcovegallery
-            if (neonTrackerMode === 'brightcovegallery') {
+            // mode=simple
+            if (neonTrackerMode === 'simple') {
                 // We look for the anchor
                 var $a = $el.closest('a');
                 _clickHandlerOff($a);
