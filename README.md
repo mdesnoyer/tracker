@@ -1,35 +1,25 @@
-# neontrackerstratchpad
-
-Temp repo for Neon tracker v2
+# tracker
 
 ## Release process 
 
-```sh minifier.sh js/neon.js js/neon-main.js```
-
-```sh minifier.sh js/neonbootloader.js js/neonbctracker.js```
+- ```sh minifier.sh js/neon.js js/neon-main.js```
+- ```sh minifier.sh js/neonbootloader.js js/neonbctracker.js```
 
 ## Generation
 
-### Dixon (generic)
+There are many options. `generate_tracker.py` has a definitive list but:
+
+- `--upload_location` can be `s3test` or `s3prod`
+- `--trackerid` `1234567890`
+
+## Dixon (generic)
+
+We can generate without a `trackerid`
 
 - `./generate_tracker.py --minify 0 --upload_location s3test`
 - `./generate_tracker.py --minify 1 --upload_location s3prod`
 
-* Note to test somewhat, run a local web server and point at `http://localhost/dixon/snippet.html`
-
-### Gannett
-
-- ```./generate_tracker.py --trackerid 1554964958 --custom_module 'js/neonbcoveplayer.js'```
-- ```./generate_tracker.py --trackerid 1554964958 --minify 1 --upload_location s3prod --custom_module 'js/neonbcoveplayer.js'```
-
-### FOX
-
-- ```./generate_tracker.py --trackerid 1930337906```
-- ```./generate_tracker.py --trackerid 1930337906 --minify 0 --upload_location s3test```
-
-### CNN
-- ```./generate_tracker.py --trackerid 1657678658```
-- ```./generate_tracker.py --trackerid 1657678658 --minify 1 --upload_location s3prod```
+* Note to test somewhat and see snippet, run a local web server and point at `http://localhost/dixon/snippet.html`
 
 ## includes
 
@@ -75,3 +65,19 @@ If you run
 
 - You should see an error in the console AND in the generated file `neon_main_123456789.js`.
 - You should also see the contents of `123456789.test.js` included into `neon_main_123456789.js`
+
+## Examples
+
+### Gannett
+
+- ```./generate_tracker.py --trackerid 1554964958 --custom_module 'js/neonbcoveplayer.js'```
+- ```./generate_tracker.py --trackerid 1554964958 --minify 1 --upload_location s3prod --custom_module 'js/neonbcoveplayer.js'```
+
+### FOX
+
+- ```./generate_tracker.py --trackerid 1930337906```
+- ```./generate_tracker.py --trackerid 1930337906 --minify 0 --upload_location s3test```
+
+### CNN
+- ```./generate_tracker.py --trackerid 1657678658```
+- ```./generate_tracker.py --trackerid 1657678658 --minify 1 --upload_location s3prod```
