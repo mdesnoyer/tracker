@@ -517,16 +517,6 @@ Object.size = function(obj) {
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        function _getDataFromUrl(url) {
-            var thumbData;
-            if (thumbMap && thumbMap.hasOwnProperty(url)) {
-                thumbData = thumbMap[url];
-            }
-            return thumbData;
-        }
-
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
         // image click event handler
         function imageClickEventHandler(e) {
 
@@ -901,6 +891,14 @@ Object.size = function(obj) {
                 if (videoIds.indexOf(videoId) === -1) {
                     videoIds.push(videoId);
                 }
+            },
+
+            _getDataFromUrl: function(url) {
+                var thumbData;
+                if (thumbMap && thumbMap.hasOwnProperty(url)) {
+                    thumbData = thumbMap[url];
+                }
+                return thumbData;
             },
 
             getVideoIds: function() {
