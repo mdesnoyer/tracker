@@ -4,8 +4,14 @@
         <!-- Neon -->
         <script>
             var neonPublisherId = '1830901739';  // Discovery
+            (function(doc, tag, url, scr, fir) {
+                scr = doc.createElement(tag);
+                fir = doc.getElementsByTagName(tag)[0];
+                scr.async = 1;
+                scr.src = url;
+                fir.parentNode.insertBefore(scr, fir);
+            })(document, 'script', '//neon-test.s3.amazonaws.com/neonoptimizer_dixon.js')
         </script>
-        <script src='//neon-test.s3.amazonaws.com/neonoptimizer_dixon.js'></script>
         <!-- Neon -->
     </head>
     <body>
