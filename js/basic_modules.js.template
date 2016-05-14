@@ -270,22 +270,25 @@ Object.size = function(obj) {
             return (obj instanceof _neonjQuery ? obj : $(obj));
         },
 
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        //
         getMysteryElementImageSource: function (el) {
             var $el = _neon.utils.makeJQueryObject(el);
             return _neon.utils.getElementImageSource($el) || _neon.utils.getElementBackgroundImageSource($el);
         },
 
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+
         getElementImageSource: function(el) {
-            var $el = _neon.utils.makeJQueryObject(el),
-                returnValue = $el.attr('data-original') || $el.attr('src') || ''
-            ;
-            return returnValue;
+            var $el = _neon.utils.makeJQueryObject(el);
+            // TODO neonDecache
+            return $el.attr('data-original') || $el.attr('src') || '';
         },
 
         getElementBackgroundImageSource: function(el) {
-            var $el = _neon.utils.makeJQueryObject(el),
-                returnValue = $el.attr('data-background-image') || $el.css('background-image') || ''
-            ;
+            var $el = _neon.utils.makeJQueryObject(el);
+            // TODO neonDecache
+            var returnValue = $el.attr('data-background-image') || $el.css('background-image') || '';
             if (returnValue === 'none') { // ugh
                 returnValue = '';
             }

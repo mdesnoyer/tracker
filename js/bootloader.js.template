@@ -29,8 +29,11 @@ var neonDecacheBrightcoveGallery = function(str) {
     });
 }
 
-if (isNeonBrightcoveGallery) {
-    document.body.innerHTML = neonDecacheBrightcoveGallery(document.body.innerHTML);
+var neonDecache = function(str) {
+    if (isNeonBrightcoveGallery) {
+        return neonDecacheBrightcoveGallery(str);
+    }
+    return str;
 }
 
 // --- decache ---
