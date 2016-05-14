@@ -281,13 +281,15 @@ Object.size = function(obj) {
 
         getElementImageSource: function(el) {
             var $el = _neon.utils.makeJQueryObject(el);
-            // TODO neonDecache
+            $el.attr('data-original', neonDecache($el.attr('data-original'));
+            $el.attr('src', neonDecache($el.attr('src'));
             return $el.attr('data-original') || $el.attr('src') || '';
         },
 
         getElementBackgroundImageSource: function(el) {
             var $el = _neon.utils.makeJQueryObject(el);
-            // TODO neonDecache
+            $el.attr('data-background-image', neonDecache($el.attr('data-background-image'));
+            $el.css('background-image', neonDecache($el.css('background-image'));
             var returnValue = $el.attr('data-background-image') || $el.css('background-image') || '';
             if (returnValue === 'none') { // ugh
                 returnValue = '';
