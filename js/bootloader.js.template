@@ -1,10 +1,18 @@
+// --- decache ---
+
 if (typeof isNeonBrightcoveGallery === 'undefined') {
     var isNeonBrightcoveGallery = false;
 }
-if (isNeonBrightcoveGallery) {
-    var b = document.body.innerHTML;
-    document.body.innerHTML = b.replace(/https?:\/\/images.gallerysites.net\/?\?image=(.*)\?.*(width=\d+(\&|\&amp;)height=\d+)/g, '$1?$2');
+
+var neonDecacheBrightcoveGallery = function(str) {
+    return str.replace(/\/\/images.gallerysites.net\/?\?image=(.*)\?.*(width=\d+(\&|\&amp;)height=\d+)/g, '$1?$2');
 }
+
+if (isNeonBrightcoveGallery) {
+    document.body.innerHTML = neonDecacheBrightcoveGallery(document.body.innerHTML);
+}
+
+// --- decache ---
 
 LazyLoad = function(m) {
     function d(b, a) {
