@@ -1,28 +1,62 @@
-# neontrackerstratchpad
-
-Temp repo for Neon tracker v2
-
-## Release process 
-
-```sh minifier.sh js/neon.js js/neon-main.js```
-
-```sh minifier.sh js/neonbootloader.js js/neonbctracker.js```
+# tracker
 
 ## Generation
 
-### Gannett
+There are many options. `generate_tracker.py` has a definitive list but:
 
-- ```./generate_tracker.py --trackerid 1554964958 --custom_module 'js/neonbcoveplayer.js'```
-- ```./generate_tracker.py --trackerid 1554964958 --minify 1 --upload_location s3prod --custom_module 'js/neonbcoveplayer.js'```
+- `--upload_location` can be `s3test` or `s3prod`
+- `--trackerid 1234567890` (optional, see Dixon)
+- `--upload_location` can be `simple` or (defaults to) `normal`
+- `--minify` can be `0` or `1` 
 
-### FOX
+## Dixon (generic)
 
-- ```./generate_tracker.py --trackerid 1930337906```
-- ```./generate_tracker.py --trackerid 1930337906 --minify 0 --upload_location s3test```
+We can generate without a `trackerid`, e.g.:
 
-### CNN
-- ```./generate_tracker.py --trackerid 1657678658```
-- ```./generate_tracker.py --trackerid 1657678658 --minify 1 --upload_location s3prod```
+- `./generate_tracker.py --minify 0 --upload_location s3test`
+- `./generate_tracker.py --minify 1 --upload_location s3prod`
+
+* Note to test somewhat and see snippet, run a local web server and point at `http://localhost/dixon/snippet.html`
+
+## Snippets
+
+### Brightcove Gallery + Test
+
+```javascript
+<script id="neon">
+    var neonPublisherId = 'XXXXXXXXXX';
+    var neonBrightcoveGallery = true;
+</script>
+<script src="//neon-test.s3.amazonaws.com/neonoptimizer_dixon.js"></script>
+```
+
+### Brightcove Gallery + Production
+
+```javascript
+<script id="neon">
+    var neonPublisherId = 'XXXXXXXXXX';
+    var neonBrightcoveGallery = true;
+</script>
+<script src="//cdn.neon-lab.com/neonoptimizer_dixon.js"></script>
+```
+
+### NOT Brightcove Gallery + Test
+
+```javascript
+<script id="neon">
+    var neonPublisherId = 'XXXXXXXXXX';
+</script>
+<script src="//neon-test.s3.amazonaws.com/neonoptimizer_dixon.js"></script>
+```
+
+### NOT Brightcove Gallery + Production
+
+```javascript
+<script id="neon">
+    var neonPublisherId = 'XXXXXXXXXX';
+</script>
+<script src="//cdn.neon-lab.com/neonoptimizer_dixon.js"></script>
+```
 
 ## includes
 
@@ -68,3 +102,24 @@ If you run
 
 - You should see an error in the console AND in the generated file `neon_main_123456789.js`.
 - You should also see the contents of `123456789.test.js` included into `neon_main_123456789.js`
+
+## Examples
+
+### Gannett
+
+- ```./generate_tracker.py --trackerid 1554964958 --custom_module 'js/neonbcoveplayer.js'```
+- ```./generate_tracker.py --trackerid 1554964958 --minify 1 --upload_location s3prod --custom_module 'js/neonbcoveplayer.js'```
+
+### FOX
+
+- ```./generate_tracker.py --trackerid 1930337906```
+- ```./generate_tracker.py --trackerid 1930337906 --minify 0 --upload_location s3test```
+
+### CNN
+- ```./generate_tracker.py --trackerid 1657678658```
+- ```./generate_tracker.py --trackerid 1657678658 --minify 1 --upload_location s3prod```
+
+## Release process 
+
+- ```sh minifier.sh js/neon.js js/neon-main.js```
+- ```sh minifier.sh js/neonbootloader.js js/neonbctracker.js```
