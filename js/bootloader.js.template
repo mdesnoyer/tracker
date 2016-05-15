@@ -9,7 +9,7 @@ var neonDecacheBrightcoveGallery = function(str) {
         var goodQuerystring = {}
             returnValue = p2,
             querystringDirty = false,
-            cleanp3 = p3.replace('&amp;', '&') // sigh
+            cleanp3 = p3.replace(/\&amp\;/g, '&') // sigh
         ;
         cleanp3.replace(
             new RegExp("([^?=&]+)(=([^&]*))?", "g"), function($0, $1, $2, $3) {
@@ -38,6 +38,8 @@ var neonDecache = function(str) {
     }
     return str;
 }
+
+document.body.innerHTML = neonDecache(document.body.innerHTML);
 
 // --- decache ---
 
