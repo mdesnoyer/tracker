@@ -667,13 +667,15 @@ Object.size = function(obj) {
             ;
             if (_isNeonThumbnail(url)) {
                 var vid = _getNeonVideoIdFromURL(url);
-                if ($.inArray(vid, videoIds) === -1) { 
-                    videoIds.push(vid);
-                } 
-                if ($.inArray($element, imgObjs) === -1) { 
-                    imgObjs.push($element);
-                } 
-                _registerClickEvent($element);
+                if (vid) {
+                    if ($.inArray(vid, videoIds) === -1) { 
+                        videoIds.push(vid);
+                    } 
+                    if ($.inArray($element, imgObjs) === -1) { 
+                        imgObjs.push($element);
+                    } 
+                    _registerClickEvent($element);
+                }
             }
         } 
 
@@ -915,9 +917,13 @@ Object.size = function(obj) {
         function _getNeonVideoIdFromURL(url) {
            if (url.indexOf('neontn') > -1) {
                 var ret = _parseNeonThumbnailIdURL(url);
-                return ret[0];
+                if (ret) {
+                    return ret[0];
+                }
+                else {
+                    return;
+                }
            }
-
            if (url.indexOf('neonvid') > -1) {
                return _neonISPURLToVid(url);
            }
