@@ -1,10 +1,39 @@
+// --- decache ---
+
 if (typeof isNeonBrightcoveGallery === 'undefined') {
     var isNeonBrightcoveGallery = false;
 }
-if (isNeonBrightcoveGallery) {
-    var b = document.body.innerHTML;
-    document.body.innerHTML = b.replace(/https?:\/\/images.gallerysites.net\/?\?image=(.*)\?.*(width=\d+(\&|\&amp;)height=\d+)/g, '$1?$2');
+
+var neonDecacheBrightcoveGallery = function(str) {
+    return str.replace(/(https?:)?\/\/images\.gallerysites\.net\/?\?image=(.*jpg)(.*?)(\'\)|\")/g, function(match, p1, p2, p3, p4, offset, string) {
+        var goodQuerystring = {}
+            returnValue = p2,
+            querystringDirty = false,
+            cleanp3 = p3.replace('&amp;', '&') // sigh
+        ;
+        cleanp3.replace(
+            new RegExp("([^?=&]+)(=([^&]*))?", "g"), function($0, $1, $2, $3) {
+                goodQuerystring[$1] = $3;
+            }
+        );
+        if (goodQuerystring && goodQuerystring.hasOwnProperty('width')) {
+            returnValue += '?' + 'width=' + goodQuerystring['width'];
+            querystringDirty = true;
+        }
+        if (goodQuerystring && goodQuerystring.hasOwnProperty('height')) {
+            returnValue += (querystringDirty ? '&' : '?') + 'height=' + goodQuerystring['height'];
+            querystringDirty = true;
+        }
+        returnValue += p4;
+        return returnValue;
+    });
 }
+
+if (isNeonBrightcoveGallery) {
+    document.body.innerHTML = neonDecacheBrightcoveGallery(document.body.innerHTML);
+}
+
+// --- decache ---
 
 LazyLoad = function(m) {
     function d(b, a) {
