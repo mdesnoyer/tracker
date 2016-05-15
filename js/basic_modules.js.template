@@ -579,6 +579,7 @@ Object.size = function(obj) {
             lastMouseClick = new Date().getTime();
 
             var imgSrc = e.data.imgsrc,
+                cleanUrl = cleanseUrlOfQuerystring(imgSrc),
                 offset = $(this).offset(), // Get position relative to document
                 wx = offset.left - $(window).scrollLeft(),
                 wy = offset.top - $(window).scrollTop(),
@@ -587,13 +588,13 @@ Object.size = function(obj) {
                 thumbData
             ;
 
-            if (thumbMap && thumbMap.hasOwnProperty(imgSrc)) {
-                thumbData = thumbMap[imgSrc];
+            if (thumbMap && thumbMap.hasOwnProperty(cleanUrl)) {
+                thumbData = thumbMap[cleanUrl];
             }
 
             // If the image is one that Neon cares about 
             if (typeof(thumbData) !== 'undefined') {
-                _neon.utils.beacon('click hit', imgSrc);
+                _neon.utils.beacon('click hit', cleanUrl);
                 var vid = thumbData[0],
                     tid = thumbData[1]
                 ;
@@ -602,7 +603,7 @@ Object.size = function(obj) {
                 _neon.TrackerEvents.sendImageClickEvent(vid, tid, wx, wy, px, py, e.clientX, e.clientY);
             }
             else {
-                _neon.utils.beacon('click miss', imgSrc);
+                _neon.utils.beacon('click miss', cleanUrl);
             }
         }
 
