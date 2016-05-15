@@ -720,6 +720,10 @@ Object.size = function(obj) {
             masterControlProgram(false);
         }
 
+        function cleanseUrlOfQuerystring(url) {
+            return url.split('?')[0];
+        }
+
         // Start Tracking Neon ISP Images
         // This is invoked as a callback after Neon ISP service call resolves
         // the video ids in to TIDs
@@ -738,18 +742,19 @@ Object.size = function(obj) {
                 imgURLs = [];
                 for (var i = trackerProcessedCount; i < imgObjs.length; i++) {
                     var imgObj = imgObjs[i]
-                        url = _neon.utils.getMysteryElementImageSource(imgObj)
+                        url = _neon.utils.getMysteryElementImageSource(imgObj),
+                        cleanUrl = cleanseUrlOfQuerystring(url)
                     ;
                     if (_isNeonImageServingURL(url)) {
                         var vid = _neonISPURLToVid(url);
-                        thumbMap[url] = [vid, ispMap[vid]];
+                        thumbMap[cleanUrl] = [vid, ispMap[vid]];
                     }
                     else {
-                        thumbMap[url] = _parseNeonThumbnailIdURL(url);
+                        thumbMap[cleanUrl] = _parseNeonThumbnailIdURL(url);
                     }
                     imgURLs.push(url);
                     // Populate the image sizes here
-                    imgVisibleSizes[url] = [imgObj.width(), imgObj.height()];
+                    imgVisibleSizes[cleanUrl] = [imgObj.width(), imgObj.height()];
                 }
                 // Send the loaded image set that Neon is interested in 
                 _neon.TrackerEvents.sendImagesLoadedEvent(thumbMap, imgVisibleSizes);
@@ -850,10 +855,12 @@ Object.size = function(obj) {
                 for (var i = 0; i < $imgArr.length; i++) {
                     var $img = _neon.utils.makeJQueryObject($imgArr[i]);
                     if ($img.is(':appeared') && !_neon.utils.isElementOutOfBounds($img)) {
-                        var url = _neon.utils.getMysteryElementImageSource($img);
-                        if (thumbMap.hasOwnProperty(url)) {
-                            vidId = thumbMap[url][0];
-                            thumbId = thumbMap[url][1];
+                        var url = _neon.utils.getMysteryElementImageSource($img),
+                            cleanUrl = cleanseUrlOfQuerystring(url)
+                        ;
+                        if (thumbMap.hasOwnProperty(cleanUrl)) {
+                            vidId = thumbMap[cleanUrl][0];
+                            thumbId = thumbMap[cleanUrl][1];
                             if (!lastVisibleSet.hasOwnProperty(url)) { // image just appeared, store it
                                 allVisibleSet[url] = 1;
                                 // store the video_id-thumbnail_id pair as viewed
@@ -875,7 +882,7 @@ Object.size = function(obj) {
                         if (allVisibleSet[iUrl] === 1) {
                             if (imagesSentSet[iUrl] === 0) {
                                 imagesSentSet[iUrl] = 1;
-                                visibleThumbMap.push(thumbMap[iUrl]);
+                                visibleThumbMap.push(thumbMap[cleanseUrlOfQuerystring(iUrl)]);
                             }
                         }
                     }
@@ -1004,9 +1011,11 @@ Object.size = function(obj) {
             },
 
             getDataFromUrl: function(url) {
-                var thumbData;
-                if (thumbMap && thumbMap.hasOwnProperty(url)) {
-                    thumbData = thumbMap[url];
+                var thumbData,
+                    cleanUrl = cleanseUrlOfQuerystring(url)
+                ;
+                if (thumbMap && thumbMap.hasOwnProperty(cleanUrl)) {
+                    thumbData = thumbMap[cleanUrl];
                 }
                 return thumbData;
             },
