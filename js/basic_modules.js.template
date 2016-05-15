@@ -270,10 +270,14 @@ Object.size = function(obj) {
             return (obj instanceof _neonjQuery ? obj : $(obj));
         },
 
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+        //
         getMysteryElementImageSource: function (el) {
             var $el = _neon.utils.makeJQueryObject(el);
             return _neon.utils.getElementImageSource($el) || _neon.utils.getElementBackgroundImageSource($el);
         },
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
 
         getElementImageSource: function(el) {
             var $el = _neon.utils.makeJQueryObject(el),
@@ -282,6 +286,8 @@ Object.size = function(obj) {
             return returnValue;
         },
 
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+
         getElementBackgroundImageSource: function(el) {
             var $el = _neon.utils.makeJQueryObject(el),
                 returnValue = $el.attr('data-background-image') || $el.css('background-image') || ''
@@ -289,8 +295,14 @@ Object.size = function(obj) {
             if (returnValue === 'none') { // ugh
                 returnValue = '';
             }
+            else {
+                // Get rid of the url(x), url('x'), url("x")
+                returnValue = returnValue.match(/\((.*?)\)/)[1].replace(/('|")/g,'');
+            }
             return returnValue;
         },
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
 
         // given a root element (jQuery or Javascript), look for:
         // 1. regular <img /> with src attribute
@@ -657,18 +669,32 @@ Object.size = function(obj) {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         function _testAndAddImageElement(potentialElement) {
+            
             var $element = _neon.utils.makeJQueryObject(potentialElement),
                 url = _neon.utils.getMysteryElementImageSource($element)
             ;
+            
             if (_isNeonThumbnail(url)) {
+                
+                // Decache the best we can. Since we know it has a neon signature
+                $element.attr('data-original', neonDecache($element.attr('data-original')));
+                $element.attr('src', neonDecache($element.attr('src')));
+                $element.attr('data-background-image', neonDecache($element.attr('data-background-image')));
+                $element.css('background-image', neonDecache($element.css('background-image')));
+
+                // Remember to get the new URL
+                url = _neon.utils.getMysteryElementImageSource($element);
+
                 var vid = _getNeonVideoIdFromURL(url);
-                if ($.inArray(vid, videoIds) === -1) { 
-                    videoIds.push(vid);
-                } 
-                if ($.inArray($element, imgObjs) === -1) { 
-                    imgObjs.push($element);
-                } 
-                _registerClickEvent($element);
+                if (vid) {
+                    if ($.inArray(vid, videoIds) === -1) { 
+                        videoIds.push(vid);
+                    } 
+                    if ($.inArray($element, imgObjs) === -1) { 
+                        imgObjs.push($element);
+                    } 
+                    _registerClickEvent($element);
+                }
             }
         } 
 
@@ -712,7 +738,8 @@ Object.size = function(obj) {
                 imgURLs = [];
                 for (var i = trackerProcessedCount; i < imgObjs.length; i++) {
                     var imgObj = imgObjs[i]
-                        url = _neon.utils.getMysteryElementImageSource(imgObj);
+                        url = _neon.utils.getMysteryElementImageSource(imgObj)
+                    ;
                     if (_isNeonImageServingURL(url)) {
                         var vid = _neonISPURLToVid(url);
                         thumbMap[url] = [vid, ispMap[vid]];
@@ -910,9 +937,13 @@ Object.size = function(obj) {
         function _getNeonVideoIdFromURL(url) {
            if (url.indexOf('neontn') > -1) {
                 var ret = _parseNeonThumbnailIdURL(url);
-                return ret[0];
+                if (ret) {
+                    return ret[0];
+                }
+                else {
+                    return;
+                }
            }
-
            if (url.indexOf('neonvid') > -1) {
                return _neonISPURLToVid(url);
            }
