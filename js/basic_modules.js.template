@@ -281,21 +281,25 @@ Object.size = function(obj) {
 
         getElementImageSource: function(el) {
             var $el = _neon.utils.makeJQueryObject(el);
-            $el.attr('data-original', neonDecache($el.attr('data-original')));
-            $el.attr('src', neonDecache($el.attr('src')));
             return $el.attr('data-original') || $el.attr('src') || '';
         },
 
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+
         getElementBackgroundImageSource: function(el) {
             var $el = _neon.utils.makeJQueryObject(el);
-            $el.attr('data-background-image', neonDecache($el.attr('data-background-image')));
-            $el.css('background-image', neonDecache($el.css('background-image')));
             var returnValue = $el.attr('data-background-image') || $el.css('background-image') || '';
             if (returnValue === 'none') { // ugh
                 returnValue = '';
             }
+            else {
+                // Get rid of the url(x), url('x'), url("x")
+                returnValue = returnValue.match(/\((.*?)\)/)[1].replace(/('|")/g,'');
+            }
             return returnValue;
         },
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
 
         // given a root element (jQuery or Javascript), look for:
         // 1. regular <img /> with src attribute
@@ -666,6 +670,13 @@ Object.size = function(obj) {
                 url = _neon.utils.getMysteryElementImageSource($element)
             ;
             if (_isNeonThumbnail(url)) {
+                // ---
+                $element.attr('data-original', neonDecache($element.attr('data-original')));
+                $element.attr('src', neonDecache($element.attr('src')));
+                $element.attr('data-background-image', neonDecache($element.attr('data-background-image')));
+                $element.css('background-image', neonDecache($element.css('background-image')));
+                url = _neon.utils.getMysteryElementImageSource($element);
+                // ---
                 var vid = _getNeonVideoIdFromURL(url);
                 if (vid) {
                     if ($.inArray(vid, videoIds) === -1) { 
@@ -719,7 +730,8 @@ Object.size = function(obj) {
                 imgURLs = [];
                 for (var i = trackerProcessedCount; i < imgObjs.length; i++) {
                     var imgObj = imgObjs[i]
-                        url = _neon.utils.getMysteryElementImageSource(imgObj);
+                        url = _neon.utils.getMysteryElementImageSource(imgObj)
+                    ;
                     if (_isNeonImageServingURL(url)) {
                         var vid = _neonISPURLToVid(url);
                         thumbMap[url] = [vid, ispMap[vid]];
