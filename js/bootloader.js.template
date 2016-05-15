@@ -5,6 +5,9 @@ if (typeof isNeonBrightcoveGallery === 'undefined') {
 }
 
 var neonDecacheBrightcoveGallery = function(str) {
+    if (typeof str === 'undefined') {
+        return '';
+    }
     return str.replace(/(https?:)?\/\/images\.gallerysites\.net\/?\?image=(.*jpg)(.*?)(\'\)|\")/g, function(match, p1, p2, p3, p4, offset, string) {
         var goodQuerystring = {}
             returnValue = p2,
