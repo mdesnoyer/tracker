@@ -401,7 +401,7 @@ Object.size = function(obj) {
                     return simpleMap[url];
                 }
                 
-                var replaced_string = url.replace(location.origin,'')
+                var replaced_string = url.replace(location.origin,'');
 
                 if (simpleMap.hasOwnProperty(replaced_string)) { 
                     return simpleMap[replaced_string];
