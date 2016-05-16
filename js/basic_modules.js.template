@@ -396,12 +396,18 @@ Object.size = function(obj) {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         function _getSimpleMapFire(url) {
-            if (simpleMap && simpleMap.hasOwnProperty(url)) {
-                return simpleMap[url];
+            if (simpleMap) { 
+                if (simpleMap.hasOwnProperty(url)) {
+                    return simpleMap[url];
+                }
+                
+                var replaced_string = url.replace(location.origin,'');
+
+                if (simpleMap.hasOwnProperty(replaced_string)) { 
+                    return simpleMap[replaced_string];
+                }
             }
-            else {
-                return false;
-            }
+            return false;
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -496,6 +502,9 @@ Object.size = function(obj) {
                     if (el.tagName == 'IMG')
                         imgSrc= el.src;
 
+                    if (el.tagName == 'img')
+                        imgSrc= el.src;
+
                     if (el.type == 'image')
                         inpElement = el;
                 }
@@ -535,7 +544,7 @@ Object.size = function(obj) {
                         if (aHref.indexOf('#') === 0) {
                             aHref = window.location.href + aHref;
                         }
-                        simpleMap[aHref] = clickAttr;
+                        simpleMap[encodeURI(aHref)] = clickAttr;
                     }
                 }
                 return true;
