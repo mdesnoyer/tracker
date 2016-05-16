@@ -22,7 +22,7 @@ var neonDecacheBrightcoveGallery = function(str) {
 }
 
 var neonDecache = function(str) {
-    if (typeof str === 'undefined') {
+    if (typeof str === 'undefined' || str === '') {
         return '';
     }
     if (isNeonBrightcoveGallery) {
