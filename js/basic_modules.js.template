@@ -401,7 +401,7 @@ Object.size = function(obj) {
                     return simpleMap[url];
                 }
                 
-                replaced_string = url.replace(location.origin,'')
+                var replaced_string = url.replace(location.origin,'')
 
                 if (simpleMap.hasOwnProperty(replaced_string)) { 
                     return simpleMap[replaced_string];
@@ -501,6 +501,7 @@ Object.size = function(obj) {
                     var el = siblings[j];
                     if (el.tagName == 'IMG')
                         imgSrc= el.src;
+
                     if (el.tagName == 'img')
                         imgSrc= el.src;
 
