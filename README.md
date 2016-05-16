@@ -6,7 +6,7 @@ There are many options. `generate_tracker.py` has a definitive list but:
 
 - `--upload_location` can be `s3test` or `s3prod`
 - `--trackerid 1234567890` (optional, see Dixon)
-- `--upload_location` can be `simple` or (defaults to) `normal`
+- `--trackermode` can be `simple` or (defaults to) `normal`
 - `--minify` can be `0` or `1` 
 
 ## Dixon (generic)
