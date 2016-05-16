@@ -11,7 +11,7 @@ var neonDecacheBrightcoveGallery = function(str) {
         height = qs.match(/(height=[0-9]+)/g);
         width = qs.match(/(width=[0-9]+)/g);
         if (height && width) {
- 	        if (height.length != width.legnth) {
+ 	        if (height.length != width.length) {
   	            return p3 + '?' + height[0] + '&' + width[0];
             } else {
  		        return p3 + '?' + height.slice(-1)[0] + '&' + width.slice(-1)[0];
