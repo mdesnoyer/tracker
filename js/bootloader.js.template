@@ -5,7 +5,7 @@ if (typeof isNeonBrightcoveGallery === 'undefined') {
 }
 
 var neonDecacheBrightcoveGallery = function(str) {
-    return str.replace(/(https?:)?\/\/images\.gallerysites\.net\/?\?image=(https?:)?([^\?]+\.jpg)\??(.*?)(\'\)|\")/g,
+    return str.replace(/(https?:)?\/\/images\.gallerysites\.net\/?\?image=(https?:)?(\/\/i[0-9]\.neon-images\.com[^\?]+?\.jpg)\??((width=\d*|height=\d*|&amp;|&)*)/g,
                        function (match, p1, p2, p3, p4, p5, string, offset) {
         qs = p4.replace(/\&amp\;/g', '&') // sigh
         height = qs.match(/(height=[0-9]+)/g);
