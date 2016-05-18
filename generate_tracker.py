@@ -53,7 +53,8 @@ def compile_js(contents):
     except Exception, e:
         print e
 
-def s3_uploader(location, basename, data):
+def s3_uploader(location, basename, data, options):
+
     try:
         bucket_name = s3locations[location]
     except KeyError:
@@ -70,12 +71,17 @@ def s3_uploader(location, basename, data):
     s3data.write(data)
     s3data.seek(0)
 
-    try:
-        k.set_contents_from_file(s3data, policy=policy, headers= { "Cache-Control": "max-age=3600", "Content-Type": "application/javascript" })
-    except Exception, e:
-        #TODO: More specific exceptions
-        print "Error writing the file", e
-        return
+    if options.dry_run:
+        # We've demonstrated that the compilation works but we stop here
+        # without uploading to s3.
+        pass
+    else:
+        try:
+            k.set_contents_from_file(s3data, policy=policy, headers= { "Cache-Control": "max-age=3600", "Content-Type": "application/javascript" })
+        except Exception, e:
+            #TODO: More specific exceptions
+            print "Error writing the file", e
+            return
 
     return "//%s.s3.amazonaws.com/%s" % (bucket_name, basename)
 
@@ -83,7 +89,7 @@ def upload_to_s3(location, bootloader, contents, tai):
 
     # upload main js to the given location
     mainjs = MAINJS_FNAME % tai
-    mainjs_s3url = s3_uploader(location, mainjs, contents)
+    mainjs_s3url = s3_uploader(location, mainjs, contents, options={})
 
     # change the location in the bootloader template
     with open(bootloader, 'r') as f:
@@ -102,8 +108,11 @@ def upload_to_s3(location, bootloader, contents, tai):
 
         # upload bootloader
         bootjs = BOOTLOADER_FNAME % tai
-        bootjs_url = s3_uploader(location, bootjs, new_boot)
-        print "The optimizer script has been uploaded to %s" % bootjs_url
+        bootjs_url = s3_uploader(location, bootjs, new_boot, options)
+        if options.dry_run:
+            print "Dry-run: script compiled but not uploaded to %s" % bootjs_url
+        else:
+            print "The optimizer script has been uploaded to %s" % bootjs_url
 
 def include_replace(match, tai):
     matches = match.groups()
@@ -204,9 +213,9 @@ if __name__ == '__main__':
                         type=str)
     # options - s3test / s3prod (neon cdn)
     parser.add_option('--upload_location', default=None, type=str)
-    options, args = parser.parse_args()
+    parser.add_option('--dry_run', action="store_true")
+    options, _ = parser.parse_args()
 
     if options.trackerid is None:
         print "TrackerId has not been specified, generating dixon."
-        # sys.exit(0)
     main(options)

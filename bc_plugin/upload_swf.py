@@ -18,11 +18,19 @@ if __name__ == '__main__':
         required=True,
         type=str,
         choices=['s3test', 's3prod'])
+    parser.add_argument(
+        '--dry-run',
+        help='Build but do not deploy to s3',
+        action='store_true')
     args = parser.parse_args()
 
     with open(local_source_path, 'r') as file_handle:
         url = s3_uploader(
             args.target,
             s3_target_path,
-            file_handle.read())
-        print('Uploaded to %s' % url)
+            file_handle.read(),
+            args)
+        if args.dry_run:
+            print('Dry run success. File not uploaded')
+        else:
+            print('Uploaded to %s' % url)
