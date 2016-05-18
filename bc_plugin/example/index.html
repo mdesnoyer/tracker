@@ -1,11 +1,17 @@
 <html>
     <body>
-        <script>
-            var neonPublisherId = '123456789'
-            function __getNeonPublisherId() { return neonPublisherId; };
-            function __getDebugLogging() { return true; };
-        </script>
         <script src='//neon-test.s3.amazonaws.com/neonoptimizer_dixon.js'></script>
+        <script>
+            var neonPublisherId = '12345';
+            var __getNeonPublisherId = function() {
+                if (window._neon) {
+                    return window._neon.tracker.getNeonPublisherId();
+                } else {
+                    return neonPublisherId;
+                }
+            };
+            var __getDebugLogging = function() { return true; };
+        </script>
         <script type="text/javascript" src="http://admin.brightcove.com/js/BrightcoveExperiences.js"></script>
         <object id="myExperience4049517528001" class="BrightcoveExperience">
           <param name="bgcolor" value="#FFFFFF" />
