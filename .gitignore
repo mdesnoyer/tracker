@@ -1,1 +1,3 @@
 neon_main_dixon.js
+dist/
+*.pyc

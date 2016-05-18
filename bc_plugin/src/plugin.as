@@ -1,5 +1,5 @@
-
 package {
+
     import com.brightcove.api.APIModules;
     import com.brightcove.api.CustomModule;
     import com.brightcove.api.components.TileList;
@@ -15,6 +15,8 @@ package {
     import flash.display.Stage;
     import flash.events.MouseEvent;
     import flash.net.URLRequest;
+    import flash.external.ExternalInterface;
+    import flash.system.Security;
 
 
     public class neonoptimizer extends CustomModule
@@ -53,8 +55,17 @@ package {
 
         public function neonoptimizer() : void {}
 
+        protected function getConfigFromExternalInterface() : Object
+        {
+            ExternalInterface("console.log(neonPublisherId)");
+            return {};
+        }
+
         override protected function initialize() : void
         {
+            trace("start plugin initialize");
+            Security.allowDomain("s3.amazonaws.com");
+
             _experienceModule = player.getModule(APIModules.EXPERIENCE) as ExperienceModule;
             _videoPlayerModule = player.getModule(APIModules.VIDEO_PLAYER) as VideoPlayerModule;
             _advertisingModule = player.getModule(APIModules.ADVERTISING) as AdvertisingModule;
@@ -71,13 +82,15 @@ package {
             _pageid = genNumber(16);
             _refURL = encodeURIComponent(_experienceModule.getReferrerURL());
 
-            //ExternalInterface.call("console.log", "expMod: " + _experienceModule.toString());
-            //ExternalInterface.call("console.log", "refURL: " + _refURL);
+            ExternalInterface.call("console.log", "expMod: " + _experienceModule.toString());
+            ExternalInterface.call("console.log", "refURL: " + _refURL);
             //neontn in the name is a VC stored image URL, fully resolved (neontn... .)
             //neonvid in the name is ISP (either neonvid... .jpg OR neonvid... ?)
 
             _pageURL = encodeURIComponent(_experienceModule.getExperienceURL());
             _start = returnStart(_imageURL);
+            ExternalInterface.call("console.log", "_pageURL" + _pageURL)
+            ExternalInterface.call("console.log", "_start" + _start)
 
             _tileList = _experienceModule.getElementByID("videoList") as TileList;
             if (_tileList != null) {
@@ -143,8 +156,8 @@ package {
                 _tileList.addEventListener(MouseEvent.CLICK, onTileListClick);
             }
 
-            //ExternalInterface.call("console.log", "refURL.lenth: " + _refURL.length);
-            //ExternalInterface.call("console.log", "refURL.type: " + typeof(_refURL));
+            ExternalInterface.call("console.log", "refURL.lenth: " + _refURL.length);
+            ExternalInterface.call("console.log", "refURL.type: " + typeof(_refURL));
 
             // Now take care of the non carousel based player's 1 il & iv call
             if (_start > 0 && _tileList == null) {
@@ -182,12 +195,12 @@ package {
             var newPageNum:int =_tileList.getPageIndex();
             var video:VideoDTO;
 
-            //ExternalInterface.call("console.log", "onTileListClick, got a click and our pageNum is now: " + newPageNum);
+            ExternalInterface.call("console.log", "onTileListClick, got a click and our pageNum is now: " + newPageNum);
 
             if (newPageNum != _currTileListPage) {
                 _currTileListPage = newPageNum;
                 var ivBNs:String = "";
-                //ExternalInterface.call("console.log", "onTileListClick, new page num <> currPageNum");
+                ExternalInterface.call("console.log", "onTileListClick, new page num <> currPageNum");
 
                 // if we haven't called that pages' iv's, call them
                 if (_ivCalled[_currTileListPage] == undefined) {
@@ -215,8 +228,8 @@ package {
             } else {
                 // page number was the same, this should be a video click on something that isn't currently loaded / playing.
                 video = _tileList.getSelectedData() as VideoDTO;
-                //ExternalInterface.call("console.log", "onTileListClick, vid to switch to = " + video.id + ", name :" + video.displayName);
-                //ExternalInterface.call("console.log", "onTileListClick, currVideo = " + _currentVideo.id);
+                ExternalInterface.call("console.log", "onTileListClick, vid to switch to = " + video.id + ", name :" + video.displayName);
+                ExternalInterface.call("console.log", "onTileListClick, currVideo = " + _currentVideo.id);
 
             }
 
@@ -241,7 +254,7 @@ package {
         }
 
         private function autoPlayVideo() : Boolean {
-            //ExternalInterface.call("console.log", "in onAutoPlay() : adelta -> " + adelta);
+            ExternalInterface.call("console.log", "in onAutoPlay() : adelta -> " + adelta);
             if(adelta >-1 && adelta <= 2000) {
                 return false;
             } else {
@@ -298,7 +311,7 @@ package {
                 adelta = mediaPlay - lclick;
             }
 
-            //ExternalInterface.call("console.log", "onMediaPlay : calledImageClickAlready? -> " + _calledImageClick + ", _start -> " + _start + ", mediaPlay -> " + mediaPlay + ", adelta -> " + adelta + ", lclick -> " + lclick);
+            ExternalInterface.call("console.log", "onMediaPlay : calledImageClickAlready? -> " + _calledImageClick + ", _start -> " + _start + ", mediaPlay -> " + mediaPlay + ", adelta -> " + adelta + ", lclick -> " + lclick);
 
             _bns = "";
             var video:VideoDTO = _videoPlayerModule.getCurrentVideo();
@@ -394,4 +407,3 @@ package {
         }
     }
 }
-// ActionScript file

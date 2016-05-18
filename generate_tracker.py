@@ -53,37 +53,37 @@ def compile_js(contents):
     except Exception, e:
         print e
 
+def s3_uploader(location, basename, data):
+    try:
+        bucket_name = s3locations[location]
+    except KeyError:
+        print "invalid location to upload"
+        return
+
+    # only supports if you have boto credentials locally ~/.boto
+    conn = boto.s3.connection.S3Connection()
+    bucket = conn.get_bucket(bucket_name)
+    k = Key(bucket)
+    k.name = basename
+    policy = 'public-read'
+    s3data = StringIO()
+    s3data.write(data)
+    s3data.seek(0)
+
+    try:
+        k.set_contents_from_file(s3data, policy=policy, headers= { "Cache-Control": "max-age=3600", "Content-Type": "application/javascript" })
+    except Exception, e:
+        #TODO: More specific exceptions
+        print "Error writing the file", e
+        return
+
+    return "//%s.s3.amazonaws.com/%s" % (bucket_name, basename)
+
 def upload_to_s3(location, bootloader, contents, tai):
-    
-    def s3_uploader(basename, data):
-        try:
-            bucket_name = s3locations[location]
-        except KeyError:
-            print "invalid location to upload"
-            return
-            
-        # only supports if you have boto credentials locally ~/.boto
-        conn = boto.s3.connection.S3Connection()
-        bucket = conn.get_bucket(bucket_name)
-        k = Key(bucket)
-        k.name = basename
-        policy = 'public-read'
-        s3data = StringIO()
-        s3data.write(data)
-        s3data.seek(0)
-
-        try:
-            k.set_contents_from_file(s3data, policy=policy, headers= { "Cache-Control": "max-age=3600", "Content-Type": "application/javascript" })
-        except Exception, e:
-            #TODO: More specific exceptions
-            print "Error writing the file", e
-            return
-
-        return "//%s.s3.amazonaws.com/%s" % (bucket_name, basename)
 
     # upload main js to the given location
     mainjs = MAINJS_FNAME % tai
-    mainjs_s3url = s3_uploader(mainjs, contents)
+    mainjs_s3url = s3_uploader(location, mainjs, contents)
 
     # change the location in the bootloader template
     with open(bootloader, 'r') as f:
@@ -102,7 +102,7 @@ def upload_to_s3(location, bootloader, contents, tai):
 
         # upload bootloader
         bootjs = BOOTLOADER_FNAME % tai
-        bootjs_url = s3_uploader(bootjs, new_boot)
+        bootjs_url = s3_uploader(location, bootjs, new_boot)
         print "The optimizer script has been uploaded to %s" % bootjs_url
 
 def include_replace(match, tai):
