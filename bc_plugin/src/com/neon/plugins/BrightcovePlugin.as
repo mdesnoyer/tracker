@@ -35,10 +35,10 @@ package com.neon.plugins {
         private var _bns:String = "";
         private var _refURL:String = "";
         private var _pageURL:String = "";
-        private var _pageid:String = "";
+        private var _pageLoadId:String = "";
         private var _adPlayed:Boolean = false;
         private var _calledVP:Boolean = false;
-        private var _accountID:String = "557414715";
+        private var _trackerAccountId:String = "557414715";
         private var _start:Number = 0;
         private var _vidCount:Number = 1;
         private var _calledImageClick:Boolean = false;
@@ -52,21 +52,44 @@ package com.neon.plugins {
         private var _currTileListPage:int;
         private var _tileListCount:int;
         private var _ivCalled:Array;
+        private var _debugLogging:Boolean; // Overridden by external context
 
         public function neonoptimizer() : void {}
 
-        protected function getOptionsFromExternalInterface() : Object
+        // Wraps logging
+        protected function log(... args) : void
         {
-            ExternalInterface("console.log", "tai", neonPublisherId);
-            return {};
+            if (_debugLogging) {
+                if (ExternalInterface.available) {
+                    args.unshift("console.log");
+                    ExternalInterface.call.apply(this, args);
+                } else {
+                    trace.apply(this, args);
+                }
+            }
+        }
+
+        protected function externalCall(... args): *
+        {
+            if(ExternalInterface.available) {
+                return ExternalInterface.call.apply(this, args);
+            }
+            trace('No ExternalInterface available for following:');
+            trace.call.apply(this, args);
+        }
+
+        protected function loadOptionsFromExternalInterface() : void
+        {
+            this._pageLoadId = ExternalInterface.call("window._neon.TrackerEvents.getPageLoadId");
+            this._trackerAccountId = ExternalInterface.call("window.__getNeonPublisherId");
+            this._debugLogging = ExternalInterface.call("window.__getDebugLogging");
+            log('pageLoadId:', this._pageLoadId);
         }
 
         override protected function initialize() : void
         {
             // Read neonPublisherId and other options from external context
-            const options:Object = getOptionsFromExternalInterface();
-
-            Security.allowDomain("s3.amazonaws.com");
+            loadOptionsFromExternalInterface();
 
             _experienceModule = player.getModule(APIModules.EXPERIENCE) as ExperienceModule;
             _videoPlayerModule = player.getModule(APIModules.VIDEO_PLAYER) as VideoPlayerModule;
@@ -81,18 +104,13 @@ package com.neon.plugins {
             _currentVideo = _videoPlayerModule.getCurrentVideo();
             _imageURL = _currentVideo.videoStillURL;
 
-            _pageid = genNumber(16);
             _refURL = encodeURIComponent(_experienceModule.getReferrerURL());
 
-            ExternalInterface.call("console.log", "expMod: " + _experienceModule.toString());
-            ExternalInterface.call("console.log", "refURL: " + _refURL);
             //neontn in the name is a VC stored image URL, fully resolved (neontn... .)
             //neonvid in the name is ISP (either neonvid... .jpg OR neonvid... ?)
 
             _pageURL = encodeURIComponent(_experienceModule.getExperienceURL());
             _start = returnStart(_imageURL);
-            ExternalInterface.call("console.log", "_pageURL" + _pageURL)
-            ExternalInterface.call("console.log", "_start" + _start)
 
             _tileList = _experienceModule.getElementByID("videoList") as TileList;
             if (_tileList != null) {
@@ -158,8 +176,8 @@ package com.neon.plugins {
                 _tileList.addEventListener(MouseEvent.CLICK, onTileListClick);
             }
 
-            ExternalInterface.call("console.log", "refURL.lenth: " + _refURL.length);
-            ExternalInterface.call("console.log", "refURL.type: " + typeof(_refURL));
+            log("refURL.lenth: " + _refURL.length);
+            log("refURL.type: " + typeof(_refURL));
 
             // Now take care of the non carousel based player's 1 il & iv call
             if (_start > 0 && _tileList == null) {
@@ -197,12 +215,12 @@ package com.neon.plugins {
             var newPageNum:int =_tileList.getPageIndex();
             var video:VideoDTO;
 
-            ExternalInterface.call("console.log", "onTileListClick, got a click and our pageNum is now: " + newPageNum);
+            log("onTileListClick, got a click and our pageNum is now: " + newPageNum);
 
             if (newPageNum != _currTileListPage) {
                 _currTileListPage = newPageNum;
                 var ivBNs:String = "";
-                ExternalInterface.call("console.log", "onTileListClick, new page num <> currPageNum");
+                log("onTileListClick, new page num <> currPageNum");
 
                 // if we haven't called that pages' iv's, call them
                 if (_ivCalled[_currTileListPage] == undefined) {
@@ -228,10 +246,10 @@ package com.neon.plugins {
                 }
 
             } else {
-                // page number was the same, this should be a video click on something that isn't currently loaded / playing.
+                // page number was the same, should be a video click on something that isn't currently loaded / playing.
                 video = _tileList.getSelectedData() as VideoDTO;
-                ExternalInterface.call("console.log", "onTileListClick, vid to switch to = " + video.id + ", name :" + video.displayName);
-                ExternalInterface.call("console.log", "onTileListClick, currVideo = " + _currentVideo.id);
+                log("onTileListClick, vid to switch to = " + video.id + ", name :" + video.displayName);
+                log("onTileListClick, currVideo = " + _currentVideo.id);
 
             }
 
@@ -244,9 +262,9 @@ package com.neon.plugins {
             //var completeURL:String = "http://private-ec864-trackerneonlabcom.apiary-mock.com/v2/track";
 
             if ((_refURL.length) > 20) {
-                completeURL+= "?a=" + tracktype + "&pageid=" + _pageid + "&tai=" + _accountID + "&ttype=brightcove&page=" + _pageURL + "&ref=" + _refURL + "&cts=" + cts + "&" + restOfURL;
+                completeURL+= "?a=" + tracktype + "&pageid=" + _pageLoadId + "&tai=" + _trackerAccountId + "&ttype=brightcove&page=" + _pageURL + "&ref=" + _refURL + "&cts=" + cts + "&" + restOfURL;
             } else {
-                completeURL+= "?a=" + tracktype + "&pageid=" + _pageid + "&tai=" + _accountID + "&ttype=brightcove&page=" + _pageURL + "&cts=" + cts + "&" + restOfURL;
+                completeURL+= "?a=" + tracktype + "&pageid=" + _pageLoadId + "&tai=" + _trackerAccountId + "&ttype=brightcove&page=" + _pageURL + "&cts=" + cts + "&" + restOfURL;
             }
 
             var urlRequestOne:URLRequest = new URLRequest(completeURL);
@@ -256,7 +274,7 @@ package com.neon.plugins {
         }
 
         private function autoPlayVideo() : Boolean {
-            ExternalInterface.call("console.log", "in onAutoPlay() : adelta -> " + adelta);
+            log("in onAutoPlay() : adelta -> " + adelta);
             if(adelta >-1 && adelta <= 2000) {
                 return false;
             } else {
@@ -313,7 +331,7 @@ package com.neon.plugins {
                 adelta = mediaPlay - lclick;
             }
 
-            ExternalInterface.call("console.log", "onMediaPlay : calledImageClickAlready? -> " + _calledImageClick + ", _start -> " + _start + ", mediaPlay -> " + mediaPlay + ", adelta -> " + adelta + ", lclick -> " + lclick);
+            log("onMediaPlay : calledImageClickAlready? -> " + _calledImageClick + ", _start -> " + _start + ", mediaPlay -> " + mediaPlay + ", adelta -> " + adelta + ", lclick -> " + lclick);
 
             _bns = "";
             var video:VideoDTO = _videoPlayerModule.getCurrentVideo();
@@ -327,7 +345,7 @@ package com.neon.plugins {
                     icEnd = thumb.length;
                 }
                 _bns = thumb.slice(icStart, icEnd);
-                ExternalInterface.call("console.log", "onMediaPlay, setting _bns to = " + _bns);
+                log("onMediaPlay, setting _bns to = " + _bns);
 
                 if (!autoPlayVideo()) {
                     if (!_calledImageClick) {
@@ -359,7 +377,7 @@ package com.neon.plugins {
 
         private function onMediaChange(pEvent:MediaEvent) : void {
             _currentVideo = _videoPlayerModule.getCurrentVideo();
-            //ExternalInterface.call("console.log", "onMediaChange happened");
+            //log("onMediaChange happened");
             _calledImageClick = false;
             _calledVP = false;
             adelta = -1;
@@ -390,7 +408,7 @@ package com.neon.plugins {
                     icEnd = thumb.length;
                 }
                 _bns = thumb.slice(icStart, icEnd);
-                ExternalInterface.call("console.log", "onAdSTart, setting _bns to = " + _bns);
+                log("onAdSTart, setting _bns to = " + _bns);
 
                 if (!autoPlayVideo()) {
                     if (!_calledImageClick) {
