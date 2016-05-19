@@ -1329,6 +1329,19 @@ _neon.TrackerEvents = (function() {
             _neon.JsonRequester.sendRequest(req);
         },
 
+        sendVideoPlayEventByUrl: function(vid, url, playerId, adPlay, adelta, pcount) {
+            var thumbData = _neon.tracker.getDataFromUrl(url);
+            try  {
+                var tid = thumbData[1];
+                sendVideoPlayEvent(vid, tid, wx, wy, px, py, cx, cy);
+                return true;
+            }
+            catch(err) {
+                _neon.utils.beacon('sendVideoPlayEventByUrl', 'Could not find tid for ' + url);
+                return false;
+            }
+        },
+
         // If AD event available
         sendAdPlayEvent: function(vid, tid, playerId, adelta, pcount, adTs) {
             eventName = 'ap';
@@ -1339,6 +1352,19 @@ _neon.TrackerEvents = (function() {
             }
             _neon.utils.beacon(eventName, req);
             _neon.JsonRequester.sendRequest(req);
+        },
+
+        sendAdPlayEventByUrl: function(vid, url, playerId, adelta, pcount, adTs) {
+            var thumbData = _neon.tracker.getDataFromUrl(url);
+            try  {
+                var tid = thumbData[1];
+                sendAdPlayEvent(vid, tid, playerId, adelta, pcount, adTs);
+                return true;
+            }
+            catch(err) {
+                _neon.utils.beacon('sendAdPlayEventByUrl', 'Could not find tid for ' + url);
+                return false;
+            }
         },
 
         // ImageMap is a Map of thumbnail url => tid 
