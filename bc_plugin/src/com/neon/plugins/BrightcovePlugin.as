@@ -203,43 +203,6 @@ package com.neon.plugins {
             log('pageLoadId:', this._pageLoadId, ' trackerAccountId:', this._trackerAccountId);
         }
 
-        // Try to send event api call via parent tracker javascript.
-        protected function sendViaParent(eventCode:String, url:String) : Boolean
-        {
-
-            if(ExternalInterface.available) {
-                // Needs implementation to send via parent tracker.
-                var targetFunction:String;
-                const base:String = "_neon.TrackerEvents.";
-                switch(eventCode) {
-                case "ic":
-                    //sendImageClickEvent: function(vid, tid, wx, wy, px, py, cx, cy)
-                    targetFunction = base + "sendImageClickEvent";
-                break;
-                case "il":
-                    //sendImageLoadEvent: function(tid)
-                    targetFunction = base + sendImageLoadEvent;
-                break;
-                case "iv":
-                    //sendImageVisibleEvent: function(tid)
-                    targetFunction = base + sendImageVisibleEvent;
-                break;
-                case "vp":
-                    //sendVideoPlayEvent: function(vid, tid, playerId, adPlay, adelta, pcount)
-                break;
-                case "ap":
-                    //sendAdPlayEvent: function(vid, tid, playerId, adelta, pcount, adTs)
-                break;
-                }
-                if(targetFunction) {
-                    args.unshift(targetFunction)
-                    return externalInterfaceCall.apply(args);
-                }
-                return false;
-            }
-            return false;
-        }
-
         private function returnStart(url:String) : Number {
             var startPos:Number = url.indexOf("neontn");
             if (startPos == -1) {
@@ -302,10 +265,6 @@ package com.neon.plugins {
         }
 
         private function sendTrackingEvent(trackType:String, restOfURL:String) : void {
-            if(this.sendViaParent(trackType, restOfURL)) {
-                log("event:", trackType, " sent to parent for url:", restOfURL);
-                return;
-            }
             var myDate:Date = new Date();
             var cts:Number = myDate.getTime() + (myDate.getTimezoneOffset() * 60000);
 
