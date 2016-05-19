@@ -15,6 +15,7 @@ package com.neon.plugins {
     import flash.display.Stage;
     import flash.events.MouseEvent;
     import flash.net.URLRequest;
+    import flash.net.URLVariables;
     import flash.external.ExternalInterface;
     import flash.system.Security;
 
@@ -203,21 +204,25 @@ package com.neon.plugins {
         }
 
         // Try to send event api call via parent tracker javascript.
-        protected function sendViaParent(eventCode:String, ... args) : Boolean
+        protected function sendViaParent(eventCode:String, url:String) : Boolean
         {
 
             if(ExternalInterface.available) {
                 // Needs implementation to send via parent tracker.
                 var targetFunction:String;
+                const base:String = "_neon.TrackerEvents.";
                 switch(eventCode) {
+                case "ic":
+                    //sendImageClickEvent: function(vid, tid, wx, wy, px, py, cx, cy)
+                    targetFunction = base + "sendImageClickEvent";
+                break;
                 case "il":
-                    //sendImageLoadEventByUrl: function(url)
+                    //sendImageLoadEvent: function(tid)
+                    targetFunction = base + sendImageLoadEvent;
                 break;
                 case "iv":
-                    //sendImageVisibleEventByUrl: function(url)
-                break;
-                case "ic":
-                    //sendImageClickEventByUrl: function(vid, url, wx, wy, px, py, cx, cy)
+                    //sendImageVisibleEvent: function(tid)
+                    targetFunction = base + sendImageVisibleEvent;
                 break;
                 case "vp":
                     //sendVideoPlayEvent: function(vid, tid, playerId, adPlay, adelta, pcount)
@@ -417,7 +422,6 @@ package com.neon.plugins {
             _vidCount++;
             var mydate:Date = new Date();
             mediaPlay = mydate.getTime() + (mydate.getTimezoneOffset() * 60000);
-
         }
 
         private function onAdStart(pEvent:AdEvent) : void {
