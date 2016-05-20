@@ -4,6 +4,7 @@ Capture player events and send them to the Neon event tracking API.
 
 ## Reference
 [Neon's tracking API definition] http://docs.trackerneonlabcom.apiary.io/#reference/tracking-events/video-play
+[JIRA issue] https://neonlabs.atlassian.net/browse/NEON-1111
 
 ## Description
 
@@ -40,6 +41,20 @@ Run the Python web server from within bc_plugin/. Browse to http://localhost:800
 ```sh
 python -m SimpleHTTPServer
 ```
+
+## Troubleshooting
+
+Run Chrome with the Flash Content Debugger instead of the prepackaged Flash runner. This will enable stack traces as dialog boxes.
+
+https://helpx.adobe.com/flash-player/kb/enable-flash-player-content-debugger-in-google-chrome.html
+
+You can also look trace logs in (OSX, e.g., Library/Application\ Support/Google/Chrome/Default/Pepper\ Data/Shockwave\ Flash/Writeable\ Roots/Logs). You might need a mm.cfg like the below in the System/ subdir of Shockwave Flash in previous path.
+
+TraceOutputFileEnable=1
+ErrorReportingEnable=1
+AS3Verbose=1
+TraceOutputBuffered=1
+AS3Trace=1
 
 ## Contact
 Nate Kresge <kresge@neon-lab.com>

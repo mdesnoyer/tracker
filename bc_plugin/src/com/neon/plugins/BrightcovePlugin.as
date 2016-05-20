@@ -81,7 +81,7 @@ package com.neon.plugins {
             _refURL = encodeURIComponent(_experienceModule.getReferrerURL());
 
             // Generate our own pageLoadId if context didn't provide one.
-            if(!this._pageLoadId) {
+            if(this._pageLoadId == null) {
                 this._pageLoadId = this.genNumber(16);
             }
 
@@ -197,10 +197,23 @@ package com.neon.plugins {
 
         protected function loadOptionsFromExternalInterface() : void
         {
+            // Check if we should log to console
+            this._debugLogging = externalInterfaceCall("window.__neonGetDebugLogging");
+
+            // Get pageload identifier
             this._pageLoadId = externalInterfaceCall("window._neon.TrackerEvents.getPageLoadId");
-            this._trackerAccountId = externalInterfaceCall("window.__getNeonPublisherId");
-            this._debugLogging = externalInterfaceCall("window.__getDebugLogging");
-            log('pageLoadId:', this._pageLoadId, ' trackerAccountId:', this._trackerAccountId);
+
+            // Get the neon user tracker account id
+            this._trackerAccountId = externalInterfaceCall("window.neonPublisherId");
+
+            // Override the above if the trackerAccountId GET url parameter is present
+            if(root.loaderInfo.parameters.neonPublisherId != null) {
+                this._trackerAccountId = root.loaderInfo.parameters.neonPublisherId;
+            } else if (root.loaderInfo.parameters.tai != null) {
+                this._trackerAccountId = root.loaderInfo.parameters.tai;
+            }
+
+            log('Neon track configured with pageLoadId:', this._pageLoadId, ' trackerAccountId:', this._trackerAccountId);
         }
 
         private function returnStart(url:String) : Number {
