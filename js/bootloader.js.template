@@ -31,7 +31,9 @@ var neonDecache = function(str) {
     return str;
 }
 
-document.body.innerHTML = neonDecache(document.body.innerHTML);
+if (document.body) {
+    document.body.innerHTML = neonDecache(document.body.innerHTML);    
+}
 
 // --- decache ---
 
