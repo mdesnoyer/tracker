@@ -85,11 +85,11 @@ def s3_uploader(location, basename, data, options):
 
     return "//%s.s3.amazonaws.com/%s" % (bucket_name, basename)
 
-def upload_to_s3(location, bootloader, contents, tai):
+def upload_to_s3(location, bootloader, contents, tai, options=None):
 
     # upload main js to the given location
     mainjs = MAINJS_FNAME % tai
-    mainjs_s3url = s3_uploader(location, mainjs, contents, options={})
+    mainjs_s3url = s3_uploader(location, mainjs, contents, options)
 
     # change the location in the bootloader template
     with open(bootloader, 'r') as f:
@@ -191,7 +191,7 @@ def main(options):
 
         # upload the optimizer script to S3
         if options.upload_location is not None:
-            upload_to_s3(options.upload_location, options.bootloader, contents, tai)
+            upload_to_s3(options.upload_location, options.bootloader, contents, tai, options)
 
 if __name__ == '__main__':
 
