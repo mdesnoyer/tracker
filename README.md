@@ -105,6 +105,11 @@ If you run
 
 ## Examples
 
+### MSN
+
+- ```./generate_tracker.py --trackerid 603225904 --minify 0 --upload_location s3test --trackermode simple```
+- ```./generate_tracker.py --trackerid 603225904 --minify 1 --upload_location s3prod --trackermode simple```
+
 ### Gannett
 
 - ```./generate_tracker.py --trackerid 1554964958 --custom_module 'js/neonbcoveplayer.js'```

@@ -214,6 +214,8 @@ Object.size = function(obj) {
 
     _neon.utils = {
 
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
         isElementOutOfBounds: function($originalElement) {
 
             // add partials here which will do specific work per client, they
@@ -227,17 +229,23 @@ Object.size = function(obj) {
 
         },
 
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
         // Generate a random string of given length
         getRandomString: function(len) {
             var n = parseInt((1 + Math.random()) * 100000000, 10); // a random number
             return n.toString().substr(0, len);
         },
 
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
         beacon: function() {
             if (true) {
                 console.log('[neon]', arguments);
             }
         },
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         // check if current page is referred by a page from same website
         // TODO: tackle different subdomain
@@ -253,6 +261,8 @@ Object.size = function(obj) {
             return (referrer == window.location.hostname);
         },
 
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
         getPageRequestUUID: function() {
             function randomString(length, chars) {
                 var result = '';
@@ -264,6 +274,8 @@ Object.size = function(obj) {
             return randomString(16, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
         },
 
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
         // Check object and if it is a jQuery object, return it, otherwise cast
         // it to a jQuery object.
         makeJQueryObject: function(obj) {
@@ -271,7 +283,7 @@ Object.size = function(obj) {
         },
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        //
+        
         getMysteryElementImageSource: function (el) {
             var $el = _neon.utils.makeJQueryObject(el);
             return _neon.utils.getElementImageSource($el) || _neon.utils.getElementBackgroundImageSource($el);
@@ -335,6 +347,8 @@ Object.size = function(obj) {
             return $fgImages.add($bgImages);
         },
 
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
         getQueryValue: function(qstring, param) {
             var qstringArray = qstring && qstring.substring(1).split('&'),
                 i = 0,
@@ -350,6 +364,8 @@ Object.size = function(obj) {
                 }
             }
         }
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         // Get script tag   
     };
@@ -396,13 +412,11 @@ Object.size = function(obj) {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         function _getSimpleMapFire(url) {
+            var replaced_string = url.replace(location.origin, '');
             if (simpleMap) { 
                 if (simpleMap.hasOwnProperty(url)) {
                     return simpleMap[url];
                 }
-                
-                var replaced_string = url.replace(location.origin,'');
-
                 if (simpleMap.hasOwnProperty(replaced_string)) { 
                     return simpleMap[replaced_string];
                 }
@@ -535,6 +549,7 @@ Object.size = function(obj) {
             ;
 
             // mode=simple
+            
             if (neonTrackerMode === 'simple') {
                 // We look for the anchor
                 var $a = $el.closest('a');
