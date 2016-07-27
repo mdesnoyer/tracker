@@ -1,7 +1,7 @@
 var _neon = _neon || {},
     videoIds = [],
     imgObjs = [],
-    CDN_IMAGE_BASE = 'neon-images.com',
+    CDN_IMAGE_BASE = 'neon-',
     apiBaseURL = 'i3.neon-images.com',
     TAG_NAME_BLACK_LIST = 'area, audio, base, canvas, col, colgroup, datalist, dialog, del, details, embed, head, iframe, img, input, ins, keygen, link, map, menu, menuitem, meta, noscript, object, optgroup, option, param, progress, script, select, source, style, summary, title, track, video',
     lastMouseClick,
@@ -696,7 +696,7 @@ Object.size = function(obj) {
         function _testAndAddImageElement(potentialElement) {
             
             var $element = _neon.utils.makeJQueryObject(potentialElement),
-                url = ''
+                url = _neon.utils.getMysteryElementImageSource($element)
             ;
 
             if (_isNeonThumbnail(url)) {
