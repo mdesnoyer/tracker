@@ -18,14 +18,16 @@ function neonTransform(neonReplacements) {
             images = document.querySelectorAll("img[src='" + key + "']")
         ;
         images.forEach(function(image) {
-            image.src = value;
+            if (image.classList.contains('loaded')) {
+                image.src = value;
+            }
         });
     }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-window.nInterval1 = setInterval(function() {
+var nInterval1 = setInterval(function() {
     console.log('ping nInterval1');
     if (window._neon !== undefined) {
         window._neon.tracker.masterControlProgram();
@@ -34,7 +36,7 @@ window.nInterval1 = setInterval(function() {
     }
 }, 500);
 
-window.nInterval2 = setInterval(function() {
+var nInterval2 = setInterval(function() {
     console.log('ping nInterval2');
     if (document.body) {
         var fileRef = document.createElement('script');
@@ -46,9 +48,10 @@ window.nInterval2 = setInterval(function() {
     }
 }, 500);
 
-window.nInterval3 = setInterval(function() {
+var nInterval3 = setInterval(function() {
     console.log('ping nInterval3');
-    if (document) {
+    var html = document.querySelector('html')
+    if (html.classList.contains('loaded')) {
         neonTransform(neonReplacements);
         clearInterval(nInterval3);
         console.log('kill nInterval3');
