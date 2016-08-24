@@ -240,7 +240,7 @@ Object.size = function(obj) {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         beacon: function() {
-            if (true) {
+            if (false) {
                 console.log('[neon]', arguments);
             }
         },
