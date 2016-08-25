@@ -398,9 +398,10 @@ Object.size = function(obj) {
             // a note of it, if so get the vid/tid and if that works, fire an
             // IC
             $(document.body).on('click', 'a', function(e) {
-                var hrefToCheck = e.currentTarget.href;
+                var hrefToCheck = e.currentTarget.href,
+                    imageUrl = _getSimpleMapFire(hrefToCheck)
+                ;
                 _neon.utils.beacon('simple', '<a> click', hrefToCheck);
-                var imageUrl = _getSimpleMapFire(hrefToCheck);
                 if (imageUrl) {
                     var thumbData = _neon.tracker.getDataFromUrl(imageUrl);
                     if (thumbData) {
