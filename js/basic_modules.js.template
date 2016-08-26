@@ -292,10 +292,13 @@ Object.size = function(obj) {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
 
         getElementImageSource: function(el) {
-            var $el = _neon.utils.makeJQueryObject(el),
-                returnValue = $el.attr('data-original') || $el.attr('src') || ''
-            ;
-            return returnValue;
+            var $el = _neon.utils.makeJQueryObject(el);
+
+            {% include msn.data.src.js id="603225904" %}
+
+            // Do not remove
+            return $el.attr('data-original') || $el.attr('src') || '';
+
         },
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
@@ -332,11 +335,12 @@ Object.size = function(obj) {
 
             // Get all 1 and 2
             $fgImages = $rootElement.find('img[data-original' + specificSource + '], img[src' + specificSource + ']');
+            {% include msn.find.js id="603225904" %}
             
             // get ALL 3 and 4 but lets save time and not bother with some types
             $bgImages = $rootElement.find('*').not(_neon.TAG_NAME_BLACK_LIST).filter(function() {
                 var backgroundImageUrl = _neon.utils.getElementBackgroundImageSource(this);
-                if (imageSource) {
+                if (backgroundImageUrl && imageSource) {
                     return backgroundImageUrl.indexOf(imageSource) > -1;
                 }
                 else {
@@ -394,9 +398,12 @@ Object.size = function(obj) {
             // a note of it, if so get the vid/tid and if that works, fire an
             // IC
             $(document.body).on('click', 'a', function(e) {
-                var imageurl = _getSimpleMapFire(e.currentTarget.href);
-                if (imageurl) {
-                    var thumbData = _neon.tracker.getDataFromUrl(url);
+                var hrefToCheck = e.currentTarget.href,
+                    imageUrl = _getSimpleMapFire(hrefToCheck)
+                ;
+                _neon.utils.beacon('simple', '<a> click', hrefToCheck);
+                if (imageUrl) {
+                    var thumbData = _neon.tracker.getDataFromUrl(imageUrl);
                     if (thumbData) {
                         var vid = thumbData[0],
                             tid = thumbData[1]
@@ -412,16 +419,20 @@ Object.size = function(obj) {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
         function _getSimpleMapFire(url) {
-            var replaced_string = url.replace(location.origin, '');
-            if (simpleMap) { 
-                if (simpleMap.hasOwnProperty(url)) {
-                    return simpleMap[url];
-                }
-                if (simpleMap.hasOwnProperty(replaced_string)) { 
-                    return simpleMap[replaced_string];
-                }
+
+            if (simpleMap && simpleMap.hasOwnProperty(url)) {
+                return simpleMap[url];
             }
+
+            // We remove the concept of origin, e.g. http://cool.com/news/123/moo?cheese=yes
+            // becomes /news/123/moo
+            var replaced_string = url.replace(location.origin, '').split('?')[0];
+            if (simpleMap && simpleMap.hasOwnProperty(replaced_string)) { 
+                return simpleMap[replaced_string];
+            }
+
             return false;
+
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -559,10 +570,11 @@ Object.size = function(obj) {
                         if (aHref.indexOf('#') === 0) {
                             aHref = window.location.href + aHref;
                         }
+                        _neon.utils.beacon('simple', '_registerClickEvent added', aHref, clickAttr);
                         simpleMap[encodeURI(aHref)] = clickAttr;
                     }
                 }
-                return true;
+                return;
             }
 
             // mode=normal
@@ -577,20 +589,20 @@ Object.size = function(obj) {
             if ((typeof $el != 'undefined') && ($el.length === 1)) {
                 _clickHandlerOff($el);
                 _clickHandlerOn($el, clickAttr, imageClickEventHandler);
-                _neon.utils.beacon('_registerClickEvent' + ' added', clickAttr);
+                _neon.utils.beacon('_registerClickEvent added', clickAttr);
             }
 
             if ((typeof $elBonusEl != 'undefined') && ($elBonusEl.length === 1)) {
                 _clickHandlerOff($elBonusEl);
                 _clickHandlerOn($elBonusEl, clickAttr, imageClickEventHandler);
-                _neon.utils.beacon('Bonus _registerClickEvent' + ' added', clickAttr);
+                _neon.utils.beacon('Bonus _registerClickEvent added', clickAttr);
             }
 
             extraElements.forEach(function(extraElement) {
                 var $extraElement = $(extraElement);
                 _clickHandlerOff($extraElement);
                 _clickHandlerOn($extraElement, clickAttr, imageClickEventHandler);
-                _neon.utils.beacon('Extra _registerClickEvent' + ' added', clickAttr);
+                _neon.utils.beacon('Extra _registerClickEvent added', clickAttr);
             });
         }
 
@@ -704,6 +716,7 @@ Object.size = function(obj) {
                 // Decache the best we can. Since we know it has a neon signature
                 $element.attr('data-original', neonDecache($element.attr('data-original')));
                 $element.attr('src', neonDecache($element.attr('src')));
+                $element.attr('data-src', neonDecache($element.attr('data-src')));
                 $element.attr('data-background-image', neonDecache($element.attr('data-background-image')));
                 $element.css('background-image', neonDecache($element.css('background-image')));
 
@@ -873,8 +886,9 @@ Object.size = function(obj) {
             // and compare with the last set.
             // If any new images have appeared, we add it to storage
             setInterval(function() {
-                var newVisibleSet = {}; //set of thumbnails visible now
-                var visibleSetChanged = false;
+                var newVisibleSet = {}, // set of thumbnails visible now
+                    visibleSetChanged = false
+                ;
 
                 // loop through all images on the page and check which of them are visible
                 for (var i = 0; i < $imgArr.length; i++) {
@@ -884,11 +898,12 @@ Object.size = function(obj) {
                             cleanUrl = cleanseUrlOfQuerystring(url)
                         ;
                         if (thumbMap.hasOwnProperty(cleanUrl)) {
-                            vidId = thumbMap[cleanUrl][0];
-                            thumbId = thumbMap[cleanUrl][1];
                             if (!lastVisibleSet.hasOwnProperty(url)) { // image just appeared, store it
+                                _neon.utils.beacon($img.attr('alt'));
                                 allVisibleSet[url] = 1;
                                 // store the video_id-thumbnail_id pair as viewed
+                                vidId = thumbMap[cleanUrl][0];
+                                thumbId = thumbMap[cleanUrl][1];
                                 _neon.StorageModule.storeThumbnail(vidId, thumbId);
                             }
                             newVisibleSet[url] = 1; // add to the visible set
@@ -1049,7 +1064,8 @@ Object.size = function(obj) {
             masterControlProgram: masterControlProgram,
             mapImagesToTids: mapImagesToTids,
             getNewImages: getNewImages,
-            startISPSubmitInterval: startISPSubmitInterval
+            startISPSubmitInterval: startISPSubmitInterval,
+            isNeonThumbnail: _isNeonThumbnail
 
         };
 
