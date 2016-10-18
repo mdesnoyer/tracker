@@ -21,6 +21,6 @@
       - when any anchor is clicked, the `thumbnail_id` is pulled from the map and used to register an _Image Click_
       - the benefit of this is that any anchor to the same URL will result in an Image Click (overlays, headlines, other links)
   - There are three main events that are sent to reporting:
-    - Image Load - when a Neon Image is loaded
-    - Image View - when a Neon Image comes into view (the viewport), this fires once for each image as we keep track of it being visible (done via a JQuery plugin)
-    - Image Click - when a Neon Image is clicked
+    - _Image Load_ - when a Neon Image is loaded
+    - _Image View_ - when a Neon Image comes into view (the viewport), this fires once for each image as we keep track of it being visible (done via a JQuery plugin)
+    - _Image Click_ - when a Neon Image is clicked
