@@ -1,26 +1,26 @@
 # How It Works
 
-- Snippet included on page (contains a Publisher Id and a link to a script)
-- This link is used to load a small Bootstrap JS file.
-- Bootstrap JS does a number of things:
-  - Decache - remove any references to Neon Images from cached copies and points back to the original
-  - Lazy loads jQuery (if it doesn&#39;t already exist in the project)
+- Snippet included on your page (contains a `publisher_id` and a link to a `script` used to load a small Bootstrap JS file)
+- Bootstrap JS:
+  - Decache, i.e. remove any references to Neon Images from cached URL and points back to the original
+  - Lazy loads jQuery (if it doesn't already exist on the page)
   - Lazy loads in the Main JS
 - Main JS:
-  - There are three main events that are sent to reporting:
-    - Image Load - when a Neon Image is loaded
-    - Image View - when a Neon Image comes into view (the viewport), this fires once for each image as we keep track of it being visible.
-    - Image Click - when a Neon Image is clicked
-  - The Tracker checks the DOM for Neon Images.
-  - The Tracker watches for new nodes that are added to the DOM. When they are, those nodes are checked for Neon Images.
+  - Checks the DOM for Neon Images.
+  - Watches for new nodes that are added to the DOM. When they are, those nodes are checked for Neon Images.
   - There is a blacklist of element types that are not examined to speed up checking.
   - Neon Images can be background, `<img>`, lazy loaded images (we check a number of common patterns)
-  - Tracker can run in two slightly different ways.
+  - We can run in two slightly different ways.
     - _normal (default)_
       - We add a click handler to each image that is served from the `neon-images` domain
       - We fire an API call (batched where necessary) to work out the `thumbnail_id` and `video_id` (this is done via injecting a script tag / iframe to make a cross-domain request)
+      - We can then watch this image for Events
     - _simple_
-      - adds a click handler to each anchor (<a>) in the DOM that contains a Neon Image
+      - adds a click handler to each anchor (`<a>`) in the DOM that contains a Neon Image
       - maintains a map of (anchors) `url: thumbnail_id`
       - when any anchor is clicked, the `thumbnail_id` is pulled from the map and used to register an _Image Click_
       - the benefit of this is that any anchor to the same URL will result in an Image Click (overlays, headlines, other links)
+  - There are three main events that are sent to reporting:
+    - Image Load - when a Neon Image is loaded
+    - Image View - when a Neon Image comes into view (the viewport), this fires once for each image as we keep track of it being visible (done via a JQuery plugin)
+    - Image Click - when a Neon Image is clicked
